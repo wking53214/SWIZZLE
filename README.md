@@ -133,6 +133,35 @@ All three have guarantees in `Tests/test_lab_self_adversarial.py` and
 `Tests/test_lab_differential.py` now. Finding them is what re-running after a
 fix is for.
 
+## A fix is not a stamp of completion
+
+When an attack stops reproducing, the most this laboratory will say is:
+
+> the current structure supports the conclusion that this has been resolved
+
+Never `fixed`. The word appears in exactly one place in the output, in the
+sentence refusing it, and a test asserts that every occurrence is negated.
+
+The reason is the sentence *"I didn't say she stole my money"* — seven words,
+seven meanings, one text, depending only on which word takes the stress. The
+same thing happens to "it no longer reproduces": stress any word and it names
+something that was not established. **THIS** case, not the class. This
+**CASE** — the observable, not the defect. **THESE** oracles, one of which
+declined to say rather than agreeing. **THIS** world, the one minimisation
+left behind.
+
+Each of the seven readings is a question the tool can actually ask
+(`swizzle standing CASE`), and each answer is *defeated*, *held*, or **not
+asked** — three states, because "not asked" and "asked, nothing found" are
+different and collapsing them is how a corpus fills with conclusions nobody
+reached.
+
+The failure being refused is **epistemic promotion**: an observation
+acquiring authority, provenance, certainty and historical status it never
+earned. `docs/EPISTEMIC_STANDING.md` has the full decomposition, including
+the two occasions the module committed that failure itself on its first real
+run.
+
 ## Severity, and the one rule that cannot be tuned
 
 A case where the target destroyed a paragraph outranks any number of cases

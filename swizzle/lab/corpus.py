@@ -76,6 +76,28 @@ class Entry:
     def corroborated(self) -> Tuple[str, ...]:
         return tuple(self.record.get("corroborated") or ())
 
+    @property
+    def standing(self) -> str:
+        """What the evidence supports, or the honest absence of an answer.
+
+        A case with no resolution recorded has not been interrogated, and
+        says so rather than inheriting a status from the folder it is in.
+        """
+        return str(self.record.get("standing", "never interrogated"))
+
+    @property
+    def observation(self):
+        from .standing import Observation
+        return Observation.from_corpus_record(self.record)
+
+    @property
+    def original_genome(self):
+        """The world before minimisation, for the `THIS world` question."""
+        from .genome import RepositoryGenome
+        block = self.record.get("minimisation") or {}
+        raw = block.get("original")
+        return RepositoryGenome.from_dict(raw) if raw else None
+
 
 class Corpus:
     """The on-disk attack memory."""
@@ -89,6 +111,7 @@ class Corpus:
 
     def record(self, result: CaseResult, bucket: str = "discovered", *,
                minimisation: Optional[Minimisation] = None,
+               resolution=None,
                note: str = "") -> Entry:
         if bucket not in BUCKETS:
             raise ValueError("no such bucket: %s" % bucket)
@@ -103,6 +126,12 @@ class Corpus:
         })
         if minimisation is not None:
             payload["minimisation"] = minimisation.to_dict()
+        if resolution is not None:
+            # Never a bucket name standing in for a conclusion. The bucket
+            # says where the file lives; the standing says what the evidence
+            # currently supports, and the two are allowed to disagree.
+            payload["resolution"] = resolution.to_dict()
+            payload["standing"] = resolution.standing.value
         path = self.root / bucket / ("%s.json" % _slug(result.genome.name))
         path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n",
                         encoding="utf-8")

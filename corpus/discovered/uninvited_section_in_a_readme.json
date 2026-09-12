@@ -116,6 +116,169 @@
   "note": "",
   "recorded_at": "2026-09-12T10:54:26Z",
   "reproduce": "swizzle reproduce uninvited_section_in_a_readme",
+  "resolution": {
+    "defeated_by": [],
+    "interpretation": "the current structure supports the conclusion that this has been resolved",
+    "previously_reproduced": {
+      "broken": "",
+      "case": "uninvited_section_in_a_readme",
+      "classes": [
+        "unauthorised_mutation"
+      ],
+      "genome_digest": "cdf41620459affee",
+      "observed_at": "2026-09-12T10:54:26Z",
+      "oracles_inconclusive": [],
+      "oracles_ran": [
+        "structural"
+      ],
+      "reproduced": true,
+      "target_revision": "d14dc1acf01f9b7d95fc3d3a822d20f8e54c96cf",
+      "top_severity": "HIGH"
+    },
+    "probes": [
+      {
+        "account": "every oracle that saw this failure ran again and reported nothing. Residual limit, unchanged and documented: a change the target made and reverted is invisible to all of them (docs/ORACLES.md).",
+        "defeated": false,
+        "evidence": {
+          "looked_now": [
+            "expectation",
+            "ledger",
+            "scope",
+            "semantic",
+            "structural",
+            "temporal"
+          ],
+          "saw_it": [
+            "structural"
+          ]
+        },
+        "held": true,
+        "probe": "concealment"
+      },
+      {
+        "account": "it does not reproduce at b5dda3cfc1, and that is a statement about that commit and no other",
+        "defeated": false,
+        "evidence": {
+          "observed_at": "2026-09-12T12:38:11Z",
+          "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108"
+        },
+        "held": true,
+        "probe": "recurrence"
+      },
+      {
+        "account": "a world grown around it does not reproduce unauthorised_mutation either",
+        "defeated": false,
+        "evidence": {
+          "digest": "651fb2ef94f09d81",
+          "grown": true,
+          "other_findings": []
+        },
+        "held": true,
+        "probe": "scope"
+      },
+      {
+        "account": "3 sibling case(s) on the same surface were re-run and none reproduce unauthorised_mutation",
+        "defeated": false,
+        "evidence": {
+          "checked": [
+            "prose_inside_the_maintained_block",
+            "block_in_a_document_about_a_moment",
+            "two_maintained_blocks"
+          ],
+          "other_findings": []
+        },
+        "held": true,
+        "probe": "adjacency"
+      },
+      {
+        "account": "4 variant(s) were built and run; none reproduce unauthorised_mutation. That is a sample of the neighbourhood, not a proof about it.",
+        "defeated": false,
+        "evidence": {
+          "incidental": [],
+          "tried": [
+            "34996bc1d9d99f08",
+            "4fae54a83af34e3c",
+            "44c2229ec4a01151",
+            "cd184d716bd74cd5"
+          ],
+          "unbuildable": 0
+        },
+        "held": true,
+        "probe": "variant"
+      }
+    ],
+    "source": {
+      "broken": "",
+      "case": "uninvited_section_in_a_readme",
+      "classes": [],
+      "genome_digest": "cdf41620459affee",
+      "observed_at": "2026-09-12T12:38:11Z",
+      "oracles_inconclusive": [],
+      "oracles_ran": [
+        "expectation",
+        "ledger",
+        "scope",
+        "semantic",
+        "structural",
+        "temporal"
+      ],
+      "reproduced": false,
+      "target_revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108",
+      "top_severity": "NONE"
+    },
+    "standing": "current structure supports resolved",
+    "unestablished": [
+      {
+        "emphasis": "THIS case",
+        "probe": "variant",
+        "status": "held",
+        "unestablished": "a variant of this case may still reproduce; the case is not the class"
+      },
+      {
+        "emphasis": "this CASE",
+        "probe": "concealment",
+        "status": "held",
+        "unestablished": "the case is the observable, not the defect: the observable is gone and nothing here says the defect is"
+      },
+      {
+        "emphasis": "NO LONGER",
+        "probe": "recurrence",
+        "status": "held",
+        "unestablished": "at this moment only; it reproduced before and the world moves"
+      },
+      {
+        "emphasis": "REPRODUCES",
+        "probe": "concealment",
+        "status": "held",
+        "unestablished": "the oracles saw nothing, which is bounded by what they can see"
+      },
+      {
+        "emphasis": "THIS revision",
+        "probe": "recurrence",
+        "status": "held",
+        "unestablished": "one commit, and no statement about any other"
+      },
+      {
+        "emphasis": "THESE oracles",
+        "probe": "concealment",
+        "status": "held",
+        "unestablished": "the ones that ran; an inconclusive oracle declined to say rather than agreeing"
+      },
+      {
+        "emphasis": "THIS world",
+        "probe": "scope",
+        "status": "held",
+        "unestablished": "the minimised genome; a larger world may behave differently, and minimisation is what made it smaller"
+      },
+      {
+        "emphasis": "the surface",
+        "probe": "adjacency",
+        "status": "held",
+        "unestablished": "sibling cases on the same surface were not re-examined; a local fix can close one case and leave the mechanism open"
+      }
+    ],
+    "unprobed": []
+  },
   "seconds": 1.33,
   "signals": [
     {
@@ -217,6 +380,7 @@
     "unauthorised_file_mutation",
     "HIGH"
   ],
+  "standing": "current structure supports resolved",
   "swizzle": {
     "commit": "ec9c7c740b9fb27f9c08bb5bce0ea0c6f5135900",
     "version": "0.1.0"

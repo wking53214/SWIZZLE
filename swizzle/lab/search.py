@@ -121,10 +121,19 @@ def _satisfied(genome: RepositoryGenome, name: str) -> bool:
     if name in ("make_dated_claim", "make_historical_claim", "make_scoped_claim",
                 "make_attributed_claim", "make_hedged_claim",
                 "make_comparison_table", "rewrite_claim_during_tests"):
-        return bool(genome.claims)
+        # A claim mutator needs a claim AND the document it lives in to still
+        # be where the genome says. `alias_document_with_symlink` and
+        # `symlink_escapes_repository` both move or remove one, so composing
+        # either with a claim mutator builds a world that cannot be built.
+        moved = {m.name for m in genome.mutations} & {
+            "alias_document_with_symlink", "symlink_escapes_repository"}
+        return bool(genome.claims) and not moved
     if name == "alias_document_with_symlink":
+        # Not after a claim mutator either: the alias renames the document
+        # out from under the claim's recorded path.
         return bool(genome.documents) and not any(
-            m.name == "symlink_escapes_repository" for m in genome.mutations)
+            m.name in ("symlink_escapes_repository", "rewrite_claim_during_tests")
+            for m in genome.mutations)
     if name == "symlink_escapes_repository":
         return not any(m.name == "alias_document_with_symlink"
                        for m in genome.mutations)

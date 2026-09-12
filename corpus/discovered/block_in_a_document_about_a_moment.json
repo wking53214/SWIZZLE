@@ -194,6 +194,256 @@
   "note": "",
   "recorded_at": "2026-09-12T10:54:15Z",
   "reproduce": "swizzle reproduce block_in_a_document_about_a_moment",
+  "resolution": {
+    "defeated_by": [
+      "variant"
+    ],
+    "interpretation": "the current structure supports the conclusion that this has been resolved",
+    "previously_reproduced": {
+      "broken": "",
+      "case": "block_in_a_document_about_a_moment",
+      "classes": [
+        "unauthorised_mutation"
+      ],
+      "genome_digest": "d05c3434fbe7054a",
+      "observed_at": "2026-09-12T10:54:15Z",
+      "oracles_inconclusive": [],
+      "oracles_ran": [
+        "structural"
+      ],
+      "reproduced": true,
+      "target_revision": "d14dc1acf01f9b7d95fc3d3a822d20f8e54c96cf",
+      "top_severity": "HIGH"
+    },
+    "probes": [
+      {
+        "account": "every oracle that saw this failure ran again and reported nothing. Residual limit, unchanged and documented: a change the target made and reverted is invisible to all of them (docs/ORACLES.md).",
+        "defeated": false,
+        "evidence": {
+          "looked_now": [
+            "expectation",
+            "ledger",
+            "scope",
+            "semantic",
+            "structural",
+            "temporal"
+          ],
+          "saw_it": [
+            "structural"
+          ]
+        },
+        "held": true,
+        "probe": "concealment"
+      },
+      {
+        "account": "it does not reproduce at b5dda3cfc1, and that is a statement about that commit and no other",
+        "defeated": false,
+        "evidence": {
+          "observed_at": "2026-09-12T12:37:26Z",
+          "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108"
+        },
+        "held": true,
+        "probe": "recurrence"
+      },
+      {
+        "account": "a world grown around it does not reproduce unauthorised_mutation either",
+        "defeated": false,
+        "evidence": {
+          "digest": "a98dba32d59cfb08",
+          "grown": true,
+          "other_findings": []
+        },
+        "held": true,
+        "probe": "scope"
+      },
+      {
+        "account": "3 sibling case(s) on the same surface were re-run and none reproduce unauthorised_mutation",
+        "defeated": false,
+        "evidence": {
+          "checked": [
+            "prose_inside_the_maintained_block",
+            "two_maintained_blocks",
+            "uninvited_section_in_a_readme"
+          ],
+          "other_findings": []
+        },
+        "held": true,
+        "probe": "adjacency"
+      },
+      {
+        "account": "a variant reproduces unauthorised_mutation at CRITICAL, which is the failure this resolution is about: the fix closed this case and not the class",
+        "defeated": true,
+        "evidence": {
+          "classes": [
+            "unauthorised_mutation"
+          ],
+          "tried": [
+            "e5c334a962ab3ab4"
+          ],
+          "variant_digest": "e5c334a962ab3ab4",
+          "variant_genome": {
+            "baseline": {
+              "mode": "none",
+              "stale_count": 0
+            },
+            "category": "writability",
+            "claims": [
+              {
+                "document": "README.md",
+                "documented_count": 12,
+                "heading": "## Tests",
+                "may_be_rewritten": false,
+                "rationale": "",
+                "style": "live_whole_suite"
+              }
+            ],
+            "count_blocks": [
+              {
+                "body_prose": [],
+                "document": "README.md",
+                "documented_count": 12,
+                "duplicated": false,
+                "malformed_close": false,
+                "nested_open": false
+              }
+            ],
+            "documents": [
+              {
+                "kind": "generated",
+                "path": "README.md",
+                "prose": [
+                  "A small project, kept small so that everything in the report is about the case and not about the noise."
+                ],
+                "title": "Example"
+              },
+              {
+                "kind": "historical",
+                "path": "PHASE_4_COMPLETE.md",
+                "prose": [
+                  "Closed out on 2026-01-14 with the numbers as they stood."
+                ],
+                "title": "Phase 4, complete"
+              }
+            ],
+            "filesystem": {
+              "filler_modules": 0,
+              "nested_repository": null,
+              "symlinks": []
+            },
+            "git": {
+              "branch": "main",
+              "committed": true,
+              "detached": false,
+              "dirty": []
+            },
+            "hypothesis": "The prose remedy refuses a dated or versioned document by name, on the reasoning that such a document records a moment. The block remedy applies the same tool to every markdown file with the markers in it and performs no document check at all. The same repository therefore gets two different answers to 'may a machine update this number', decided by which mechanism happens to reach it.",
+            "mutations": [
+              {
+                "name": "move_count_block_to_document",
+                "params": {
+                  "from": "README.md",
+                  "to": "PHASE_4_COMPLETE.md"
+                },
+                "phase": "build"
+              }
+            ],
+            "name": "block_in_a_document_about_a_moment-g2350",
+            "notes": "Evolved from block_in_a_document_about_a_moment (d05c3434fbe7054a).",
+            "project": {
+              "functions_per_module": 1,
+              "has_ci": false,
+              "has_pyproject": true,
+              "modules": [
+                "core"
+              ],
+              "package": "app"
+            },
+            "schema_version": 1,
+            "seed": 914183,
+            "tests": {
+              "count": 30,
+              "directory": "Tests",
+              "passing": null
+            },
+            "tolerate_target_sections": true
+          }
+        },
+        "held": false,
+        "probe": "variant"
+      }
+    ],
+    "source": {
+      "broken": "",
+      "case": "block_in_a_document_about_a_moment",
+      "classes": [],
+      "genome_digest": "d05c3434fbe7054a",
+      "observed_at": "2026-09-12T12:37:26Z",
+      "oracles_inconclusive": [],
+      "oracles_ran": [
+        "expectation",
+        "ledger",
+        "scope",
+        "semantic",
+        "structural",
+        "temporal"
+      ],
+      "reproduced": false,
+      "target_revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108",
+      "top_severity": "NONE"
+    },
+    "standing": "unreproduced, but a probe defeated it",
+    "unestablished": [
+      {
+        "emphasis": "THIS case",
+        "probe": "variant",
+        "status": "overturned",
+        "unestablished": "a variant of this case may still reproduce; the case is not the class"
+      },
+      {
+        "emphasis": "this CASE",
+        "probe": "concealment",
+        "status": "held",
+        "unestablished": "the case is the observable, not the defect: the observable is gone and nothing here says the defect is"
+      },
+      {
+        "emphasis": "NO LONGER",
+        "probe": "recurrence",
+        "status": "held",
+        "unestablished": "at this moment only; it reproduced before and the world moves"
+      },
+      {
+        "emphasis": "REPRODUCES",
+        "probe": "concealment",
+        "status": "held",
+        "unestablished": "the oracles saw nothing, which is bounded by what they can see"
+      },
+      {
+        "emphasis": "THIS revision",
+        "probe": "recurrence",
+        "status": "held",
+        "unestablished": "one commit, and no statement about any other"
+      },
+      {
+        "emphasis": "THESE oracles",
+        "probe": "concealment",
+        "status": "held",
+        "unestablished": "the ones that ran; an inconclusive oracle declined to say rather than agreeing"
+      },
+      {
+        "emphasis": "THIS world",
+        "probe": "scope",
+        "status": "held",
+        "unestablished": "the minimised genome; a larger world may behave differently, and minimisation is what made it smaller"
+      },
+      {
+        "emphasis": "the surface",
+        "probe": "adjacency",
+        "status": "held",
+        "unestablished": "sibling cases on the same surface were not re-examined; a local fix can close one case and leave the mechanism open"
+      }
+    ],
+    "unprobed": []
+  },
   "seconds": 1.51,
   "signals": [
     {
@@ -325,6 +575,7 @@
     "unauthorised_file_mutation",
     "HIGH"
   ],
+  "standing": "unreproduced, but a probe defeated it",
   "swizzle": {
     "commit": "ec9c7c740b9fb27f9c08bb5bce0ea0c6f5135900",
     "version": "0.1.0"
