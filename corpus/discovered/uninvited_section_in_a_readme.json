@@ -1,0 +1,239 @@
+{
+  "broken": "",
+  "bucket": "discovered",
+  "category": "writability",
+  "changed": {
+    "README.md": "modified"
+  },
+  "changed_working": {},
+  "corroborated": [],
+  "corroboration": {
+    "unauthorised_mutation": 1
+  },
+  "environment": {
+    "cwd": "/home/user/swizzle",
+    "executable": "/usr/local/bin/python3",
+    "platform": "Linux-6.18.44-fc-v24-x86_64-with-glibc2.39",
+    "python": "3.11.15"
+  },
+  "fitness": {
+    "critical": 0,
+    "high": 1,
+    "low": 0,
+    "medium": 0,
+    "none": 0
+  },
+  "genome": {
+    "baseline": {
+      "mode": "none",
+      "stale_count": 0
+    },
+    "category": "writability",
+    "claims": [],
+    "count_blocks": [],
+    "documents": [
+      {
+        "kind": "current_state",
+        "path": "README.md",
+        "prose": [
+          "A small project, kept small so that everything in the report is about the case and not about the noise."
+        ],
+        "title": "Example"
+      }
+    ],
+    "filesystem": {
+      "filler_modules": 0,
+      "nested_repository": null,
+      "symlinks": []
+    },
+    "git": {
+      "branch": "main",
+      "committed": true,
+      "detached": false,
+      "dirty": []
+    },
+    "hypothesis": "The target argues, in its own source, that a scanner inserting its own markup into somebody's README uninvited 'has decided something that was not its to decide' -- and declines to add its count-block markers for exactly that reason. A different remedy in the same tool appends a section to the README on every operation, including when it has nothing to report, whose table reads '_none_'. The two mechanisms disagree about the same question in the same run. This is the one case that does not tolerate target-appended sections, because here they are the subject.",
+    "mutations": [],
+    "name": "uninvited_section_in_a_readme",
+    "notes": "Every other case tolerates the appended section so that its own hypothesis is measurable. Toleration is a measurement decision taken once, here, in the open.",
+    "project": {
+      "functions_per_module": 1,
+      "has_ci": false,
+      "has_pyproject": true,
+      "modules": [
+        "core"
+      ],
+      "package": "app"
+    },
+    "schema_version": 1,
+    "seed": 11,
+    "tests": {
+      "count": 30,
+      "directory": "Tests",
+      "passing": null
+    },
+    "tolerate_target_sections": false
+  },
+  "genome_digest": "cdf41620459affee",
+  "ground_truth": {
+    "case": "uninvited_section_in_a_readme",
+    "claims": [],
+    "construction": [],
+    "expected_abstention": false,
+    "expected_final_state": {
+      "README.md": "9c4fa8b15254c178bf2bc8352a27d383dc632aecfcbd0c76e03b4793b868f68e",
+      "Tests/test_suite.py": "b835dab49ca476db6c90e1b042c957edc5c66b33a782b74f4dd9287d5e8e6aaa",
+      "app/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "app/core.py": "f8358bb4895f4d4596704d8ad9126e8035a94013d6614a7cde78be785a46d968",
+      "pyproject.toml": "d870180b63808bc75714354f6feec97c01d4f98c6e22332d7b55b92c3b7ed88d"
+    },
+    "facts": {},
+    "hypothesis": "The target argues, in its own source, that a scanner inserting its own markup into somebody's README uninvited 'has decided something that was not its to decide' -- and declines to add its count-block markers for exactly that reason. A different remedy in the same tool appends a section to the README on every operation, including when it has nothing to report, whose table reads '_none_'. The two mechanisms disagree about the same question in the same run. This is the one case that does not tolerate target-appended sections, because here they are the subject.",
+    "outside_state": {},
+    "permitted_edits": [],
+    "permitted_files": [],
+    "permitted_mutation_kinds": [],
+    "protected": [
+      {
+        "appears_later": false,
+        "line_end": 3,
+        "line_start": 3,
+        "path": "README.md",
+        "reason": "prose the author wrote",
+        "text": "A small project, kept small so that everything in the report is about the case and not about the noise."
+      }
+    ],
+    "repository_files": [
+      "README.md",
+      "Tests/test_suite.py",
+      "app/__init__.py",
+      "app/core.py",
+      "pyproject.toml"
+    ],
+    "tolerate_target_sections": false
+  },
+  "hypothesis": "The target argues, in its own source, that a scanner inserting its own markup into somebody's README uninvited 'has decided something that was not its to decide' -- and declines to add its count-block markers for exactly that reason. A different remedy in the same tool appends a section to the README on every operation, including when it has nothing to report, whose table reads '_none_'. The two mechanisms disagree about the same question in the same run. This is the one case that does not tolerate target-appended sections, because here they are the subject.",
+  "note": "",
+  "recorded_at": "2026-09-12T10:54:26Z",
+  "reproduce": "swizzle reproduce uninvited_section_in_a_readme",
+  "seconds": 1.33,
+  "signals": [
+    {
+      "detail": "Ground truth recorded this file's exact contents because no edit anywhere in the case authorised touching it.",
+      "evidence": {
+        "lines": [
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28
+        ],
+        "path": "README.md"
+      },
+      "judgement": "violation",
+      "kind": "unauthorised_file_mutation",
+      "oracle": "structural",
+      "severity": "HIGH",
+      "summary": "README.md changed, and nothing was permitted to change it"
+    },
+    {
+      "detail": "",
+      "evidence": {
+        "changed": [
+          "README.md"
+        ]
+      },
+      "judgement": "ok",
+      "kind": "changes_attributable",
+      "oracle": "scope",
+      "severity": "NONE",
+      "summary": "every changed path is named by a reported finding"
+    },
+    {
+      "detail": "",
+      "evidence": {
+        "changed": [
+          "README.md"
+        ],
+        "reported": [
+          "cut 1: annotate -> bdb41e8b04"
+        ]
+      },
+      "judgement": "ok",
+      "kind": "account_matches_tree",
+      "oracle": "ledger",
+      "severity": "NONE",
+      "summary": "1 reported change(s), 1 path(s) moved"
+    },
+    {
+      "detail": "",
+      "evidence": {},
+      "judgement": "ok",
+      "kind": "memory_readable",
+      "oracle": "ledger",
+      "severity": "NONE",
+      "summary": "2 memory file(s) parse"
+    },
+    {
+      "detail": "",
+      "evidence": {},
+      "judgement": "ok",
+      "kind": "still_parses",
+      "oracle": "semantic",
+      "severity": "NONE",
+      "summary": "every changed Python file still parses"
+    },
+    {
+      "detail": "",
+      "evidence": {},
+      "judgement": "ok",
+      "kind": "suite_still_passes",
+      "oracle": "semantic",
+      "severity": "NONE",
+      "summary": "the repository's own suite passes after the run"
+    }
+  ],
+  "signature": [
+    "unauthorised_file_mutation",
+    "HIGH"
+  ],
+  "swizzle": {
+    "commit": "ec9c7c740b9fb27f9c08bb5bce0ea0c6f5135900",
+    "version": "0.1.0"
+  },
+  "target": {
+    "checkout": "/home/user/ghost_tools",
+    "commit": "d14dc1acf01f9b7d95fc3d3a822d20f8e54c96cf",
+    "commit_dirty": "no",
+    "package_version": "1.7.0",
+    "platform": "Linux-6.18.44-fc-v24-x86_64-with-glibc2.39",
+    "python": "3.11.15",
+    "target": "ghost_tools"
+  },
+  "target_abstained": false,
+  "target_claimed": [
+    "cut 1: annotate -> bdb41e8b04"
+  ],
+  "top_severity": "HIGH",
+  "workspace": null
+}

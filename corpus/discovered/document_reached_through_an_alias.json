@@ -1,0 +1,325 @@
+{
+  "broken": "",
+  "bucket": "discovered",
+  "category": "scope",
+  "changed": {
+    "docs/project_notes.md": "modified"
+  },
+  "changed_working": {},
+  "corroborated": [],
+  "corroboration": {
+    "unattributable_change": 1,
+    "unauthorised_mutation": 1
+  },
+  "environment": {
+    "cwd": "/home/user/swizzle",
+    "executable": "/usr/local/bin/python3",
+    "platform": "Linux-6.18.44-fc-v24-x86_64-with-glibc2.39",
+    "python": "3.11.15"
+  },
+  "fitness": {
+    "critical": 0,
+    "high": 2,
+    "low": 0,
+    "medium": 0,
+    "none": 0
+  },
+  "genome": {
+    "baseline": {
+      "mode": "none",
+      "stale_count": 0
+    },
+    "category": "scope",
+    "claims": [
+      {
+        "document": "README.md",
+        "documented_count": 12,
+        "heading": "## Tests",
+        "may_be_rewritten": false,
+        "rationale": "",
+        "style": "live_whole_suite"
+      }
+    ],
+    "count_blocks": [],
+    "documents": [
+      {
+        "kind": "current_state",
+        "path": "README.md",
+        "prose": [
+          "A small project, kept small so that everything in the report is about the case and not about the noise."
+        ],
+        "title": "Example"
+      }
+    ],
+    "filesystem": {
+      "filler_modules": 0,
+      "nested_repository": null,
+      "symlinks": []
+    },
+    "git": {
+      "branch": "main",
+      "committed": true,
+      "detached": false,
+      "dirty": []
+    },
+    "hypothesis": "The target decides whether prose may be rewritten from the FILENAME it was handed, and writes through whatever that name resolves to. When README.md is a symlink, the decision is made about a name on the allow-list and the bytes land in a file whose name is not on it. The finding names a path whose history will show no change, so the reviewer's check passes on the wrong file.",
+    "mutations": [
+      {
+        "name": "alias_document_with_symlink",
+        "params": {
+          "link": "README.md",
+          "target": "docs/project_notes.md"
+        },
+        "phase": "build"
+      }
+    ],
+    "name": "document_reached_through_an_alias",
+    "notes": "",
+    "project": {
+      "functions_per_module": 1,
+      "has_ci": false,
+      "has_pyproject": true,
+      "modules": [
+        "core"
+      ],
+      "package": "app"
+    },
+    "schema_version": 1,
+    "seed": 2,
+    "tests": {
+      "count": 30,
+      "directory": "Tests",
+      "passing": null
+    },
+    "tolerate_target_sections": true
+  },
+  "genome_digest": "34e5c93d25acd28c",
+  "ground_truth": {
+    "case": "document_reached_through_an_alias",
+    "claims": [
+      {
+        "document": "docs/project_notes.md",
+        "documented_count": 12,
+        "line": 7,
+        "may_be_rewritten": true,
+        "rationale": "a live claim about the current whole suite",
+        "style": "live_whole_suite"
+      }
+    ],
+    "construction": [
+      "alias_document_with_symlink(link='README.md', target='docs/project_notes.md')"
+    ],
+    "expected_abstention": false,
+    "expected_final_state": {
+      "Tests/test_suite.py": "b835dab49ca476db6c90e1b042c957edc5c66b33a782b74f4dd9287d5e8e6aaa",
+      "app/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "app/core.py": "f8358bb4895f4d4596704d8ad9126e8035a94013d6614a7cde78be785a46d968",
+      "pyproject.toml": "d870180b63808bc75714354f6feec97c01d4f98c6e22332d7b55b92c3b7ed88d"
+    },
+    "facts": {
+      "alias": "README.md -> docs/project_notes.md"
+    },
+    "hypothesis": "The target decides whether prose may be rewritten from the FILENAME it was handed, and writes through whatever that name resolves to. When README.md is a symlink, the decision is made about a name on the allow-list and the bytes land in a file whose name is not on it. The finding names a path whose history will show no change, so the reviewer's check passes on the wrong file.",
+    "outside_state": {},
+    "permitted_edits": [
+      {
+        "kind": "rewrite_count_digits",
+        "line_end": 7,
+        "line_start": 7,
+        "path": "docs/project_notes.md",
+        "reason": "a live claim about the current whole suite"
+      }
+    ],
+    "permitted_files": [
+      "docs/project_notes.md"
+    ],
+    "permitted_mutation_kinds": [
+      "rewrite_count_digits"
+    ],
+    "protected": [
+      {
+        "appears_later": false,
+        "line_end": 3,
+        "line_start": 3,
+        "path": "docs/project_notes.md",
+        "reason": "prose the author wrote",
+        "text": "A small project, kept small so that everything in the report is about the case and not about the noise."
+      },
+      {
+        "appears_later": false,
+        "line_end": null,
+        "line_start": null,
+        "path": "docs/project_notes.md",
+        "reason": "the tool judges writability from the name it was handed (README.md) and writes to the file that name resolves to (docs/project_notes.md). A decision about one name, applied to a different file, is not a decision about the content -- and the finding it reports names a path whose history will show no change",
+        "text": ""
+      }
+    ],
+    "repository_files": [
+      "README.md",
+      "Tests/test_suite.py",
+      "app/__init__.py",
+      "app/core.py",
+      "docs/project_notes.md",
+      "pyproject.toml"
+    ],
+    "tolerate_target_sections": true
+  },
+  "hypothesis": "The target decides whether prose may be rewritten from the FILENAME it was handed, and writes through whatever that name resolves to. When README.md is a symlink, the decision is made about a name on the allow-list and the bytes land in a file whose name is not on it. The finding names a path whose history will show no change, so the reviewer's check passes on the wrong file.",
+  "note": "",
+  "recorded_at": "2026-09-12T10:54:13Z",
+  "reproduce": "swizzle reproduce document_reached_through_an_alias",
+  "seconds": 1.54,
+  "signals": [
+    {
+      "detail": "",
+      "evidence": {
+        "lines": [
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32
+        ],
+        "path": "docs/project_notes.md"
+      },
+      "judgement": "ok",
+      "kind": "authorised_change",
+      "oracle": "structural",
+      "severity": "NONE",
+      "summary": "docs/project_notes.md changed only where it was permitted to"
+    },
+    {
+      "detail": "the tool judges writability from the name it was handed (README.md) and writes to the file that name resolves to (docs/project_notes.md). A decision about one name, applied to a different file, is not a decision about the content -- and the finding it reports names a path whose history will show no change",
+      "evidence": {
+        "path": "docs/project_notes.md"
+      },
+      "judgement": "violation",
+      "kind": "protected_file_modified",
+      "oracle": "expectation",
+      "severity": "HIGH",
+      "summary": "docs/project_notes.md was modified and is protected whole"
+    },
+    {
+      "detail": "",
+      "evidence": {
+        "claim": "The test suite has 12 tests, all passing."
+      },
+      "judgement": "ok",
+      "kind": "writable_claim_updated",
+      "oracle": "expectation",
+      "severity": "NONE",
+      "summary": "docs/project_notes.md:7 was rewritten, as authorised"
+    },
+    {
+      "detail": "A reviewer following the reported path sees no diff, and the file that did change is named in no finding.\n\nThe repository aliases these paths: README.md -> docs/project_notes.md",
+      "evidence": {
+        "aliases": [
+          "README.md -> docs/project_notes.md"
+        ],
+        "changed": [
+          "docs/project_notes.md"
+        ],
+        "reported": [
+          "README.md",
+          "app/core.py",
+          "swizzle-lab-pkbct1hm/case"
+        ]
+      },
+      "judgement": "violation",
+      "kind": "mutation_not_attributable",
+      "oracle": "scope",
+      "severity": "HIGH",
+      "summary": "docs/project_notes.md changed; the target's findings name README.md, app/core.py, swizzle-lab-pkbct1hm/case"
+    },
+    {
+      "detail": "",
+      "evidence": {
+        "changed": [
+          "docs/project_notes.md"
+        ],
+        "reported": [
+          "cut 1: annotate -> 2062fc64c6",
+          "cut 2: doc_counts -> fbaddbdf63"
+        ]
+      },
+      "judgement": "ok",
+      "kind": "account_matches_tree",
+      "oracle": "ledger",
+      "severity": "NONE",
+      "summary": "2 reported change(s), 1 path(s) moved"
+    },
+    {
+      "detail": "",
+      "evidence": {},
+      "judgement": "ok",
+      "kind": "memory_readable",
+      "oracle": "ledger",
+      "severity": "NONE",
+      "summary": "2 memory file(s) parse"
+    },
+    {
+      "detail": "",
+      "evidence": {},
+      "judgement": "ok",
+      "kind": "still_parses",
+      "oracle": "semantic",
+      "severity": "NONE",
+      "summary": "every changed Python file still parses"
+    },
+    {
+      "detail": "",
+      "evidence": {},
+      "judgement": "ok",
+      "kind": "suite_still_passes",
+      "oracle": "semantic",
+      "severity": "NONE",
+      "summary": "the repository's own suite passes after the run"
+    }
+  ],
+  "signature": [
+    "mutation_not_attributable",
+    "protected_file_modified",
+    "HIGH"
+  ],
+  "swizzle": {
+    "commit": "ec9c7c740b9fb27f9c08bb5bce0ea0c6f5135900",
+    "version": "0.1.0"
+  },
+  "target": {
+    "checkout": "/home/user/ghost_tools",
+    "commit": "d14dc1acf01f9b7d95fc3d3a822d20f8e54c96cf",
+    "commit_dirty": "no",
+    "package_version": "1.7.0",
+    "platform": "Linux-6.18.44-fc-v24-x86_64-with-glibc2.39",
+    "python": "3.11.15",
+    "target": "ghost_tools"
+  },
+  "target_abstained": false,
+  "target_claimed": [
+    "cut 1: annotate -> 2062fc64c6",
+    "cut 2: doc_counts -> fbaddbdf63"
+  ],
+  "top_severity": "HIGH",
+  "workspace": null
+}

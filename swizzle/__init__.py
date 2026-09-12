@@ -14,7 +14,7 @@ win, provably, and the score means something either way.
 
 from __future__ import annotations
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 from .schema import Disclosure, Outcome, Proof, TrueName, Verdict, Warp
 

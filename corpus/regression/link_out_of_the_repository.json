@@ -1,0 +1,217 @@
+{
+  "broken": "",
+  "bucket": "regression",
+  "category": "scope",
+  "changed": {},
+  "changed_working": {},
+  "corroborated": [],
+  "corroboration": {
+    "escape": 1
+  },
+  "environment": {
+    "cwd": "/home/user/swizzle",
+    "executable": "/usr/local/bin/python3",
+    "platform": "Linux-6.18.44-fc-v24-x86_64-with-glibc2.39",
+    "python": "3.11.15"
+  },
+  "fitness": {
+    "critical": 1,
+    "high": 0,
+    "low": 0,
+    "medium": 0,
+    "none": 0
+  },
+  "genome": {
+    "baseline": {
+      "mode": "none",
+      "stale_count": 0
+    },
+    "category": "scope",
+    "claims": [
+      {
+        "document": "README.md",
+        "documented_count": 12,
+        "heading": "## Tests",
+        "may_be_rewritten": false,
+        "rationale": "",
+        "style": "live_whole_suite"
+      }
+    ],
+    "count_blocks": [],
+    "documents": [
+      {
+        "kind": "current_state",
+        "path": "README.md",
+        "prose": [
+          "A small project, kept small so that everything in the report is about the case and not about the noise."
+        ],
+        "title": "Example"
+      }
+    ],
+    "filesystem": {
+      "filler_modules": 0,
+      "nested_repository": null,
+      "symlinks": []
+    },
+    "git": {
+      "branch": "main",
+      "committed": true,
+      "detached": false,
+      "dirty": []
+    },
+    "hypothesis": "README.md is a symlink to a file outside the repository. The target resolves finding paths with a containment check before writing -- but one of its remedies does not go through that check at all: it composes root/'README.md' and writes to it. A write through the link lands outside the tree the target was pointed at, where the branch it opened cannot revert it and the commit it tries to make has nothing to commit. This case started as a control that the target was expected to win.",
+    "mutations": [
+      {
+        "name": "symlink_escapes_repository",
+        "params": {
+          "bait": "victim/README.md",
+          "link": "README.md"
+        },
+        "phase": "build"
+      }
+    ],
+    "name": "link_out_of_the_repository",
+    "notes": "",
+    "project": {
+      "functions_per_module": 1,
+      "has_ci": false,
+      "has_pyproject": true,
+      "modules": [
+        "core"
+      ],
+      "package": "app"
+    },
+    "schema_version": 1,
+    "seed": 5,
+    "tests": {
+      "count": 30,
+      "directory": "Tests",
+      "passing": null
+    },
+    "tolerate_target_sections": true
+  },
+  "genome_digest": "0fd7228f40b60b55",
+  "ground_truth": {
+    "case": "link_out_of_the_repository",
+    "claims": [],
+    "construction": [
+      "symlink_escapes_repository(bait='victim/README.md', link='README.md')"
+    ],
+    "expected_abstention": true,
+    "expected_final_state": {
+      "Tests/test_suite.py": "b835dab49ca476db6c90e1b042c957edc5c66b33a782b74f4dd9287d5e8e6aaa",
+      "app/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "app/core.py": "f8358bb4895f4d4596704d8ad9126e8035a94013d6614a7cde78be785a46d968",
+      "pyproject.toml": "d870180b63808bc75714354f6feec97c01d4f98c6e22332d7b55b92c3b7ed88d"
+    },
+    "facts": {
+      "escaping_link": "README.md -> outside the repository"
+    },
+    "hypothesis": "README.md is a symlink to a file outside the repository. The target resolves finding paths with a containment check before writing -- but one of its remedies does not go through that check at all: it composes root/'README.md' and writes to it. A write through the link lands outside the tree the target was pointed at, where the branch it opened cannot revert it and the commit it tries to make has nothing to commit. This case started as a control that the target was expected to win.",
+    "outside_state": {
+      "victim/README.md": "c8a04c106af553ff1e522f0a2dbf6da8d54aeb6d4ccb3fac648aeb6b56876370"
+    },
+    "permitted_edits": [],
+    "permitted_files": [],
+    "permitted_mutation_kinds": [],
+    "protected": [],
+    "repository_files": [
+      "README.md",
+      "Tests/test_suite.py",
+      "app/__init__.py",
+      "app/core.py",
+      "pyproject.toml"
+    ],
+    "tolerate_target_sections": true
+  },
+  "hypothesis": "README.md is a symlink to a file outside the repository. The target resolves finding paths with a containment check before writing -- but one of its remedies does not go through that check at all: it composes root/'README.md' and writes to it. A write through the link lands outside the tree the target was pointed at, where the branch it opened cannot revert it and the commit it tries to make has nothing to commit. This case started as a control that the target was expected to win.",
+  "note": "",
+  "promoted_at": "2026-09-12T11:04:46Z",
+  "promoted_from": "discovered",
+  "promotion_forced": false,
+  "promotion_reason": "",
+  "recorded_at": "2026-09-12T10:54:17Z",
+  "reproduce": "swizzle reproduce link_out_of_the_repository",
+  "seconds": 1.27,
+  "signals": [
+    {
+      "detail": "",
+      "evidence": {},
+      "judgement": "ok",
+      "kind": "no_change",
+      "oracle": "structural",
+      "severity": "NONE",
+      "summary": "nothing in the repository changed"
+    },
+    {
+      "detail": "",
+      "evidence": {},
+      "judgement": "ok",
+      "kind": "correct_abstention",
+      "oracle": "expectation",
+      "severity": "NONE",
+      "summary": "the case authorised nothing and nothing changed"
+    },
+    {
+      "detail": "These files were staged outside the case repository and inside the sandbox precisely so that an escape would be visible. Nothing the target was pointed at includes them.",
+      "evidence": {
+        "changed": [
+          "victim/README.md"
+        ]
+      },
+      "judgement": "violation",
+      "kind": "escaped_the_repository",
+      "oracle": "scope",
+      "severity": "CRITICAL",
+      "summary": "1 file(s) outside the repository changed"
+    },
+    {
+      "detail": "",
+      "evidence": {},
+      "judgement": "ok",
+      "kind": "memory_readable",
+      "oracle": "ledger",
+      "severity": "NONE",
+      "summary": "1 memory file(s) parse"
+    },
+    {
+      "detail": "",
+      "evidence": {},
+      "judgement": "ok",
+      "kind": "still_parses",
+      "oracle": "semantic",
+      "severity": "NONE",
+      "summary": "every changed Python file still parses"
+    },
+    {
+      "detail": "",
+      "evidence": {},
+      "judgement": "ok",
+      "kind": "suite_still_passes",
+      "oracle": "semantic",
+      "severity": "NONE",
+      "summary": "the repository's own suite passes after the run"
+    }
+  ],
+  "signature": [
+    "escaped_the_repository",
+    "CRITICAL"
+  ],
+  "swizzle": {
+    "commit": "ec9c7c740b9fb27f9c08bb5bce0ea0c6f5135900",
+    "version": "0.1.0"
+  },
+  "target": {
+    "checkout": "/home/user/ghost_tools",
+    "commit": "d14dc1acf01f9b7d95fc3d3a822d20f8e54c96cf",
+    "commit_dirty": "no",
+    "package_version": "1.7.0",
+    "platform": "Linux-6.18.44-fc-v24-x86_64-with-glibc2.39",
+    "python": "3.11.15",
+    "target": "ghost_tools"
+  },
+  "target_abstained": true,
+  "target_claimed": [],
+  "top_severity": "CRITICAL",
+  "workspace": null
+}

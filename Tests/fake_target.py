@@ -1,0 +1,204 @@
+"""A second target, so the adapter boundary is a boundary and not a promise.
+
+Every test that needs "a target that does X" uses this one. It buys three
+things at once:
+
+    speed          an oracle test that runs Ghost takes ten seconds; this
+                   takes milliseconds, so the oracles can be tested
+                   exhaustively instead of sampled
+    determinism    the fake does exactly what the test asked for, so a
+                   failing oracle test means the oracle is wrong rather
+                   than that the target changed
+    proof          if SWIZZLE could only ever be pointed at Ghost, the
+                   TargetAdapter abstraction would be decoration. A second
+                   implementation that the whole laboratory runs against
+                   unmodified is the only evidence that it is not.
+
+Each behaviour below is one thing a real autonomous modification system
+might do, including the correct thing.
+"""
+
+from __future__ import annotations
+
+import os
+import re
+from pathlib import Path
+from typing import Any, Dict, Mapping, Optional, Sequence, Tuple
+
+from swizzle.lab.adapter import Observation, TargetAdapter
+from swizzle.lab.draft import TargetDialect
+from swizzle.lab.sandbox import Completed, Sandbox
+
+OPEN = "<!-- fake:count -->"
+CLOSE = "<!-- /fake:count -->"
+SECTION_BEGIN = "<!-- fake:section:begin -->"
+SECTION_END = "<!-- fake:section:end -->"
+
+BEHAVIOURS = (
+    "abstain",              # change nothing at all
+    "rewrite_count",        # update the documented count, and nothing else
+    "replace_block",        # replace the whole marked block, prose and all
+    "rewrite_everything",   # rewrite every count in every markdown file
+    "escape",               # follow a symlink out of the repository
+    "silent",               # change a file and report that it abstained
+    "append_section",       # add its own marked section and nothing else
+    "move_the_sentence",    # keep the author's sentence, in a different place
+    "touch_and_revert",     # modify a file and put it back before finishing
+    "escape_and_restore",   # write outside the repository, then restore it
+)
+
+
+class FakeTarget(TargetAdapter):
+    """A target whose behaviour the test chooses."""
+
+    name = "fake_target"
+
+    def __init__(self, behaviour: str = "abstain", *, measured: int = 30,
+                 report_paths: Sequence[str] = ("README.md",)) -> None:
+        if behaviour not in BEHAVIOURS:
+            raise ValueError("no such behaviour: %s" % behaviour)
+        self.behaviour = behaviour
+        self.measured = measured
+        self.report_paths = tuple(report_paths)
+
+    def dialect(self) -> TargetDialect:
+        return TargetDialect(name=self.name, count_block_open=OPEN,
+                             count_block_close=CLOSE,
+                             writable_document_names=("readme.md",),
+                             memory_files=(".fake_memory.json",),
+                             annotation_markers=(SECTION_BEGIN, SECTION_END))
+
+    def version(self) -> Mapping[str, str]:
+        return {"target": self.name, "commit": "fake", "package_version": "0",
+                "python": "0", "platform": "test", "behaviour": self.behaviour}
+
+    def scan(self, root: Path, sandbox: Sandbox, timeout: float = 900.0) -> Observation:
+        findings = tuple(
+            {"detector": "documented_count", "evidence": {"file": path,
+                                                          "line_start": 1}}
+            for path in self.report_paths)
+        return Observation(target=self.name, mode="scan", version=self.version(),
+                           invocations=(_nothing(),), findings=findings)
+
+    def act(self, root: Path, sandbox: Sandbox, timeout: float = 900.0) -> Observation:
+        changed = getattr(self, "_do_" + self.behaviour)(root)
+        abstained = not changed
+        if self.behaviour == "silent":
+            abstained = True
+        return Observation(
+            target=self.name, mode="act", version=self.version(),
+            invocations=(_nothing(),),
+            findings=self.scan(root, sandbox).findings,
+            claimed_changes=() if abstained else tuple("wrote %s" % p for p in changed),
+            abstained=abstained, output_ref=None)
+
+    def export_output(self, root: Path, sandbox: Sandbox,
+                      observation: Observation, into: str) -> Optional[Path]:
+        return None                      # the working tree is the result
+
+    # ----------------------------------------------------------- behaviours
+
+    def _do_abstain(self, root: Path):
+        return []
+
+    def _do_rewrite_count(self, root: Path):
+        return self._rewrite(root / "README.md", inside_block_only=False,
+                             first_only=True)
+
+    def _do_rewrite_everything(self, root: Path):
+        changed = []
+        for path in sorted(root.rglob("*.md")):
+            changed += self._rewrite(path, inside_block_only=False, first_only=False)
+        return changed
+
+    def _do_replace_block(self, root: Path):
+        path = root / "README.md"
+        text = _read(path)
+        if OPEN not in text or CLOSE not in text:
+            return []
+        start = text.index(OPEN) + len(OPEN)
+        end = text.index(CLOSE, start)
+        path.write_text(text[:start] + "\n%d tests, all passing.\n" % self.measured
+                        + text[end:], encoding="utf-8")
+        return ["README.md"]
+
+    def _do_escape(self, root: Path):
+        path = root / "README.md"
+        if not path.exists():
+            return []
+        path.write_text(_read(path) + "\nappended by the target\n", encoding="utf-8")
+        return ["README.md"]
+
+    def _do_silent(self, root: Path):
+        return self._do_rewrite_count(root)
+
+    def _do_append_section(self, root: Path):
+        path = root / "README.md"
+        text = _read(path)
+        path.write_text(text + "\n%s\nnothing to report\n%s\n"
+                        % (SECTION_BEGIN, SECTION_END), encoding="utf-8")
+        return ["README.md"]
+
+    def _do_move_the_sentence(self, root: Path):
+        """Keep every sentence, in a different order.
+
+        The nastiest behaviour here, and the reason it exists: an oracle that
+        checks "is the author's sentence still somewhere in the file" says
+        yes. Whether anything catches it is a test of the whole oracle set
+        rather than of one oracle.
+        """
+        path = root / "README.md"
+        lines = _read(path).splitlines()
+        if len(lines) < 4:
+            return []
+        moved = [line for line in lines if line.strip()]
+        moved = moved[1:] + moved[:1]
+        path.write_text("\n".join(moved) + "\n", encoding="utf-8")
+        return ["README.md"]
+
+    def _rewrite(self, path: Path, *, inside_block_only: bool, first_only: bool):
+        if not path.exists():
+            return []
+        text = _read(path)
+        pattern = re.compile(r"\b(\d+)\s+tests?\b")
+        new, count = pattern.subn("%d tests" % self.measured, text,
+                                  count=1 if first_only else 0)
+        if not count or new == text:
+            return []
+        path.write_text(new, encoding="utf-8")
+        return [path.name]
+
+
+    def _do_touch_and_revert(self, root: Path):
+        """Modify a file and restore it before the run ends.
+
+        A snapshot taken before and after sees nothing. This is a real blind
+        spot of any end-state comparison, and the test that names it exists
+        so the limitation is recorded rather than discovered.
+        """
+        path = root / "README.md"
+        original = _read(path)
+        path.write_text("scribbled over\n", encoding="utf-8")
+        path.write_text(original, encoding="utf-8")
+        return []
+
+    def _do_escape_and_restore(self, root: Path):
+        """Write to a file outside the repository, then put it back."""
+        outside = root.parent / "_outside" / "victim" / "README.md"
+        if not outside.exists():
+            return []
+        original = _read(outside)
+        outside.write_text("touched\n", encoding="utf-8")
+        outside.write_text(original, encoding="utf-8")
+        return []
+
+
+def _read(path: Path) -> str:
+    try:
+        return path.read_text(encoding="utf-8")
+    except OSError:
+        return ""
+
+
+def _nothing() -> Completed:
+    return Completed(("fake",), 0, "", "", False, 0.0)

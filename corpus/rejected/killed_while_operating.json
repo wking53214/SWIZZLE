@@ -1,0 +1,221 @@
+{
+  "broken": "",
+  "bucket": "rejected",
+  "category": "crash",
+  "changed": {},
+  "changed_working": {},
+  "corroborated": [],
+  "corroboration": {},
+  "environment": {
+    "cwd": "/home/user/swizzle",
+    "executable": "/usr/local/bin/python3",
+    "platform": "Linux-6.18.44-fc-v24-x86_64-with-glibc2.39",
+    "python": "3.11.15"
+  },
+  "fitness": {
+    "critical": 0,
+    "high": 0,
+    "low": 0,
+    "medium": 0,
+    "none": 0
+  },
+  "genome": {
+    "baseline": {
+      "mode": "none",
+      "stale_count": 0
+    },
+    "category": "crash",
+    "claims": [
+      {
+        "document": "README.md",
+        "documented_count": 12,
+        "heading": "## Tests",
+        "may_be_rewritten": false,
+        "rationale": "",
+        "style": "live_whole_suite"
+      }
+    ],
+    "count_blocks": [
+      {
+        "body_prose": [],
+        "document": "README.md",
+        "documented_count": 12,
+        "duplicated": false,
+        "malformed_close": false,
+        "nested_open": false
+      }
+    ],
+    "documents": [
+      {
+        "kind": "current_state",
+        "path": "README.md",
+        "prose": [
+          "A small project, kept small so that everything in the report is about the case and not about the noise."
+        ],
+        "title": "Example"
+      }
+    ],
+    "filesystem": {
+      "filler_modules": 0,
+      "nested_repository": null,
+      "symlinks": []
+    },
+    "git": {
+      "branch": "main",
+      "committed": true,
+      "detached": false,
+      "dirty": []
+    },
+    "hypothesis": "The target protects the branch the repository came in on with a cleanup path that restores it whatever happens inside the operation. A process that is killed does not run its cleanup path. The suite the target runs mid-operation sends it SIGKILL, which puts the interruption at a point the target chose and makes it exactly reproducible. The question is what the repository looks like afterwards: which branch it is on, and whether there is partial work in the tree.",
+    "mutations": [
+      {
+        "name": "kill_target_during_tests",
+        "params": {},
+        "phase": "during_tests"
+      }
+    ],
+    "name": "killed_while_operating",
+    "notes": "",
+    "project": {
+      "functions_per_module": 1,
+      "has_ci": false,
+      "has_pyproject": true,
+      "modules": [
+        "core"
+      ],
+      "package": "app"
+    },
+    "schema_version": 1,
+    "seed": 12,
+    "tests": {
+      "count": 30,
+      "directory": "Tests",
+      "passing": null
+    },
+    "tolerate_target_sections": true
+  },
+  "genome_digest": "624a013d8b59d981",
+  "ground_truth": {
+    "case": "killed_while_operating",
+    "claims": [
+      {
+        "document": "README.md",
+        "documented_count": 12,
+        "line": 7,
+        "may_be_rewritten": true,
+        "rationale": "a live claim about the current whole suite",
+        "style": "live_whole_suite"
+      }
+    ],
+    "construction": [
+      "kill_target_during_tests()"
+    ],
+    "expected_abstention": true,
+    "expected_final_state": {
+      "README.md": "0b315f24082d8d737f549a85351a15e498621a3ba35d224970342fc2b2c798fc",
+      "Tests/test_suite.py": "a0ae001ed8fdfd6baf90c6a722d686b463cdf2e7a6d50a4a4bfc1aad6bf2d2b8",
+      "app/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "app/core.py": "f8358bb4895f4d4596704d8ad9126e8035a94013d6614a7cde78be785a46d968",
+      "pyproject.toml": "d870180b63808bc75714354f6feec97c01d4f98c6e22332d7b55b92c3b7ed88d"
+    },
+    "facts": {
+      "during_tests": "kill_target_during_tests",
+      "interrupted": "sigkill while the target ran the suite"
+    },
+    "hypothesis": "The target protects the branch the repository came in on with a cleanup path that restores it whatever happens inside the operation. A process that is killed does not run its cleanup path. The suite the target runs mid-operation sends it SIGKILL, which puts the interruption at a point the target chose and makes it exactly reproducible. The question is what the repository looks like afterwards: which branch it is on, and whether there is partial work in the tree.",
+    "outside_state": {},
+    "permitted_edits": [],
+    "permitted_files": [],
+    "permitted_mutation_kinds": [],
+    "protected": [
+      {
+        "appears_later": false,
+        "line_end": 3,
+        "line_start": 3,
+        "path": "README.md",
+        "reason": "prose the author wrote",
+        "text": "A small project, kept small so that everything in the report is about the case and not about the noise."
+      }
+    ],
+    "repository_files": [
+      "README.md",
+      "Tests/test_suite.py",
+      "app/__init__.py",
+      "app/core.py",
+      "pyproject.toml"
+    ],
+    "tolerate_target_sections": true
+  },
+  "hypothesis": "The target protects the branch the repository came in on with a cleanup path that restores it whatever happens inside the operation. A process that is killed does not run its cleanup path. The suite the target runs mid-operation sends it SIGKILL, which puts the interruption at a point the target chose and makes it exactly reproducible. The question is what the repository looks like afterwards: which branch it is on, and whether there is partial work in the tree.",
+  "note": "",
+  "recorded_at": "2026-09-12T10:54:25Z",
+  "reproduce": "swizzle reproduce killed_while_operating",
+  "seconds": 0.71,
+  "signals": [
+    {
+      "detail": "",
+      "evidence": {},
+      "judgement": "ok",
+      "kind": "no_change",
+      "oracle": "structural",
+      "severity": "NONE",
+      "summary": "nothing in the repository changed"
+    },
+    {
+      "detail": "",
+      "evidence": {},
+      "judgement": "ok",
+      "kind": "correct_abstention",
+      "oracle": "expectation",
+      "severity": "NONE",
+      "summary": "the case authorised nothing and nothing changed"
+    },
+    {
+      "detail": "",
+      "evidence": {},
+      "judgement": "ok",
+      "kind": "recovered_from_interruption",
+      "oracle": "ledger",
+      "severity": "NONE",
+      "summary": "the repository is on its original branch and clean after the target was killed"
+    },
+    {
+      "detail": "",
+      "evidence": {},
+      "judgement": "ok",
+      "kind": "still_parses",
+      "oracle": "semantic",
+      "severity": "NONE",
+      "summary": "every changed Python file still parses"
+    },
+    {
+      "detail": "",
+      "evidence": {},
+      "judgement": "ok",
+      "kind": "suite_still_passes",
+      "oracle": "semantic",
+      "severity": "NONE",
+      "summary": "the repository's own suite passes after the run"
+    }
+  ],
+  "signature": [
+    "NONE"
+  ],
+  "swizzle": {
+    "commit": "ec9c7c740b9fb27f9c08bb5bce0ea0c6f5135900",
+    "version": "0.1.0"
+  },
+  "target": {
+    "checkout": "/home/user/ghost_tools",
+    "commit": "d14dc1acf01f9b7d95fc3d3a822d20f8e54c96cf",
+    "commit_dirty": "no",
+    "package_version": "1.7.0",
+    "platform": "Linux-6.18.44-fc-v24-x86_64-with-glibc2.39",
+    "python": "3.11.15",
+    "target": "ghost_tools"
+  },
+  "target_abstained": true,
+  "target_claimed": [],
+  "top_severity": "NONE",
+  "workspace": null
+}
