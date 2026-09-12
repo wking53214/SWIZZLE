@@ -158,6 +158,7 @@
         "evidence": {
           "looked_now": [
             "expectation",
+            "identity",
             "ledger",
             "scope",
             "semantic",
@@ -175,7 +176,7 @@
         "account": "it does not reproduce at b5dda3cfc1, and that is a statement about that commit and no other",
         "defeated": false,
         "evidence": {
-          "observed_at": "2026-09-12T13:29:51Z",
+          "observed_at": "2026-09-12T14:22:03Z",
           "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108"
         },
         "held": true,
@@ -207,14 +208,13 @@
         "probe": "adjacency"
       },
       {
-        "account": "3 variant(s) were built and run; none reproduce escape. That is a sample of the neighbourhood, not a proof about it.",
+        "account": "2 variant(s) were built and run; none reproduce escape. That is a sample of the neighbourhood, not a proof about it.",
         "defeated": false,
         "evidence": {
           "incidental": [],
           "tried": [
-            "e4b242c692231378",
-            "4c36be30f0f5c0db",
-            "f0fe2346dbb41d10"
+            "e37a2cc0e59510ae",
+            "e71cb1df4809af6a"
           ],
           "unbuildable": 0
         },
@@ -227,10 +227,11 @@
       "case": "link_out_of_the_repository",
       "classes": [],
       "genome_digest": "0fd7228f40b60b55",
-      "observed_at": "2026-09-12T13:29:51Z",
+      "observed_at": "2026-09-12T14:22:03Z",
       "oracles_inconclusive": [],
       "oracles_ran": [
         "expectation",
+        "identity",
         "ledger",
         "scope",
         "semantic",

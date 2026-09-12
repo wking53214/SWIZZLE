@@ -222,6 +222,7 @@
         "evidence": {
           "looked_now": [
             "expectation",
+            "identity",
             "ledger",
             "scope",
             "semantic",
@@ -239,7 +240,7 @@
         "account": "it does not reproduce at b5dda3cfc1, and that is a statement about that commit and no other",
         "defeated": false,
         "evidence": {
-          "observed_at": "2026-09-12T13:29:35Z",
+          "observed_at": "2026-09-12T14:21:38Z",
           "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108"
         },
         "held": true,
@@ -377,10 +378,11 @@
       "case": "block_in_a_document_about_a_moment",
       "classes": [],
       "genome_digest": "d05c3434fbe7054a",
-      "observed_at": "2026-09-12T13:29:35Z",
+      "observed_at": "2026-09-12T14:21:38Z",
       "oracles_inconclusive": [],
       "oracles_ran": [
         "expectation",
+        "identity",
         "ledger",
         "scope",
         "semantic",

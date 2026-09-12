@@ -142,6 +142,7 @@
         "evidence": {
           "looked_now": [
             "expectation",
+            "identity",
             "ledger",
             "scope",
             "semantic",
@@ -159,7 +160,7 @@
         "account": "it does not reproduce at b5dda3cfc1, and that is a statement about that commit and no other",
         "defeated": false,
         "evidence": {
-          "observed_at": "2026-09-12T13:30:19Z",
+          "observed_at": "2026-09-12T14:22:51Z",
           "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108"
         },
         "held": true,
@@ -199,7 +200,7 @@
             "34996bc1d9d99f08",
             "4fae54a83af34e3c"
           ],
-          "unbuildable": 1
+          "unbuildable": 0
         },
         "held": true,
         "probe": "variant"
@@ -210,10 +211,11 @@
       "case": "uninvited_section_in_a_readme",
       "classes": [],
       "genome_digest": "cdf41620459affee",
-      "observed_at": "2026-09-12T13:30:19Z",
+      "observed_at": "2026-09-12T14:22:51Z",
       "oracles_inconclusive": [],
       "oracles_ran": [
         "expectation",
+        "identity",
         "ledger",
         "scope",
         "semantic",

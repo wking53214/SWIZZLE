@@ -205,9 +205,7 @@
   "recorded_at": "2026-09-12T10:54:23Z",
   "reproduce": "swizzle reproduce alias_and_prose_together",
   "resolution": {
-    "defeated_by": [
-      "adjacency"
-    ],
+    "defeated_by": [],
     "interpretation": "the current structure supports the conclusion that this has been resolved",
     "previously_reproduced": {
       "broken": "",
@@ -235,6 +233,7 @@
         "evidence": {
           "looked_now": [
             "expectation",
+            "identity",
             "ledger",
             "scope",
             "semantic",
@@ -254,7 +253,7 @@
         "account": "it does not reproduce at b5dda3cfc1, and that is a statement about that commit and no other",
         "defeated": false,
         "evidence": {
-          "observed_at": "2026-09-12T13:29:28Z",
+          "observed_at": "2026-09-12T14:21:13Z",
           "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108"
         },
         "held": true,
@@ -272,30 +271,29 @@
         "probe": "scope"
       },
       {
-        "account": "the surface is still open: a_count_that_changes_when_you_write_it (unauthorised_mutation at CRITICAL)",
-        "defeated": true,
+        "account": "1 sibling case(s) on the same surface were re-run and none reproduce unattributable_change or unauthorised_mutation",
+        "defeated": false,
         "evidence": {
           "checked": [
             "a_count_that_changes_when_you_write_it"
           ],
-          "other_findings": [],
-          "reproducing_siblings": [
-            "a_count_that_changes_when_you_write_it (unauthorised_mutation at CRITICAL)"
-          ]
+          "other_findings": []
         },
-        "held": false,
+        "held": true,
         "probe": "adjacency"
       },
       {
-        "account": "2 variant(s) were built and run; none reproduce unattributable_change or unauthorised_mutation. That is a sample of the neighbourhood, not a proof about it.",
+        "account": "2 variant(s) were built and run; none reproduce unattributable_change or unauthorised_mutation. That is a sample of the neighbourhood, not a proof about it. Separately, 1 of them produced a different and lesser finding (false_certification, false_memory, identity_drift at CRITICAL), which is a case to file rather than a defeat of this one.",
         "defeated": false,
         "evidence": {
-          "incidental": [],
-          "tried": [
-            "6f4c35e944688f06",
-            "e09bd75f192b907b"
+          "incidental": [
+            "false_certification, false_memory, identity_drift at CRITICAL"
           ],
-          "unbuildable": 1
+          "tried": [
+            "e1124f452573cd43",
+            "6f4c35e944688f06"
+          ],
+          "unbuildable": 0
         },
         "held": true,
         "probe": "variant"
@@ -306,10 +304,11 @@
       "case": "alias_and_prose_together",
       "classes": [],
       "genome_digest": "83e235a001de4af0",
-      "observed_at": "2026-09-12T13:29:28Z",
+      "observed_at": "2026-09-12T14:21:13Z",
       "oracles_inconclusive": [],
       "oracles_ran": [
         "expectation",
+        "identity",
         "ledger",
         "scope",
         "semantic",
@@ -320,7 +319,7 @@
       "target_revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108",
       "top_severity": "NONE"
     },
-    "standing": "unreproduced, but a probe defeated it",
+    "standing": "current structure supports resolved",
     "unestablished": [
       {
         "emphasis": "THIS case",
@@ -367,7 +366,7 @@
       {
         "emphasis": "the surface",
         "probe": "adjacency",
-        "status": "overturned",
+        "status": "held",
         "unestablished": "sibling cases on the same surface were not re-examined; a local fix can close one case and leave the mechanism open"
       }
     ],
@@ -510,7 +509,7 @@
     "protected_text_destroyed",
     "CRITICAL"
   ],
-  "standing": "unreproduced, but a probe defeated it",
+  "standing": "current structure supports resolved",
   "swizzle": {
     "commit": "ec9c7c740b9fb27f9c08bb5bce0ea0c6f5135900",
     "version": "0.1.0"

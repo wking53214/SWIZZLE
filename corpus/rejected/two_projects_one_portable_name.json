@@ -1,7 +1,7 @@
 {
   "broken": "",
   "bucket": "rejected",
-  "category": "claim_shape",
+  "category": "identity",
   "changed": {
     "README.md": "modified"
   },
@@ -10,7 +10,7 @@
   "corroboration": {},
   "environment": {
     "cwd": "/home/user/swizzle",
-    "executable": "/usr/local/bin/python3",
+    "executable": "/usr/local/bin/python",
     "platform": "Linux-6.18.44-fc-v24-x86_64-with-glibc2.39",
     "python": "3.11.15"
   },
@@ -26,7 +26,7 @@
       "mode": "none",
       "stale_count": 0
     },
-    "category": "claim_shape",
+    "category": "identity",
     "claims": [
       {
         "document": "README.md",
@@ -59,18 +59,18 @@
       "detached": false,
       "dirty": []
     },
-    "hypothesis": "The claim is in a README -- a current-state document by every rule the target has -- but the sentence is about a named day. The digits are identical to a live claim and only the sentence differs. Rewriting the number would make a true record of 2026-01-14 into a false one.",
+    "hypothesis": "A repository containing two packages, each with its own pyproject.toml, each with a file of the same name defining a function of the same name. A monorepo. Nothing hostile.\n\nA tool that makes a finding portable by cutting the path at the nearest project marker cuts both of these to the same string. Detector, path and summary are then identical, so two different defects in two different files can be given one identity -- and a baseline suppresses by identity, so accepting one stops the other being reported.\n\nThe tool's output never says this happened.",
     "mutations": [
       {
-        "name": "make_dated_claim",
+        "name": "split_one_package_into_two_projects",
         "params": {
-          "count": 12,
-          "document": "README.md"
+          "name": "helpers.py",
+          "symbol": "unused_helper"
         },
         "phase": "build"
       }
     ],
-    "name": "dated_claim_in_a_current_document",
+    "name": "two_projects_one_portable_name",
     "notes": "",
     "project": {
       "functions_per_module": 1,
@@ -82,7 +82,7 @@
       "package": "app"
     },
     "schema_version": 1,
-    "seed": 6,
+    "seed": 20,
     "tests": {
       "count": 30,
       "directory": "Tests",
@@ -90,36 +90,57 @@
     },
     "tolerate_target_sections": true
   },
-  "genome_digest": "726538d4f11ec905",
+  "genome_digest": "13f000a70e5e5f6b",
   "ground_truth": {
-    "case": "dated_claim_in_a_current_document",
+    "case": "two_projects_one_portable_name",
     "claims": [
       {
         "document": "README.md",
         "documented_count": 12,
         "line": 7,
-        "may_be_rewritten": false,
-        "rationale": "a dated sentence: it asserts what was true on a named day, and rewriting the number makes the record of that day false",
+        "may_be_rewritten": true,
+        "rationale": "a live claim about the current whole suite",
         "style": "live_whole_suite"
       }
     ],
     "construction": [
-      "make_dated_claim(count=12, document='README.md')"
+      "split_one_package_into_two_projects(name='helpers.py', symbol='unused_helper')"
     ],
     "expected_abstention": false,
     "expected_final_state": {
-      "README.md": "4b720a7f0a1374b3ad5c0fb633d992c2febfc2081bc7bc0cf09eab14fb4c9a57",
       "Tests/test_suite.py": "b835dab49ca476db6c90e1b042c957edc5c66b33a782b74f4dd9287d5e8e6aaa",
       "app/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "app/core.py": "f8358bb4895f4d4596704d8ad9126e8035a94013d6614a7cde78be785a46d968",
+      "packages/alpha/pyproject.toml": "7539104e7eab62c1bc9c74c776b7995087cf216273927e350c8cf85a48b76f7f",
+      "packages/alpha/src/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "packages/alpha/src/helpers.py": "a3117af411817d33567c6cc74699f6623cedd90de1cc29b97e4004504bd6e99a",
+      "packages/beta/pyproject.toml": "9b88ae476eb993ec765b98fc1315aa45fad086f4135b4ca0b94ddabce122dd6a",
+      "packages/beta/src/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "packages/beta/src/helpers.py": "0f5d0dd11854f568f9de1a36621996737b7a6145fc210f52a9cf8bba3a520550",
       "pyproject.toml": "d870180b63808bc75714354f6feec97c01d4f98c6e22332d7b55b92c3b7ed88d"
     },
-    "facts": {},
-    "hypothesis": "The claim is in a README -- a current-state document by every rule the target has -- but the sentence is about a named day. The digits are identical to a live claim and only the sentence differs. Rewriting the number would make a true record of 2026-01-14 into a false one.",
+    "facts": {
+      "defects_that_must_stay_distinct": "packages/alpha/src/helpers.py|packages/beta/src/helpers.py",
+      "distinct_defects": "2",
+      "why_they_are_distinct": "two different files, in two different projects, containing two different functions that happen to share a name. They cut to the same string only because each sits at its own project root. A tool that treats them as one finding will suppress one of them the moment a human accepts the other"
+    },
+    "hypothesis": "A repository containing two packages, each with its own pyproject.toml, each with a file of the same name defining a function of the same name. A monorepo. Nothing hostile.\n\nA tool that makes a finding portable by cutting the path at the nearest project marker cuts both of these to the same string. Detector, path and summary are then identical, so two different defects in two different files can be given one identity -- and a baseline suppresses by identity, so accepting one stops the other being reported.\n\nThe tool's output never says this happened.",
     "outside_state": {},
-    "permitted_edits": [],
-    "permitted_files": [],
-    "permitted_mutation_kinds": [],
+    "permitted_edits": [
+      {
+        "kind": "rewrite_count_digits",
+        "line_end": 7,
+        "line_start": 7,
+        "path": "README.md",
+        "reason": "a live claim about the current whole suite"
+      }
+    ],
+    "permitted_files": [
+      "README.md"
+    ],
+    "permitted_mutation_kinds": [
+      "rewrite_count_digits"
+    ],
     "protected": [
       {
         "appears_later": false,
@@ -128,14 +149,6 @@
         "path": "README.md",
         "reason": "prose the author wrote",
         "text": "A small project, kept small so that everything in the report is about the case and not about the noise."
-      },
-      {
-        "appears_later": false,
-        "line_end": 7,
-        "line_start": 7,
-        "path": "README.md",
-        "reason": "a dated sentence: it asserts what was true on a named day, and rewriting the number makes the record of that day false",
-        "text": "As of 2026-01-14 the suite had 12 tests, all passing."
       }
     ],
     "repository_files": [
@@ -143,14 +156,21 @@
       "Tests/test_suite.py",
       "app/__init__.py",
       "app/core.py",
+      "packages/alpha/pyproject.toml",
+      "packages/alpha/src/__init__.py",
+      "packages/alpha/src/helpers.py",
+      "packages/beta/pyproject.toml",
+      "packages/beta/src/__init__.py",
+      "packages/beta/src/helpers.py",
       "pyproject.toml"
     ],
+    "self_edits": [],
     "tolerate_target_sections": true
   },
-  "hypothesis": "The claim is in a README -- a current-state document by every rule the target has -- but the sentence is about a named day. The digits are identical to a live claim and only the sentence differs. Rewriting the number would make a true record of 2026-01-14 into a false one.",
+  "hypothesis": "A repository containing two packages, each with its own pyproject.toml, each with a file of the same name defining a function of the same name. A monorepo. Nothing hostile.\n\nA tool that makes a finding portable by cutting the path at the nearest project marker cuts both of these to the same string. Detector, path and summary are then identical, so two different defects in two different files can be given one identity -- and a baseline suppresses by identity, so accepting one stops the other being reported.\n\nThe tool's output never says this happened.",
   "note": "",
-  "recorded_at": "2026-09-12T10:54:19Z",
-  "reproduce": "swizzle reproduce dated_claim_in_a_current_document",
+  "recorded_at": "2026-09-12T14:20:54Z",
+  "reproduce": "swizzle reproduce two_projects_one_portable_name",
   "resolution": {
     "defeated_by": [],
     "interpretation": "the current structure supports the conclusion that this has been resolved",
@@ -167,7 +187,7 @@
         "account": "it does not reproduce at b5dda3cfc1, and that is a statement about that commit and no other",
         "defeated": false,
         "evidence": {
-          "observed_at": "2026-09-12T14:21:56Z",
+          "observed_at": "2026-09-12T14:22:47Z",
           "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108"
         },
         "held": true,
@@ -177,7 +197,7 @@
         "account": "a world grown around it does not reproduce anything either",
         "defeated": false,
         "evidence": {
-          "digest": "53c359499b1f2469",
+          "digest": "8e17ec9dd89987c7",
           "grown": true,
           "other_findings": []
         },
@@ -201,10 +221,10 @@
     ],
     "source": {
       "broken": "",
-      "case": "dated_claim_in_a_current_document",
+      "case": "two_projects_one_portable_name",
       "classes": [],
-      "genome_digest": "726538d4f11ec905",
-      "observed_at": "2026-09-12T14:21:56Z",
+      "genome_digest": "13f000a70e5e5f6b",
+      "observed_at": "2026-09-12T14:22:47Z",
       "oracles_inconclusive": [],
       "oracles_ran": [
         "expectation",
@@ -276,29 +296,44 @@
       "variant"
     ]
   },
-  "seconds": 1.38,
+  "seconds": 2.23,
   "signals": [
     {
       "detail": "",
       "evidence": {
+        "lines": [
+          7
+        ],
         "path": "README.md"
       },
       "judgement": "ok",
-      "kind": "target_section_appended",
+      "kind": "authorised_change",
       "oracle": "structural",
       "severity": "NONE",
-      "summary": "README.md changed only by a section the target appended under its own markers"
+      "summary": "README.md changed only where it was permitted to"
     },
     {
       "detail": "",
       "evidence": {
-        "claim": "As of 2026-01-14 the suite had 12 tests, all passing."
+        "path": "README.md",
+        "text": "A small project, kept small so that everything in the report is about the case a"
       },
       "judgement": "ok",
-      "kind": "non_writable_claim_left_alone",
+      "kind": "protected_text_survived",
       "oracle": "expectation",
       "severity": "NONE",
-      "summary": "README.md:7 was left as written"
+      "summary": "text the author wrote is still in README.md"
+    },
+    {
+      "detail": "",
+      "evidence": {
+        "claim": "The test suite has 12 tests, all passing."
+      },
+      "judgement": "ok",
+      "kind": "writable_claim_updated",
+      "oracle": "expectation",
+      "severity": "NONE",
+      "summary": "README.md:7 was rewritten, as authorised"
     },
     {
       "detail": "",
@@ -320,7 +355,7 @@
           "README.md"
         ],
         "reported": [
-          "cut 1: annotate -> 0279f8e653"
+          "cut 1: doc_counts -> 0d8c5e17ae"
         ]
       },
       "judgement": "ok",
@@ -337,6 +372,20 @@
       "oracle": "ledger",
       "severity": "NONE",
       "summary": "2 memory file(s) parse"
+    },
+    {
+      "detail": "",
+      "evidence": {
+        "files": [
+          "packages/alpha/src/helpers.py",
+          "packages/beta/src/helpers.py"
+        ]
+      },
+      "judgement": "ok",
+      "kind": "identities_kept_apart",
+      "oracle": "identity",
+      "severity": "NONE",
+      "summary": "the two defects were given different identities"
     },
     {
       "detail": "",
@@ -362,21 +411,21 @@
   ],
   "standing": "never reproduced",
   "swizzle": {
-    "commit": "ec9c7c740b9fb27f9c08bb5bce0ea0c6f5135900",
-    "version": "0.1.0"
+    "commit": "afd1f435392411d74ece48836b45abc7e6b79127",
+    "version": "0.4.0"
   },
   "target": {
     "checkout": "/home/user/ghost_tools",
-    "commit": "d14dc1acf01f9b7d95fc3d3a822d20f8e54c96cf",
-    "commit_dirty": "no",
-    "package_version": "1.7.0",
+    "commit": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108",
+    "commit_dirty": "yes",
+    "package_version": "1.7.3",
     "platform": "Linux-6.18.44-fc-v24-x86_64-with-glibc2.39",
     "python": "3.11.15",
     "target": "ghost_tools"
   },
   "target_abstained": false,
   "target_claimed": [
-    "cut 1: annotate -> 0279f8e653"
+    "cut 1: doc_counts -> 0d8c5e17ae"
   ],
   "top_severity": "NONE",
   "workspace": null

@@ -1,7 +1,7 @@
 {
   "broken": "",
   "bucket": "rejected",
-  "category": "claim_shape",
+  "category": "baseline",
   "changed": {
     "README.md": "modified"
   },
@@ -10,7 +10,7 @@
   "corroboration": {},
   "environment": {
     "cwd": "/home/user/swizzle",
-    "executable": "/usr/local/bin/python3",
+    "executable": "/usr/local/bin/python",
     "platform": "Linux-6.18.44-fc-v24-x86_64-with-glibc2.39",
     "python": "3.11.15"
   },
@@ -26,7 +26,7 @@
       "mode": "none",
       "stale_count": 0
     },
-    "category": "claim_shape",
+    "category": "baseline",
     "claims": [
       {
         "document": "README.md",
@@ -59,18 +59,15 @@
       "detached": false,
       "dirty": []
     },
-    "hypothesis": "The claim is in a README -- a current-state document by every rule the target has -- but the sentence is about a named day. The digits are identical to a live claim and only the sentence differs. Rewriting the number would make a true record of 2026-01-14 into a false one.",
+    "hypothesis": "The repository's own test suite rewrites the tool's memory file while the tool is running that suite. The tool started the process that edited the record it is about to write.\n\nThis is the same window the temporal cases use, aimed at the one file the tool treats as its own. A memory with no way to notice this is a memory anything the repository can execute may edit, which includes everything the tool runs on the repository's behalf.",
     "mutations": [
       {
-        "name": "make_dated_claim",
-        "params": {
-          "count": 12,
-          "document": "README.md"
-        },
-        "phase": "build"
+        "name": "rewrite_the_memory_while_it_runs",
+        "params": {},
+        "phase": "during_tests"
       }
     ],
-    "name": "dated_claim_in_a_current_document",
+    "name": "memory_rewritten_by_the_suite_it_runs",
     "notes": "",
     "project": {
       "functions_per_module": 1,
@@ -82,7 +79,7 @@
       "package": "app"
     },
     "schema_version": 1,
-    "seed": 6,
+    "seed": 24,
     "tests": {
       "count": 30,
       "directory": "Tests",
@@ -90,36 +87,51 @@
     },
     "tolerate_target_sections": true
   },
-  "genome_digest": "726538d4f11ec905",
+  "genome_digest": "d93977a4760fb36d",
   "ground_truth": {
-    "case": "dated_claim_in_a_current_document",
+    "case": "memory_rewritten_by_the_suite_it_runs",
     "claims": [
       {
         "document": "README.md",
         "documented_count": 12,
         "line": 7,
-        "may_be_rewritten": false,
-        "rationale": "a dated sentence: it asserts what was true on a named day, and rewriting the number makes the record of that day false",
+        "may_be_rewritten": true,
+        "rationale": "a live claim about the current whole suite",
         "style": "live_whole_suite"
       }
     ],
     "construction": [
-      "make_dated_claim(count=12, document='README.md')"
+      "rewrite_the_memory_while_it_runs()"
     ],
     "expected_abstention": false,
     "expected_final_state": {
-      "README.md": "4b720a7f0a1374b3ad5c0fb633d992c2febfc2081bc7bc0cf09eab14fb4c9a57",
-      "Tests/test_suite.py": "b835dab49ca476db6c90e1b042c957edc5c66b33a782b74f4dd9287d5e8e6aaa",
+      "Tests/test_suite.py": "f20a3d7b65c15bae53e0cb5224cbd72e1f99f160122f493ca4ccf61d119e8e2c",
       "app/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "app/core.py": "f8358bb4895f4d4596704d8ad9126e8035a94013d6614a7cde78be785a46d968",
       "pyproject.toml": "d870180b63808bc75714354f6feec97c01d4f98c6e22332d7b55b92c3b7ed88d"
     },
-    "facts": {},
-    "hypothesis": "The claim is in a README -- a current-state document by every rule the target has -- but the sentence is about a named day. The digits are identical to a live claim and only the sentence differs. Rewriting the number would make a true record of 2026-01-14 into a false one.",
+    "facts": {
+      "during_tests": "rewrite_the_memory_while_it_runs",
+      "memory_was_tampered_with": ".ghost_ledger.json was rewritten by the repository's own suite, inside the window the tool opened by running it",
+      "what_a_correct_tool_does": "detect that the record it read is not the record it wrote, and say so. Trusting it silently means the memory is writable by anything the repository can execute, which includes everything the tool runs on its behalf"
+    },
+    "hypothesis": "The repository's own test suite rewrites the tool's memory file while the tool is running that suite. The tool started the process that edited the record it is about to write.\n\nThis is the same window the temporal cases use, aimed at the one file the tool treats as its own. A memory with no way to notice this is a memory anything the repository can execute may edit, which includes everything the tool runs on the repository's behalf.",
     "outside_state": {},
-    "permitted_edits": [],
-    "permitted_files": [],
-    "permitted_mutation_kinds": [],
+    "permitted_edits": [
+      {
+        "kind": "rewrite_count_digits",
+        "line_end": 7,
+        "line_start": 7,
+        "path": "README.md",
+        "reason": "a live claim about the current whole suite"
+      }
+    ],
+    "permitted_files": [
+      "README.md"
+    ],
+    "permitted_mutation_kinds": [
+      "rewrite_count_digits"
+    ],
     "protected": [
       {
         "appears_later": false,
@@ -128,14 +140,6 @@
         "path": "README.md",
         "reason": "prose the author wrote",
         "text": "A small project, kept small so that everything in the report is about the case and not about the noise."
-      },
-      {
-        "appears_later": false,
-        "line_end": 7,
-        "line_start": 7,
-        "path": "README.md",
-        "reason": "a dated sentence: it asserts what was true on a named day, and rewriting the number makes the record of that day false",
-        "text": "As of 2026-01-14 the suite had 12 tests, all passing."
       }
     ],
     "repository_files": [
@@ -145,12 +149,13 @@
       "app/core.py",
       "pyproject.toml"
     ],
+    "self_edits": [],
     "tolerate_target_sections": true
   },
-  "hypothesis": "The claim is in a README -- a current-state document by every rule the target has -- but the sentence is about a named day. The digits are identical to a live claim and only the sentence differs. Rewriting the number would make a true record of 2026-01-14 into a false one.",
+  "hypothesis": "The repository's own test suite rewrites the tool's memory file while the tool is running that suite. The tool started the process that edited the record it is about to write.\n\nThis is the same window the temporal cases use, aimed at the one file the tool treats as its own. A memory with no way to notice this is a memory anything the repository can execute may edit, which includes everything the tool runs on the repository's behalf.",
   "note": "",
-  "recorded_at": "2026-09-12T10:54:19Z",
-  "reproduce": "swizzle reproduce dated_claim_in_a_current_document",
+  "recorded_at": "2026-09-12T14:21:03Z",
+  "reproduce": "swizzle reproduce memory_rewritten_by_the_suite_it_runs",
   "resolution": {
     "defeated_by": [],
     "interpretation": "the current structure supports the conclusion that this has been resolved",
@@ -167,7 +172,7 @@
         "account": "it does not reproduce at b5dda3cfc1, and that is a statement about that commit and no other",
         "defeated": false,
         "evidence": {
-          "observed_at": "2026-09-12T14:21:56Z",
+          "observed_at": "2026-09-12T14:22:21Z",
           "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108"
         },
         "held": true,
@@ -177,7 +182,7 @@
         "account": "a world grown around it does not reproduce anything either",
         "defeated": false,
         "evidence": {
-          "digest": "53c359499b1f2469",
+          "digest": "b2cdc2eb9e33ca07",
           "grown": true,
           "other_findings": []
         },
@@ -201,10 +206,10 @@
     ],
     "source": {
       "broken": "",
-      "case": "dated_claim_in_a_current_document",
+      "case": "memory_rewritten_by_the_suite_it_runs",
       "classes": [],
-      "genome_digest": "726538d4f11ec905",
-      "observed_at": "2026-09-12T14:21:56Z",
+      "genome_digest": "d93977a4760fb36d",
+      "observed_at": "2026-09-12T14:22:21Z",
       "oracles_inconclusive": [],
       "oracles_ran": [
         "expectation",
@@ -276,42 +281,62 @@
       "variant"
     ]
   },
-  "seconds": 1.38,
+  "seconds": 1.45,
   "signals": [
     {
       "detail": "",
       "evidence": {
+        "lines": [
+          7
+        ],
         "path": "README.md"
       },
       "judgement": "ok",
-      "kind": "target_section_appended",
+      "kind": "authorised_change",
       "oracle": "structural",
       "severity": "NONE",
-      "summary": "README.md changed only by a section the target appended under its own markers"
+      "summary": "README.md changed only where it was permitted to"
     },
     {
       "detail": "",
       "evidence": {
-        "claim": "As of 2026-01-14 the suite had 12 tests, all passing."
+        "path": "README.md",
+        "text": "A small project, kept small so that everything in the report is about the case a"
       },
       "judgement": "ok",
-      "kind": "non_writable_claim_left_alone",
+      "kind": "protected_text_survived",
       "oracle": "expectation",
       "severity": "NONE",
-      "summary": "README.md:7 was left as written"
+      "summary": "text the author wrote is still in README.md"
     },
     {
       "detail": "",
       "evidence": {
-        "changed": [
-          "README.md"
-        ]
+        "claim": "The test suite has 12 tests, all passing."
       },
       "judgement": "ok",
-      "kind": "changes_attributable",
+      "kind": "writable_claim_updated",
+      "oracle": "expectation",
+      "severity": "NONE",
+      "summary": "README.md:7 was rewritten, as authorised"
+    },
+    {
+      "detail": "Cases with a during-tests mutation are run once on purpose: a preliminary scan would fire the mutation early and there would be no stale window left to test.",
+      "evidence": {},
+      "judgement": "inconclusive",
+      "kind": "attribution_unanswerable",
       "oracle": "scope",
       "severity": "NONE",
-      "summary": "every changed path is named by a reported finding"
+      "summary": "no read-only scan was run for this case, so the target published no finding list to attribute changes to"
+    },
+    {
+      "detail": "",
+      "evidence": {},
+      "judgement": "inconclusive",
+      "kind": "no_temporal_marker",
+      "oracle": "temporal",
+      "severity": "NONE",
+      "summary": "the case has a temporal mutation but recorded no text to look for afterwards"
     },
     {
       "detail": "",
@@ -320,7 +345,7 @@
           "README.md"
         ],
         "reported": [
-          "cut 1: annotate -> 0279f8e653"
+          "cut 1: doc_counts -> af02eef439"
         ]
       },
       "judgement": "ok",
@@ -362,21 +387,21 @@
   ],
   "standing": "never reproduced",
   "swizzle": {
-    "commit": "ec9c7c740b9fb27f9c08bb5bce0ea0c6f5135900",
-    "version": "0.1.0"
+    "commit": "afd1f435392411d74ece48836b45abc7e6b79127",
+    "version": "0.4.0"
   },
   "target": {
     "checkout": "/home/user/ghost_tools",
-    "commit": "d14dc1acf01f9b7d95fc3d3a822d20f8e54c96cf",
-    "commit_dirty": "no",
-    "package_version": "1.7.0",
+    "commit": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108",
+    "commit_dirty": "yes",
+    "package_version": "1.7.3",
     "platform": "Linux-6.18.44-fc-v24-x86_64-with-glibc2.39",
     "python": "3.11.15",
     "target": "ghost_tools"
   },
   "target_abstained": false,
   "target_claimed": [
-    "cut 1: annotate -> 0279f8e653"
+    "cut 1: doc_counts -> af02eef439"
   ],
   "top_severity": "NONE",
   "workspace": null

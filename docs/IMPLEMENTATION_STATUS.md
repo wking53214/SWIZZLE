@@ -264,9 +264,70 @@ probe against that quiet defeated it -- quiet, and known not to be resolved.
 Under the previous design each of them read as a single reassuring standing
 with no memory that anything had ever disagreed.
 
+## Identity and memory (v0.7.0)
+
+The two rows of the coverage matrix that had sat at zero since v0.1.0, and
+they sat there for a structural reason: every oracle compares the tree before
+a run with the tree after it, and neither of these failures moves a byte.
+
+`Phase.AFTER_BASELINE` plus `TargetAdapter.prime_baseline` make the question
+askable at all -- prime, apply the deferred edits and commit them, run again,
+judge. Six mutators, one oracle, six cases. Full reasoning in
+`docs/IDENTITY_AND_MEMORY.md`.
+
+### What it found on the first strike
+
+**CRITICAL, fixed in ghost_tools 1.7.3.** A suite with a file that could not
+be collected was certified "30 tests, all passing" in a README. The green
+gate is `passed == collected`, and a module that cannot be imported is in
+neither number. The tool reported the blocked module in the same run and
+certified anyway.
+
+**HIGH + MEDIUM, half fixed.** The finding identity is a hash of detector,
+path and summary, and both of the last two move while the defect does not.
+The summary half is fixed: a detector now states what identifies its finding,
+so adding tests to a suite no longer re-identifies three findings about a
+claim nobody touched. The rename half is open and needs rename detection
+between recorded runs.
+
+**A defect found before its case could run.** Chasing what looked like a
+harness artefact produced a bug needing no harness: a repository that commits
+`.ghost_ledger.json` -- which the tool's own documentation recommends -- can
+never be operated on, because the workup dirties it and the door check then
+refuses. Reproduced in one command from a clean checkout. Fixed in 1.7.3.
+
+**A control the target passes.** A monorepo where two packages each contain
+`helpers.py` defining `unused_helper` stays distinct, because `.git` is
+checked before `pyproject.toml`. The attack is well founded and the tool
+holds. A checkout with no `.git` would fall through to the packaging marker,
+where the collision is live.
+
+### Three corrections to this laboratory, found by running it
+
+A case about memory gets no separate read-only scan, for the same reason a
+during-tests case gets none: the extra run writes the target's memory file,
+and when the case planted that file the harness overwrote it before the run
+being judged saw it.
+
+A question no oracle can answer is stated as unasked rather than passing
+silently. Whether a target NOTICED that a planted history belongs to another
+repository turns on what it said, in words nobody can anticipate.
+
+Ground truth has to move with the world. The CRITICAL above was fixed, and
+the case then reported the fixed target for over-caution, because it still
+authorised a rewrite in a world where part of the suite never runs and no
+measured total describes it.
+
 ## Known limitations
 
-**Identity and baseline attacks are not implemented.** The coverage matrix
+**Identity and baseline attacks are implemented as of v0.7.0.** The
+paragraph below described the state up to v0.6.0 and is kept because the
+reasoning in it was right: the surfaces were empty, and they were empty for a
+structural reason. See `docs/IDENTITY_AND_MEMORY.md` for what closed them and
+what is still missing (filesystem observation during the run, which is a
+different hole).
+
+**[superseded] Identity and baseline attacks are not implemented.** The coverage matrix
 reports both rows as never exercised, which is true. They need multi-run
 sequences and a baseline-priming step in the adapter.
 

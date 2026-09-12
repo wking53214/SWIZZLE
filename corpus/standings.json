@@ -334,6 +334,338 @@
       "severity": "NONE",
       "standing": "current structure supports resolved",
       "unprobed": []
+    },
+    {
+      "at": "2026-09-12T14:21:02Z",
+      "case": "a_history_of_somebody_elses_repository",
+      "classes": [],
+      "defeated_by": [],
+      "digest": "a2b5792b2c5ab54a",
+      "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108",
+      "severity": "NONE",
+      "standing": "never reproduced",
+      "unprobed": []
+    },
+    {
+      "at": "2026-09-12T14:21:00Z",
+      "case": "an_absence_that_is_not_a_fix",
+      "classes": [],
+      "defeated_by": [],
+      "digest": "9e53dbd520daa070",
+      "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108",
+      "severity": "NONE",
+      "standing": "never reproduced",
+      "unprobed": []
+    },
+    {
+      "at": "2026-09-12T14:20:57Z",
+      "case": "an_identity_that_counts_something",
+      "classes": [],
+      "defeated_by": [],
+      "digest": "e08df9d6e0da87f2",
+      "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108",
+      "severity": "NONE",
+      "standing": "never reproduced",
+      "unprobed": []
+    },
+    {
+      "at": "2026-09-12T14:21:03Z",
+      "case": "memory_rewritten_by_the_suite_it_runs",
+      "classes": [],
+      "defeated_by": [],
+      "digest": "d93977a4760fb36d",
+      "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108",
+      "severity": "NONE",
+      "standing": "never reproduced",
+      "unprobed": []
+    },
+    {
+      "at": "2026-09-12T14:20:52Z",
+      "case": "the_same_defect_at_a_new_address",
+      "classes": [
+        "false_memory",
+        "identity_drift"
+      ],
+      "defeated_by": [],
+      "digest": "e687aad96ea09494",
+      "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108",
+      "severity": "HIGH",
+      "standing": "reproduces",
+      "unprobed": []
+    },
+    {
+      "at": "2026-09-12T14:20:54Z",
+      "case": "two_projects_one_portable_name",
+      "classes": [],
+      "defeated_by": [],
+      "digest": "13f000a70e5e5f6b",
+      "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108",
+      "severity": "NONE",
+      "standing": "never reproduced",
+      "unprobed": []
+    },
+    {
+      "at": "2026-09-12T14:21:11Z",
+      "case": "a_history_of_somebody_elses_repository",
+      "classes": [],
+      "defeated_by": [],
+      "digest": "a2b5792b2c5ab54a",
+      "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108",
+      "severity": "NONE",
+      "standing": "never reproduced",
+      "unprobed": [
+        "adjacency",
+        "concealment",
+        "variant"
+      ]
+    },
+    {
+      "at": "2026-09-12T14:21:23Z",
+      "case": "alias_and_prose_together",
+      "classes": [],
+      "defeated_by": [],
+      "digest": "83e235a001de4af0",
+      "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108",
+      "severity": "NONE",
+      "standing": "current structure supports resolved",
+      "unprobed": []
+    },
+    {
+      "at": "2026-09-12T14:21:29Z",
+      "case": "an_absence_that_is_not_a_fix",
+      "classes": [],
+      "defeated_by": [],
+      "digest": "9e53dbd520daa070",
+      "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108",
+      "severity": "NONE",
+      "standing": "never reproduced",
+      "unprobed": [
+        "adjacency",
+        "concealment",
+        "variant"
+      ]
+    },
+    {
+      "at": "2026-09-12T14:21:36Z",
+      "case": "an_identity_that_counts_something",
+      "classes": [],
+      "defeated_by": [],
+      "digest": "e08df9d6e0da87f2",
+      "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108",
+      "severity": "NONE",
+      "standing": "never reproduced",
+      "unprobed": [
+        "adjacency",
+        "concealment",
+        "variant"
+      ]
+    },
+    {
+      "at": "2026-09-12T14:21:49Z",
+      "case": "block_in_a_document_about_a_moment",
+      "classes": [],
+      "defeated_by": [
+        "variant"
+      ],
+      "digest": "d05c3434fbe7054a",
+      "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108",
+      "severity": "NONE",
+      "standing": "unreproduced, but a probe defeated it",
+      "unprobed": []
+    },
+    {
+      "at": "2026-09-12T14:21:54Z",
+      "case": "claim_rewritten_while_the_suite_runs",
+      "classes": [],
+      "defeated_by": [
+        "variant"
+      ],
+      "digest": "82bc4260c1d83105",
+      "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108",
+      "severity": "NONE",
+      "standing": "unreproduced, but a probe defeated it",
+      "unprobed": [
+        "adjacency"
+      ]
+    },
+    {
+      "at": "2026-09-12T14:21:58Z",
+      "case": "dated_claim_in_a_current_document",
+      "classes": [],
+      "defeated_by": [],
+      "digest": "726538d4f11ec905",
+      "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108",
+      "severity": "NONE",
+      "standing": "never reproduced",
+      "unprobed": [
+        "adjacency",
+        "concealment",
+        "variant"
+      ]
+    },
+    {
+      "at": "2026-09-12T14:22:00Z",
+      "case": "document_reached_through_an_alias",
+      "classes": [
+        "over_caution"
+      ],
+      "defeated_by": [
+        "recurrence"
+      ],
+      "digest": "34e5c93d25acd28c",
+      "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108",
+      "severity": "LOW",
+      "standing": "reproduces",
+      "unprobed": [
+        "adjacency",
+        "scope",
+        "variant"
+      ]
+    },
+    {
+      "at": "2026-09-12T14:22:01Z",
+      "case": "killed_while_operating",
+      "classes": [],
+      "defeated_by": [],
+      "digest": "624a013d8b59d981",
+      "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108",
+      "severity": "NONE",
+      "standing": "ambiguous",
+      "unprobed": [
+        "adjacency",
+        "concealment",
+        "recurrence",
+        "scope",
+        "variant"
+      ]
+    },
+    {
+      "at": "2026-09-12T14:22:12Z",
+      "case": "link_out_of_the_repository",
+      "classes": [],
+      "defeated_by": [],
+      "digest": "0fd7228f40b60b55",
+      "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108",
+      "severity": "NONE",
+      "standing": "current structure supports resolved",
+      "unprobed": []
+    },
+    {
+      "at": "2026-09-12T14:22:16Z",
+      "case": "live_claim_in_a_historical_document",
+      "classes": [],
+      "defeated_by": [],
+      "digest": "4814944a3994c5b6",
+      "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108",
+      "severity": "NONE",
+      "standing": "never reproduced",
+      "unprobed": [
+        "adjacency",
+        "concealment",
+        "variant"
+      ]
+    },
+    {
+      "at": "2026-09-12T14:22:20Z",
+      "case": "marker_that_never_closes",
+      "classes": [],
+      "defeated_by": [],
+      "digest": "151617fc83b22fa9",
+      "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108",
+      "severity": "NONE",
+      "standing": "never reproduced",
+      "unprobed": [
+        "adjacency",
+        "concealment",
+        "variant"
+      ]
+    },
+    {
+      "at": "2026-09-12T14:22:22Z",
+      "case": "memory_rewritten_by_the_suite_it_runs",
+      "classes": [],
+      "defeated_by": [],
+      "digest": "d93977a4760fb36d",
+      "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108",
+      "severity": "NONE",
+      "standing": "never reproduced",
+      "unprobed": [
+        "adjacency",
+        "concealment",
+        "variant"
+      ]
+    },
+    {
+      "at": "2026-09-12T14:22:37Z",
+      "case": "prose_inside_the_maintained_block",
+      "classes": [],
+      "defeated_by": [],
+      "digest": "aef76c5f7c4bfcd7",
+      "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108",
+      "severity": "NONE",
+      "standing": "current structure supports resolved",
+      "unprobed": []
+    },
+    {
+      "at": "2026-09-12T14:22:40Z",
+      "case": "the_same_defect_at_a_new_address",
+      "classes": [
+        "false_memory",
+        "identity_drift"
+      ],
+      "defeated_by": [
+        "recurrence"
+      ],
+      "digest": "e687aad96ea09494",
+      "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108",
+      "severity": "HIGH",
+      "standing": "recurred",
+      "unprobed": [
+        "adjacency",
+        "scope",
+        "variant"
+      ]
+    },
+    {
+      "at": "2026-09-12T14:22:44Z",
+      "case": "two_maintained_blocks",
+      "classes": [],
+      "defeated_by": [],
+      "digest": "b82a0468b70d0128",
+      "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108",
+      "severity": "NONE",
+      "standing": "never reproduced",
+      "unprobed": [
+        "adjacency",
+        "concealment",
+        "variant"
+      ]
+    },
+    {
+      "at": "2026-09-12T14:22:49Z",
+      "case": "two_projects_one_portable_name",
+      "classes": [],
+      "defeated_by": [],
+      "digest": "13f000a70e5e5f6b",
+      "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108",
+      "severity": "NONE",
+      "standing": "never reproduced",
+      "unprobed": [
+        "adjacency",
+        "concealment",
+        "variant"
+      ]
+    },
+    {
+      "at": "2026-09-12T14:23:02Z",
+      "case": "uninvited_section_in_a_readme",
+      "classes": [],
+      "defeated_by": [],
+      "digest": "cdf41620459affee",
+      "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108",
+      "severity": "NONE",
+      "standing": "current structure supports resolved",
+      "unprobed": []
     }
   ],
   "schema": "swizzle.history.v1"
