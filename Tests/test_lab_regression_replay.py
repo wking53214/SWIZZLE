@@ -19,7 +19,14 @@ from swizzle.lab.groundtruth import of as ground_truth_of
 from Tests.fake_target import FakeTarget
 
 CORPUS = Path(__file__).resolve().parents[1] / "corpus"
-ENTRIES = sorted(CORPUS.rglob("*.json")) if CORPUS.is_dir() else []
+
+#: Only the bucket directories. The corpus root also holds `knowledge.json`,
+#: which is not a case record and has no genome in it -- globbing the whole
+#: tree made every run assert that the knowledge file was a reproducible
+#: attack, which it is not and was never claimed to be.
+BUCKETS = ("discovered", "minimized", "regression", "rejected")
+ENTRIES = sorted(path for bucket in BUCKETS
+                 for path in (CORPUS / bucket).glob("*.json")) if CORPUS.is_dir() else []
 
 
 @pytest.mark.skipif(not ENTRIES, reason="the corpus is empty")

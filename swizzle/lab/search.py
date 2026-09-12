@@ -89,6 +89,9 @@ class SearchReport:
     #: Genome digests evaluated, so a caller can tell novelty from repetition.
     seen: int
     rediscovered: List[str] = field(default_factory=list)
+    #: Combinations that beat every one of their members' best. Structural
+    #: findings, not bigger numbers about either member.
+    connections: Tuple[str, ...] = ()
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -98,6 +101,7 @@ class SearchReport:
             "distinct_genomes": self.seen,
             "first_seen_at_evaluation": dict(sorted(self.first_seen.items())),
             "rediscovered_seed_cases": list(self.rediscovered),
+            "connections_found": list(self.connections),
             "mutator_stats": {
                 name: {"offered": s.offered, "improved": s.improved,
                        "critical": s.critical, "hit_rate": round(s.hit_rate, 3)}
@@ -176,8 +180,20 @@ _SENTENCES = (
 )
 
 
+#: The share of mutator choices spent on keys with a TRUE ZERO BASE against
+#: this target: never offered, so no prior exists.
+#:
+#: A reserved share rather than a floor on their weight, and the difference
+#: is the whole point. A floor invents a number and then treats the result as
+#: evidence. A reserved share says plainly that some of the budget is being
+#: spent on the unknown BECAUSE it is unknown, which is an experiment and not
+#: a bet, and leaves the weights to describe only what was measured.
+EXPLORE_SHARE = 0.35
+
+
 def offspring(parent: RepositoryGenome, rng: random.Random,
-              stats: Mapping[str, MutatorStats]) -> Optional[RepositoryGenome]:
+              stats: Mapping[str, MutatorStats],
+              knowledge=None, revision: str = "") -> Optional[RepositoryGenome]:
     """One child of `parent`, or None if no legal change was available."""
     moves: List[Callable[[], Optional[RepositoryGenome]]] = []
 
@@ -185,8 +201,7 @@ def offspring(parent: RepositoryGenome, rng: random.Random,
                  if _satisfied(parent, name)]
     if available:
         def add() -> RepositoryGenome:
-            weights = [stats.get(n, MutatorStats()).weight() for n in available]
-            name = rng.choices(available, weights=weights, k=1)[0]
+            name = _choose(available, rng, stats, knowledge, revision)
             spec = MutationSpec(
                 name=name, params=_params_for(name, parent, rng),
                 phase=mutator_registry.get(name).phase)
@@ -245,6 +260,46 @@ def offspring(parent: RepositoryGenome, rng: random.Random,
         notes="Evolved from %s (%s)." % (parent.name, parent.digest()))
 
 
+def _choose(available, rng, stats, knowledge, revision) -> str:
+    """Which mutator to add, and on what grounds.
+
+    Without a knowledge store this is the old in-run weighting, which is
+    fine for a single run: everything starts at zero together and the floor
+    is doing no epistemic work because nothing has a history yet.
+
+    With one, the three acquisition states are handled differently on
+    purpose. A zero base has no weight at all -- `Knowledge.weight()`
+    returns None rather than a small number -- so it cannot be sampled by
+    weight, and is reached through the reserved exploration share instead.
+    """
+    if knowledge is None:
+        weights = [stats.get(n, MutatorStats()).weight() for n in available]
+        return rng.choices(available, weights=weights, k=1)[0]
+
+    from .knowledge import Acquisition
+    unmeasured = [n for n in available
+                  if knowledge.about(n, revision).acquisition
+                  is Acquisition.ZERO_BASE]
+    if unmeasured and rng.random() < EXPLORE_SHARE:
+        return rng.choice(unmeasured)
+
+    # Observation before inference, lexicographically. Anything measured
+    # against THIS revision is chosen ahead of anything carried from another,
+    # however good the carried record looks -- the same dominance idiom
+    # `fitness.py` uses, and for the same reason: a discount factor is a
+    # judgement disguised as arithmetic.
+    known = [(n, knowledge.about(n, revision)) for n in available]
+    here = [(n, k.weight()) for n, k in known
+            if k.outranks_carried and k.weight() is not None]
+    elsewhere = [(n, k.weight()) for n, k in known
+                 if not k.outranks_carried and k.weight() is not None]
+    pool = here or elsewhere
+    if not pool:
+        return rng.choice(unmeasured or available)
+    return rng.choices([n for n, _ in pool],
+                       weights=[max(w, 0.01) for _, w in pool], k=1)[0]
+
+
 def _stem(name: str) -> str:
     return name.split("-g")[0]
 
@@ -254,10 +309,18 @@ def _stem(name: str) -> str:
 def evolve(seeds: Sequence[RepositoryGenome], adapter: TargetAdapter, *,
            budget: int = 40, population: int = 6, elite: int = 2,
            seed: int = 0, timeout: float = 900.0,
+           knowledge=None,
            on_case: Optional[Callable[[CaseResult, int], None]] = None
            ) -> SearchReport:
     """Run the search until the evaluation budget is spent."""
     rng = random.Random(seed)
+    revision = str(dict(adapter.version()).get("commit", ""))
+    #: The best score any evaluated genome containing each mutator has
+    #: reached. A combination that beats every one of its members' bests is
+    #: a CONNECTION: a structural fact about the pair that neither member's
+    #: own tally can hold.
+    best_with: Dict[str, int] = {}
+    connections: List[str] = []
     started = time.perf_counter()
     stats: Dict[str, MutatorStats] = {name: MutatorStats()
                                       for name in mutator_registry.registry()}
@@ -304,7 +367,7 @@ def evolve(seeds: Sequence[RepositoryGenome], adapter: TargetAdapter, *,
         while len(children) < population and len(evaluated) < budget:
             parent, parent_fitness = keep[rng.randrange(len(keep))] if rng.random() < 0.7 \
                 else current[rng.randrange(len(current))]
-            child = offspring(parent, rng, stats)
+            child = offspring(parent, rng, stats, knowledge, revision)
             if child is None:
                 continue
             added = [m.name for m in child.mutations
@@ -314,20 +377,41 @@ def evolve(seeds: Sequence[RepositoryGenome], adapter: TargetAdapter, *,
                 for name in added:
                     stats.setdefault(name, MutatorStats()).offered += 1
                 continue
+            improved = parent_fitness < result.fitness
+            newly_critical = (result.fitness.top is Severity.CRITICAL
+                              and parent_fitness.top is not Severity.CRITICAL)
             for name in added:
                 record = stats.setdefault(name, MutatorStats())
                 record.offered += 1
-                if parent_fitness < result.fitness:
-                    record.improved += 1
-                if (result.fitness.top is Severity.CRITICAL
-                        and parent_fitness.top is not Severity.CRITICAL):
-                    record.critical += 1
+                record.improved += int(improved)
+                record.critical += int(newly_critical)
+                if knowledge is not None:
+                    knowledge.observe(name, revision, improved=improved,
+                                      critical=newly_critical)
+
+            members = sorted({m.name for m in child.mutations})
+            if knowledge is not None and len(members) >= 2:
+                try:
+                    scalar = result.fitness.scalar()
+                except ValueError:
+                    scalar = 0
+                prior = max((best_with.get(m, 0) for m in members), default=0)
+                if scalar > prior and prior >= 0:
+                    lift = max(0.05, (int(result.fitness.top)
+                                      - _rank_of(prior)) / 4.0)
+                    knowledge.connect(members, revision, lift)
+                    connections.append(" + ".join(members))
+                for m in members:
+                    best_with[m] = max(best_with.get(m, 0), scalar)
             if (result.fitness.interesting
                     and _stem(child.name) in seed_names
                     and _stem(child.name) not in rediscovered):
                 rediscovered.append(_stem(child.name))
             children.append((child, result.fitness))
         current = children
+
+    if knowledge is not None:
+        knowledge.save()
 
     ranked = sorted((r for r in evaluated.values() if r is not None and not r.broken),
                     key=lambda r: r.fitness.key(), reverse=True)
@@ -337,4 +421,13 @@ def evolve(seeds: Sequence[RepositoryGenome], adapter: TargetAdapter, *,
         seconds=time.perf_counter() - started,
         best=[r for r in ranked if r.fitness.interesting][:10],
         stats=stats, first_seen=first_seen, seen=len(evaluated),
-        rediscovered=rediscovered)
+        rediscovered=rediscovered, connections=tuple(dict.fromkeys(connections)))
+
+
+def _rank_of(scalar: int) -> int:
+    """The top severity a packed fitness scalar represents."""
+    from .fitness import CAP
+    for level in (4, 3, 2, 1):
+        if scalar // (CAP ** (4 - level)) % CAP:
+            return level
+    return 0

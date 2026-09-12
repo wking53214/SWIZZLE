@@ -183,8 +183,16 @@ def _outside(sandbox: Sandbox) -> Dict[str, str]:
 def _post_checks(draft, sandbox: Sandbox, root: Path, after: Mapping[str, str],
                  result_source: str, rerun: bool) -> Dict[str, str]:
     """The checks an oracle needs but cannot run itself."""
+    # A world built with tests that cannot run did not have a passing suite
+    # before the target arrived, whatever the test shape says about the main
+    # file. Reading `TestShape.green` alone reported the target for breaking
+    # a suite SWIZZLE had broken on purpose.
+    green_before = draft.genome.tests.green and "uncollectable_tests" not in draft.facts
     checks: Dict[str, str] = {
-        "suite_before": "passed" if draft.genome.tests.green else "failed by construction",
+        "suite_before": "passed" if green_before
+                        else "failed by construction: %s"
+                             % (draft.facts.get("how_the_subject_was_broken")
+                                or "the test shape is not green"),
         "result_source": result_source,
     }
     # The repository's git state afterwards. Cheap, and the only way to see
