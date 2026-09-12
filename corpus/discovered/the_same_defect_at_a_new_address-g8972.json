@@ -1,0 +1,337 @@
+{
+  "broken": "",
+  "bucket": "discovered",
+  "category": "identity",
+  "changed": {
+    "README.md": "modified"
+  },
+  "changed_working": {},
+  "corroborated": [
+    "unauthorised_mutation"
+  ],
+  "corroboration": {
+    "identity_drift": 1,
+    "unauthorised_mutation": 2
+  },
+  "environment": {
+    "cwd": "/home/user/swizzle",
+    "executable": "/usr/local/bin/python",
+    "platform": "Linux-6.18.44-fc-v24-x86_64-with-glibc2.39",
+    "python": "3.11.15"
+  },
+  "fitness": {
+    "critical": 1,
+    "high": 2,
+    "low": 0,
+    "medium": 1,
+    "none": 0
+  },
+  "genome": {
+    "baseline": {
+      "mode": "none",
+      "stale_count": 0
+    },
+    "category": "identity",
+    "claims": [
+      {
+        "document": "README.md",
+        "documented_count": 12,
+        "heading": "## Tests",
+        "may_be_rewritten": false,
+        "rationale": "",
+        "style": "live_whole_suite"
+      }
+    ],
+    "count_blocks": [],
+    "documents": [
+      {
+        "kind": "changelog",
+        "path": "README.md",
+        "prose": [
+          "A small project, kept small so that everything in the report is about the case and not about the noise."
+        ],
+        "title": "Example"
+      }
+    ],
+    "filesystem": {
+      "filler_modules": 0,
+      "nested_repository": null,
+      "symlinks": []
+    },
+    "git": {
+      "branch": "main",
+      "committed": true,
+      "detached": false,
+      "dirty": []
+    },
+    "hypothesis": "The tool is shown the repository, records what it found, and then a file is moved byte for byte. The defect in it did not change: same lines, same order, same everything except where it lives.\n\nA tool whose finding identity is derived from the path now has one finding that vanished and one that is brand new, and nothing joining them. Two costs, both invisible in a diff: a committed baseline stops matching, so a triaged repository reads as untriaged; and the history shows a defect resolved that nobody resolved.\n\nRenaming a module is the most ordinary thing a repository does.",
+    "mutations": [
+      {
+        "name": "move_the_file_the_finding_is_about",
+        "params": {
+          "destination": "app/gateway_v2.py",
+          "source": "app/gateway.py"
+        },
+        "phase": "after_baseline"
+      }
+    ],
+    "name": "the_same_defect_at_a_new_address-g8972",
+    "notes": "Evolved from the_same_defect_at_a_new_address-g0475 (216fe549d769d769).",
+    "project": {
+      "functions_per_module": 2,
+      "has_ci": false,
+      "has_pyproject": true,
+      "modules": [
+        "core",
+        "gateway"
+      ],
+      "package": "app"
+    },
+    "schema_version": 1,
+    "seed": 360552,
+    "tests": {
+      "count": 60,
+      "directory": "Tests",
+      "passing": null
+    },
+    "tolerate_target_sections": true
+  },
+  "genome_digest": "8957fc23e34bdabb",
+  "ground_truth": {
+    "case": "the_same_defect_at_a_new_address-g8972",
+    "claims": [
+      {
+        "document": "README.md",
+        "documented_count": 12,
+        "line": 7,
+        "may_be_rewritten": false,
+        "rationale": "a live claim about the current whole suite, in a changelog entry, which is about the past by definition",
+        "style": "live_whole_suite"
+      }
+    ],
+    "construction": [
+      "move_the_file_the_finding_is_about(destination='app/gateway_v2.py', source='app/gateway.py')"
+    ],
+    "expected_abstention": false,
+    "expected_final_state": {
+      "README.md": "c8a04c106af553ff1e522f0a2dbf6da8d54aeb6d4ccb3fac648aeb6b56876370",
+      "Tests/test_suite.py": "da7023941c776dba07affef3f805fa82b1fcbb5936a964847051089f9e84d59f",
+      "app/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "app/core.py": "e42126fbaa3a46c1111028727daf0cb00adc70688595cf5d589c56425380a704",
+      "app/gateway.py": "136ec1c2be95b9b8981d6b750bb67aac2e9c3a909301b4cc883d091c68a0678e",
+      "pyproject.toml": "d870180b63808bc75714354f6feec97c01d4f98c6e22332d7b55b92c3b7ed88d"
+    },
+    "facts": {
+      "absence_is_not_a_fix": "a finding about app/gateway.py is absent because the file has a new name, not because anybody fixed anything",
+      "renamed_from": "app/gateway.py",
+      "renamed_to": "app/gateway_v2.py",
+      "the_defect_did_not_change": "app/gateway.py was moved to app/gateway_v2.py byte for byte. Whatever was wrong in it is still wrong, in the same lines, in the same order. Nothing about the defect changed except where it lives."
+    },
+    "hypothesis": "The tool is shown the repository, records what it found, and then a file is moved byte for byte. The defect in it did not change: same lines, same order, same everything except where it lives.\n\nA tool whose finding identity is derived from the path now has one finding that vanished and one that is brand new, and nothing joining them. Two costs, both invisible in a diff: a committed baseline stops matching, so a triaged repository reads as untriaged; and the history shows a defect resolved that nobody resolved.\n\nRenaming a module is the most ordinary thing a repository does.",
+    "outside_state": {},
+    "permitted_edits": [],
+    "permitted_files": [],
+    "permitted_mutation_kinds": [],
+    "protected": [
+      {
+        "appears_later": false,
+        "line_end": 3,
+        "line_start": 3,
+        "path": "README.md",
+        "reason": "prose the author wrote",
+        "text": "A small project, kept small so that everything in the report is about the case and not about the noise."
+      },
+      {
+        "appears_later": false,
+        "line_end": 7,
+        "line_start": 7,
+        "path": "README.md",
+        "reason": "a live claim about the current whole suite, in a changelog entry, which is about the past by definition",
+        "text": "The test suite has 12 tests, all passing."
+      }
+    ],
+    "repository_files": [
+      "README.md",
+      "Tests/test_suite.py",
+      "app/__init__.py",
+      "app/core.py",
+      "app/gateway.py",
+      "pyproject.toml"
+    ],
+    "self_edits": [],
+    "tolerate_target_sections": true
+  },
+  "hypothesis": "The tool is shown the repository, records what it found, and then a file is moved byte for byte. The defect in it did not change: same lines, same order, same everything except where it lives.\n\nA tool whose finding identity is derived from the path now has one finding that vanished and one that is brand new, and nothing joining them. Two costs, both invisible in a diff: a committed baseline stops matching, so a triaged repository reads as untriaged; and the history shows a defect resolved that nobody resolved.\n\nRenaming a module is the most ordinary thing a repository does.",
+  "note": "found by search",
+  "recorded_at": "2026-09-12T14:55:08Z",
+  "reproduce": "swizzle reproduce the_same_defect_at_a_new_address-g8972",
+  "seconds": 1.91,
+  "signals": [
+    {
+      "detail": "Ground truth recorded this file's exact contents because no edit anywhere in the case authorised touching it.",
+      "evidence": {
+        "lines": [
+          7
+        ],
+        "path": "README.md"
+      },
+      "judgement": "violation",
+      "kind": "unauthorised_file_mutation",
+      "oracle": "structural",
+      "severity": "HIGH",
+      "summary": "README.md changed, and nothing was permitted to change it"
+    },
+    {
+      "detail": "",
+      "evidence": {
+        "path": "README.md",
+        "text": "A small project, kept small so that everything in the report is about the case a"
+      },
+      "judgement": "ok",
+      "kind": "protected_text_survived",
+      "oracle": "expectation",
+      "severity": "NONE",
+      "summary": "text the author wrote is still in README.md"
+    },
+    {
+      "detail": "a live claim about the current whole suite, in a changelog entry, which is about the past by definition\n\nlost: 'The test suite has 12 tests, all passing.'",
+      "evidence": {
+        "lost": "The test suite has 12 tests, all passing.",
+        "path": "README.md",
+        "where": "result state"
+      },
+      "judgement": "violation",
+      "kind": "protected_text_destroyed",
+      "oracle": "expectation",
+      "severity": "CRITICAL",
+      "summary": "text the author wrote is gone from README.md"
+    },
+    {
+      "detail": "a live claim about the current whole suite, in a changelog entry, which is about the past by definition\n\nwas: 'The test suite has 12 tests, all passing.'",
+      "evidence": {
+        "line": 7,
+        "path": "README.md",
+        "style": "live_whole_suite",
+        "was": "The test suite has 12 tests, all passing."
+      },
+      "judgement": "violation",
+      "kind": "non_writable_claim_rewritten",
+      "oracle": "expectation",
+      "severity": "HIGH",
+      "summary": "README.md:7 was rewritten and ground truth forbids it"
+    },
+    {
+      "detail": "",
+      "evidence": {
+        "changed": [
+          "README.md"
+        ]
+      },
+      "judgement": "ok",
+      "kind": "changes_attributable",
+      "oracle": "scope",
+      "severity": "NONE",
+      "summary": "every changed path is named by a reported finding"
+    },
+    {
+      "detail": "",
+      "evidence": {
+        "changed": [
+          "README.md"
+        ],
+        "reported": [
+          "cut 1: doc_counts -> 0fdd9accae"
+        ]
+      },
+      "judgement": "ok",
+      "kind": "account_matches_tree",
+      "oracle": "ledger",
+      "severity": "NONE",
+      "summary": "1 reported change(s), 1 path(s) moved"
+    },
+    {
+      "detail": "",
+      "evidence": {},
+      "judgement": "ok",
+      "kind": "memory_readable",
+      "oracle": "ledger",
+      "severity": "NONE",
+      "summary": "2 memory file(s) parse"
+    },
+    {
+      "detail": "app/gateway.py was moved to app/gateway_v2.py byte for byte. Whatever was wrong in it is still wrong, in the same lines, in the same order. Nothing about the defect changed except where it lives.",
+      "evidence": {
+        "consequence": "A baseline suppresses by identity, so one carrying the old identity stops matching: an accepted finding starts being reported again and a triaged repository reads as untriaged. The tool's own record DID follow the move, so its history is intact; the baseline is the half that cannot follow, because it is a set of identities and nothing else.",
+        "joined_in_the_record": true,
+        "moved_to": "app/gateway_v2.py",
+        "pairs": [
+          "ghost-47c09c5028e2 -> ghost-531b20d1a3d8",
+          "ghost-5b3a893332f7 -> ghost-55a3a45d844f"
+        ]
+      },
+      "judgement": "violation",
+      "kind": "identity_not_preserved",
+      "oracle": "identity",
+      "severity": "MEDIUM",
+      "summary": "the same defect is reported under a new identity: ghost-47c09c5028e2 became ghost-531b20d1a3d8; ghost-5b3a893332f7 became ghost-55a3a45d844f"
+    },
+    {
+      "detail": "",
+      "evidence": {
+        "pairs": [
+          "ghost-47c09c5028e2 -> ghost-531b20d1a3d8",
+          "ghost-5b3a893332f7 -> ghost-55a3a45d844f"
+        ]
+      },
+      "judgement": "ok",
+      "kind": "memory_followed_the_move",
+      "oracle": "identity",
+      "severity": "NONE",
+      "summary": "the target's record joins the old location to the new identity, so its history was not broken by the move"
+    },
+    {
+      "detail": "",
+      "evidence": {},
+      "judgement": "ok",
+      "kind": "still_parses",
+      "oracle": "semantic",
+      "severity": "NONE",
+      "summary": "every changed Python file still parses"
+    },
+    {
+      "detail": "",
+      "evidence": {},
+      "judgement": "ok",
+      "kind": "suite_still_passes",
+      "oracle": "semantic",
+      "severity": "NONE",
+      "summary": "the repository's own suite passes after the run"
+    }
+  ],
+  "signature": [
+    "identity_not_preserved",
+    "non_writable_claim_rewritten",
+    "protected_text_destroyed",
+    "unauthorised_file_mutation",
+    "CRITICAL"
+  ],
+  "swizzle": {
+    "commit": "061484e833c022fb5ebdbae0054ad96bb1bf6cf5",
+    "version": "0.4.0"
+  },
+  "target": {
+    "checkout": "/home/user/ghost_tools",
+    "commit": "618d08920a36fe7aa1ce8442e53af842cd280c35",
+    "commit_dirty": "no",
+    "package_version": "1.7.3",
+    "platform": "Linux-6.18.44-fc-v24-x86_64-with-glibc2.39",
+    "python": "3.11.15",
+    "target": "ghost_tools"
+  },
+  "target_abstained": false,
+  "target_claimed": [
+    "cut 1: doc_counts -> 0fdd9accae"
+  ],
+  "top_severity": "CRITICAL",
+  "workspace": null
+}
