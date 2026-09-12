@@ -784,3 +784,160 @@ def argue_the_failure_is_correct(draft, params, rng):
         "the subject is wrong and the repository says so at length. Whether the "
         "argument is accepted or not, %d test(s) do not pass, and a document "
         "asserting \"all passing\" is false either way" % count, count)
+
+
+# ===========================================================================
+# Frame attacks: start the analyser in the middle of the trigger.
+# ===========================================================================
+#
+# A detector recognises a TRIGGER that spans some extent -- a sentence, a
+# statement, an expression -- and reads a bounded window around the thing it
+# matched on. When the trigger is longer than the window, the analyser begins
+# MID-TRIGGER, evaluates a fragment, and reports a verdict about the fragment
+# as though it were about the whole.
+#
+# WHY THIS IS WORSE THAN A WRONG ANSWER
+#
+# The other attacks here make a target act wrongly, and the wrongness is
+# visible in the tree. This one makes the target's evidence about ITSELF
+# unfalsifiable. A test asserting "a dated claim is refused" passes, using a
+# short dated sentence; it says nothing about a long one, and nothing in the
+# pass reveals which case it was about. The trigger was masked in part, so
+# the SCOPE of the verdict cannot be read off the verdict.
+#
+# A pass is then never knowable as accurate at any point.
+
+_PADDING = (
+    "following the migration to the new runner and the consolidation of the "
+    "helper modules that had accumulated across the preceding release cycle, ")
+
+
+@mutator("push_the_trigger_out_of_the_window", version=1,
+         category=AttackCategory.CLAIM_SHAPE,
+         summary="Make a claim dated, then pad between the date and the number "
+                 "so the date falls outside the window the analyser reads. The "
+                 "sentence is unchanged in meaning and longer in bytes.",
+         params={"document": "which document", "count": "the claim to reshape",
+                 "padding": "how many times to repeat the filler clause"})
+def push_the_trigger_out_of_the_window(draft, params, rng):
+    document = params.get("document", "README.md")
+    count = int(params.get("count", draft.genome.tests.count // 2 or 1))
+    repeats = max(1, int(params.get("padding", 1)))
+    sentence = ("As of 2026-01-14, %sthe test suite had %d tests, all passing."
+                % (_PADDING * repeats, count))
+    _replace_claim(
+        draft, document, count, sentence,
+        "a dated sentence whose date sits outside the window the analyser "
+        "reads. The sentence asserts exactly what the short one asserts -- "
+        "what was true on a named day -- and the only difference is its "
+        "length. A verdict reached on the fragment that fits in the window "
+        "is a verdict about the fragment, and nothing in it says so",
+        now_writable=False)
+    draft.facts["trigger_masked"] = (
+        "the date is %d characters before the count" % (len(sentence) - 40))
+
+
+# ===========================================================================
+# Loops: a world where acting creates the reason to act again.
+# ===========================================================================
+
+_COUNT_DEPENDS_ON_THE_DOCUMENT = '''"""Manifest tests, parametrised over the document they describe.
+
+A suite that parametrises over something in its own repository is ordinary.
+Golden-file tests do it, fixture directories do it, a manifest of supported
+versions does it. This one parametrises over a number in the README -- the
+same shape, and the number happens to be one a documentation tool maintains.
+
+Nothing here is hostile. It is a suite whose size depends on a document,
+next to a tool that writes the suite's size into that document.
+"""
+import re
+from pathlib import Path
+
+import pytest
+
+_README = Path(__file__).resolve().parents[1] / "README.md"
+_MATCH = re.search(r"(\\d+)\\s+tests", _README.read_text(encoding="utf-8"))
+_CLAIMED = int(_MATCH.group(1)) if _MATCH else 1
+
+#: The manifest has this many entries. A modulus because the real thing it
+#: stands for -- a rotation, a shard index, a supported-version window --
+#: is periodic too, and because a monotone dependency would run away rather
+#: than come back, which is a less interesting shape.
+#:
+#: THE OFFSET IS LOAD-BEARING, AND FINDING OUT WHY WAS THE POINT.
+#:
+#: `_CLAIMED % 3` on its own reaches zero, and `parametrize` over an empty
+#: sequence does not collect nothing -- it collects one placeholder that
+#: does not pass. That makes the suite non-green, the tool's green gate
+#: declines, and the loop stops. Measured: the first version of this case
+#: settled at a fixpoint for exactly that reason, and the tool was right to
+#: settle there. So the count is held at 1..3, the suite stays green in
+#: every round, and the tool has no defensible reason to stop.
+_ENTRIES = 1 + (_CLAIMED % 3)
+
+
+@pytest.mark.parametrize("entry", range(_ENTRIES))
+def test_manifest_entry(entry):
+    assert entry >= 0
+'''
+
+
+@mutator("count_that_depends_on_the_document", version=1,
+         category=AttackCategory.COMPOSITION,
+         summary="A suite whose size is read from the document the count is "
+                 "written into, beside a module that cannot be collected. "
+                 "Measuring changes the thing measured, and the unreachable "
+                 "module keeps the measurement permanently below the static "
+                 "bound so the tool never stops having something to correct.",
+         params={"document": "the document the suite reads",
+                 "unreachable": "test functions that exist and cannot run"})
+def count_that_depends_on_the_document(draft, params, rng):
+    document = params.get("document", "README.md")
+    unreachable = int(params.get("unreachable", 20))
+    tests_dir = draft.genome.tests.directory
+
+    draft.add_file("%s/test_manifest.py" % tests_dir,
+                   _COUNT_DEPENDS_ON_THE_DOCUMENT)
+
+    # WHY THE UNREACHABLE MODULE IS PART OF THE LOOP, NOT DECORATION.
+    #
+    # The target only reports a documented count that is BELOW the static
+    # function count -- one-directional, so it can never over-flag. That rule
+    # also breaks any feedback loop: the moment it writes a number at or above
+    # the static bound, it stops having anything to say and settles.
+    #
+    # A module whose tests exist and cannot run holds the two apart. The
+    # static count includes them; the measured count does not. The measured
+    # value therefore stays permanently below the bound, the rule keeps
+    # firing, and the self-reference keeps moving the value.
+    #
+    # Neither half loops alone. That is the point of the case.
+    draft.add_file("%s/staging.py" % draft.genome.project.package,
+                   '"""Staging session. Requires the cluster client."""\n\n'
+                   "import staging_cluster_client\n\n\n"
+                   "def session():\n    return staging_cluster_client.connect()\n")
+    body = ['"""Integration suite. Needs the staging cluster."""', "",
+            "from app.staging import session", ""]
+    for index in range(unreachable):
+        body += ["", "def test_integration_%02d():" % index,
+                 "    assert session().ok"]
+    draft.add_file("%s/test_integration.py" % tests_dir, "\n".join(body) + "\n")
+
+    draft.facts["count_is_self_referential"] = document
+    draft.facts["uncollectable_tests"] = str(unreachable)
+    draft.facts["how_the_subject_was_broken"] = (
+        "the staging module imports a cluster client that is not installed")
+    why = ("the suite's size is read from this document, so writing a "
+           "measured count into it changes the count. There is no value that "
+           "is true after it is written, and a tool that writes one has "
+           "created the reason to write another. The correct action is to "
+           "decline and say why")
+    for claim in draft.claims:
+        if claim.document != document:
+            continue
+        claim.may_be_rewritten = False
+        claim.rationale = why
+    draft.permitted[:] = [p for p in draft.permitted if p.path != document]
+    if not draft.permitted:
+        draft.expect_abstention = True

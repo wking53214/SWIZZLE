@@ -162,6 +162,35 @@ earned. `docs/EPISTEMIC_STANDING.md` has the full decomposition, including
 the two occasions the module committed that failure itself on its first real
 run.
 
+## Does the target ever finish?
+
+Every other experiment here asks whether **one run** did something wrong. One
+asks what a single run structurally cannot answer: accept the output, run
+again — does it stop?
+
+A tool that never reaches a fixpoint is not wrong on any particular run. Each
+one writes a number it just measured; each would pass review. Together they
+are a pull request every time anybody looks. `swizzle loop CASE` runs the
+target, merges its branch, and runs it again, bounded — **not settling within
+the bound is the finding, never a reason to keep going.**
+
+Measured against Ghost Tools: a suite parametrised over a number in its own
+README, beside a tool that writes the suite's size into that README, cycles
+31 → 32 → 33 → 31 forever.
+
+Two of Ghost's rules turned out to be brakes on the loop, and they are the
+more interesting half of the result: its drift rule is one-directional, and
+its green gate declines to write into a suite that is not passing. The first
+version of the case tripped the second one and settled — **correctly**.
+Getting a cycle meant building a world where the tool has no defensible
+reason to stop.
+
+The harness had the same bug it hunts. A round the target *refused to begin*
+leaves exactly the same unchanged repository as a round where it ran and
+settled, and reading the first as the second reported a fixpoint for an
+experiment that never happened. `docs/CONVERGENCE.md` has the three
+corrections, at three layers.
+
 ## Learning: three ways, and one of them has no prior
 
 `swizzle knowledge` reports what has been learned about a target **and how

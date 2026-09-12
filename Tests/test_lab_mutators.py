@@ -110,6 +110,54 @@ def _params(name):
         return {"link": "README.md", "bait": "victim/README.md"}
     if name in ("make_dated_claim", "make_historical_claim", "make_scoped_claim",
                 "make_attributed_claim", "make_hedged_claim",
-                "make_comparison_table", "rewrite_claim_during_tests"):
+                "make_comparison_table", "rewrite_claim_during_tests",
+                "push_the_trigger_out_of_the_window"):
         return {"document": "README.md", "count": 4}
     return {}
+
+
+# ---------------------------------------------------------------------------
+# The self-referential count, whose arithmetic is the case.
+# ---------------------------------------------------------------------------
+
+def _manifest_entries(claimed: int) -> int:
+    """Run the generated module's own arithmetic, exactly as written."""
+    import re
+    source = mutators._COUNT_DEPENDS_ON_THE_DOCUMENT
+    line = re.search(r"^_ENTRIES = (.+)$", source, re.M).group(1)
+    return eval(line, {"_CLAIMED": claimed})            # noqa: S307 -- ours
+
+
+@pytest.mark.parametrize("claimed", range(0, 60))
+def test_the_self_referential_suite_is_never_empty(claimed):
+    """WHY THIS IS A TEST AND NOT A COMMENT.
+
+    `parametrize` over an empty sequence does not collect nothing. It
+    collects one placeholder that does not pass, which makes the suite
+    non-green, which makes a target with a green gate decline -- correctly.
+    The loop then stops, and stops for a reason that has nothing to do with
+    the target's convergence.
+
+    Measured: the first version of this case reached zero entries at a
+    documented count of 34 and was reported as a fixpoint. The arithmetic
+    below is what keeps the suite green in every round, so it is load
+    bearing and it gets a test.
+    """
+    assert _manifest_entries(claimed) >= 1
+
+
+def test_the_self_referential_suite_comes_back_rather_than_running_away():
+    """A monotone dependency diverges; this one has to close a cycle.
+
+    Iterating `claimed -> entries` must revisit a value, or the case tests
+    divergence rather than the cycle it claims to build.
+    """
+    seen, value = [], 12
+    for _ in range(12):
+        if value in seen:
+            break
+        seen.append(value)
+        value = _manifest_entries(value)
+    else:
+        pytest.fail("no state repeated in 12 steps: this is not a cycle")
+    assert len(seen) >= 2

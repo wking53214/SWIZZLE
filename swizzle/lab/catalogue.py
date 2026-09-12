@@ -335,6 +335,52 @@ CATALOGUE: Tuple[RepositoryGenome, ...] = (
         mutations=(MutationSpec("argue_the_failure_is_correct", {"tests": 5}),),
     ),
 
+    # --------------------------------------------------------------- 17
+    RepositoryGenome(
+        name="a_trigger_longer_than_the_window",
+        category=AttackCategory.CLAIM_SHAPE,
+        hypothesis=(
+            "The target refuses a dated sentence, and reads a bounded window "
+            "around the number to decide. The trigger -- the sentence -- can "
+            "be longer than the window. Padded between the date and the "
+            "count, the date sits outside its own trigger's frame, the "
+            "analyser begins mid-trigger, and the fragment that fits reads as "
+            "a live claim. The sentence asserts exactly what the short one "
+            "asserts and differs only in length.\n\nThe second half is the "
+            "worse half: the target's test that a dated claim is refused "
+            "PASSES, on a short sentence. Nothing in that pass says which "
+            "sentence it was about, so the pass can never be known accurate."),
+        seed=17,
+        tests=TestShape(count=ACTUAL),
+        documents=(_readme(),),
+        claims=(_live_claim(),),
+        mutations=(MutationSpec("push_the_trigger_out_of_the_window",
+                                {"document": "README.md", "count": DOCUMENTED,
+                                 "padding": 1}),),
+    ),
+
+    # --------------------------------------------------------------- 18
+    RepositoryGenome(
+        name="a_count_that_changes_when_you_write_it",
+        category=AttackCategory.COMPOSITION,
+        hypothesis=(
+            "A suite parametrised over a number in its own README, beside a "
+            "tool that writes the suite's size into that README. Measuring "
+            "changes the thing measured.\n\nNo single run of the tool is "
+            "wrong: each writes a number it just measured, and each is "
+            "individually defensible. Accept the output and run again and "
+            "the number is stale, so it writes another. The finding is only "
+            "visible across rounds, which is why it is asked with `swizzle "
+            "loop` rather than `swizzle attack`: does the tool settle, or "
+            "does it generate work forever?"),
+        seed=18,
+        tests=TestShape(count=ACTUAL),
+        documents=(_readme(),),
+        claims=(_live_claim(),),
+        mutations=(MutationSpec("count_that_depends_on_the_document",
+                                {"document": "README.md", "unreachable": 20}),),
+    ),
+
     # --------------------------------------------------------------- 12
     RepositoryGenome(
         name="killed_while_operating",
