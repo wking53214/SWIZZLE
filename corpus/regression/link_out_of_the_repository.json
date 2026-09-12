@@ -175,7 +175,7 @@
         "account": "it does not reproduce at b5dda3cfc1, and that is a statement about that commit and no other",
         "defeated": false,
         "evidence": {
-          "observed_at": "2026-09-12T12:37:42Z",
+          "observed_at": "2026-09-12T13:29:51Z",
           "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108"
         },
         "held": true,
@@ -207,15 +207,14 @@
         "probe": "adjacency"
       },
       {
-        "account": "4 variant(s) were built and run; none reproduce escape. That is a sample of the neighbourhood, not a proof about it.",
+        "account": "3 variant(s) were built and run; none reproduce escape. That is a sample of the neighbourhood, not a proof about it.",
         "defeated": false,
         "evidence": {
           "incidental": [],
           "tried": [
-            "c9e3a4e739fa236a",
-            "9805101ad8bd2f7d",
-            "f0fe2346dbb41d10",
-            "daa5198012afde8a"
+            "e4b242c692231378",
+            "4c36be30f0f5c0db",
+            "f0fe2346dbb41d10"
           ],
           "unbuildable": 0
         },
@@ -228,7 +227,7 @@
       "case": "link_out_of_the_repository",
       "classes": [],
       "genome_digest": "0fd7228f40b60b55",
-      "observed_at": "2026-09-12T12:37:42Z",
+      "observed_at": "2026-09-12T13:29:51Z",
       "oracles_inconclusive": [],
       "oracles_ran": [
         "expectation",

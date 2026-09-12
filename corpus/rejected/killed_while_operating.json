@@ -163,24 +163,17 @@
         "probe": "concealment"
       },
       {
-        "account": "it does not reproduce at b5dda3cfc1, and that is a statement about that commit and no other",
+        "account": "the run could not be completed: the acting run failed: the operation never began: exit -9: in: --mutate)\nghost_buster: kernel check NOT RUN (opt-in: --kernel PATH)\nghost_buster: boundary scan NOT RUN (single repository; no unprovided packages reached for)\nghost_buster: structure scan SKIPPED at your request (--no-structure)\nghost_buster: branch scan SKIPPED at your request (--no-branches)",
         "defeated": false,
-        "evidence": {
-          "observed_at": "2026-09-12T12:37:40Z",
-          "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108"
-        },
-        "held": true,
+        "evidence": {},
+        "held": false,
         "probe": "recurrence"
       },
       {
-        "account": "a world grown around it does not reproduce anything either",
+        "account": "a world grown around it could not be run: the acting run failed: the operation never began: exit -9: in: --mutate)\nghost_buster: kernel check NOT RUN (opt-in: --kernel PATH)\nghost_buster: boundary scan NOT RUN (single repository; no unprovided packages reached for)\nghost_buster: structure scan SKIPPED at your request (--no-structure)\nghost_buster: branch scan SKIPPED at your request (--no-branches)",
         "defeated": false,
-        "evidence": {
-          "digest": "5f661b95aefba3bb",
-          "grown": true,
-          "other_findings": []
-        },
-        "held": true,
+        "evidence": {},
+        "held": false,
         "probe": "scope"
       },
       {
@@ -199,25 +192,18 @@
       }
     ],
     "source": {
-      "broken": "",
+      "broken": "the acting run failed: the operation never began: exit -9: in: --mutate)\nghost_buster: kernel check NOT RUN (opt-in: --kernel PATH)\nghost_buster: boundary scan NOT RUN (single repository; no unprovided packages reached for)\nghost_buster: structure scan SKIPPED at your request (--no-structure)\nghost_buster: branch scan SKIPPED at your request (--no-branches)",
       "case": "killed_while_operating",
       "classes": [],
       "genome_digest": "624a013d8b59d981",
-      "observed_at": "2026-09-12T12:37:40Z",
+      "observed_at": "2026-09-12T13:29:49Z",
       "oracles_inconclusive": [],
-      "oracles_ran": [
-        "expectation",
-        "ledger",
-        "scope",
-        "semantic",
-        "structural",
-        "temporal"
-      ],
+      "oracles_ran": [],
       "reproduced": false,
       "target_revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108",
       "top_severity": "NONE"
     },
-    "standing": "never reproduced",
+    "standing": "ambiguous",
     "unestablished": [
       {
         "emphasis": "THIS case",
@@ -234,7 +220,7 @@
       {
         "emphasis": "NO LONGER",
         "probe": "recurrence",
-        "status": "held",
+        "status": "not asked",
         "unestablished": "at this moment only; it reproduced before and the world moves"
       },
       {
@@ -246,7 +232,7 @@
       {
         "emphasis": "THIS revision",
         "probe": "recurrence",
-        "status": "held",
+        "status": "not asked",
         "unestablished": "one commit, and no statement about any other"
       },
       {
@@ -258,7 +244,7 @@
       {
         "emphasis": "THIS world",
         "probe": "scope",
-        "status": "held",
+        "status": "not asked",
         "unestablished": "the minimised genome; a larger world may behave differently, and minimisation is what made it smaller"
       },
       {
@@ -271,6 +257,8 @@
     "unprobed": [
       "adjacency",
       "concealment",
+      "recurrence",
+      "scope",
       "variant"
     ]
   },
@@ -325,7 +313,7 @@
   "signature": [
     "NONE"
   ],
-  "standing": "never reproduced",
+  "standing": "ambiguous",
   "swizzle": {
     "commit": "ec9c7c740b9fb27f9c08bb5bce0ea0c6f5135900",
     "version": "0.1.0"

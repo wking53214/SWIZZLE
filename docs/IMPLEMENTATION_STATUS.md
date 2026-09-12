@@ -56,7 +56,7 @@ shows empty rows).
 
 ## Tests added
 
-234 new tests, 343 total, all passing. (509 total at v0.5.0.)
+234 new tests, 343 total, all passing. (548 total at v0.6.0.)
 
 | File | Covers |
 |---|---|
@@ -218,6 +218,51 @@ collided, the refusal went to stderr where nothing was looking, and a real
 period-3 cycle was reported as a fixpoint. Three corrections at three layers,
 each where the knowledge belongs, all three regression-tested against the fake
 target.
+
+## Memory and aim (v0.6.0)
+
+Two complementary changes to what the laboratory keeps and where it points.
+
+**Recording that a case was fixed.** `swizzle standing --record` appends an
+episode per (case, revision); `swizzle history` reads the arc across them. Six
+arcs, none of which contains the string `fix`. `returned` — reproduced,
+stopped, reproduced again — is the one worth waking somebody for, and it is
+the fact a single interrogation structurally cannot see. The ledger is seeded
+from the corpus entries' own archival episodes, so an arc is available
+immediately rather than after two more interrogations.
+
+Found by running it rather than by a test: the first version listed the stored
+standing spellings by hand beside the enum that produces them and got two of
+them wrong. Nothing raised, every arc came back `unknown`, and a ledger whose
+whole purpose is to notice a case coming back would have said `unknown` forever
+without failing. The table is now derived from the enum and a test asserts
+every member is classified exactly once. `docs/CASE_HISTORY.md`.
+
+**Aiming at what has never been tested.** A quarter of mutator choices are
+reserved for reaching a surface of the target no case has landed on. Reserved
+rather than weighted, for the same reason a zero-base key gets no prior, and
+taken ahead of the zero-base share: ignorance about the subject outranks
+ignorance about the instrument. The search reports which surfaces *opened* and
+which are still empty — not how often it chose on uncovered grounds, which
+would be a report about its own policy rather than a result.
+`docs/UNCOVERED_SURFACES.md`.
+
+### The first arcs, against ghost_tools 1.7.0 -> 1.7.2
+
+| arc | cases |
+|---|---|
+| `held` | `link_out_of_the_repository`, `prose_inside_the_maintained_block`, `uninvited_section_in_a_readme` |
+| `contested` | `alias_and_prose_together`, `block_in_a_document_about_a_moment`, `claim_rewritten_while_the_suite_runs` |
+| `open` | `document_reached_through_an_alias` (LOW over-caution) |
+| `never established` | five controls, plus `killed_while_operating` (ambiguous at the newer revision) |
+
+Nothing has `returned` yet, which is the point of recording it now: the arc
+that matters cannot appear until there is a record for it to appear in.
+
+`contested` is the interesting row. Those three stopped reproducing *and* a
+probe against that quiet defeated it -- quiet, and known not to be resolved.
+Under the previous design each of them read as a single reassuring standing
+with no memory that anything had ever disagreed.
 
 ## Known limitations
 

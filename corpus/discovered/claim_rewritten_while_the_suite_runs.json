@@ -213,7 +213,7 @@
         "account": "it does not reproduce at b5dda3cfc1, and that is a statement about that commit and no other",
         "defeated": false,
         "evidence": {
-          "observed_at": "2026-09-12T12:37:34Z",
+          "observed_at": "2026-09-12T13:29:43Z",
           "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108"
         },
         "held": true,
@@ -336,7 +336,7 @@
       "case": "claim_rewritten_while_the_suite_runs",
       "classes": [],
       "genome_digest": "82bc4260c1d83105",
-      "observed_at": "2026-09-12T12:37:34Z",
+      "observed_at": "2026-09-12T13:29:43Z",
       "oracles_inconclusive": [],
       "oracles_ran": [
         "expectation",
