@@ -158,7 +158,18 @@ def run(genome: RepositoryGenome, adapter: TargetAdapter, *,
         before = read_tree(root)
         outside_before = _outside(sandbox)
 
-        isolated = any(m.phase is Phase.DURING_TESTS for m in genome.mutations)
+        # A case whose subject is the target's MEMORY gets no separate
+        # read-only scan either, and for the same reason the during-tests
+        # cases get none: the extra run perturbs the thing under test.
+        #
+        # A scan writes the tool's memory file. When the case planted that
+        # file, the scan overwrites it before the run being judged ever
+        # sees it, and -- measured -- a target that refuses to operate on a
+        # tree it finds dirty then refuses, naming the file the harness's
+        # own extra run had modified. The case never got asked.
+        planted = [name for name in dialect.memory_files if name in draft.files]
+        isolated = (any(m.phase is Phase.DURING_TESTS for m in genome.mutations)
+                    or bool(planted))
         if not isolated and not broken:
             scan = adapter.scan(root, sandbox, timeout=timeout)
             if scan.failed:

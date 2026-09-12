@@ -80,7 +80,7 @@ a human reads which. Claiming otherwise would make the oracle grade English.
 | case | result |
 |---|---|
 | `the_same_defect_at_a_new_address` | **HIGH + MEDIUM** |
-| `an_identity_that_counts_something` | **HIGH + MEDIUM** |
+| `an_identity_that_counts_something` | **HIGH + MEDIUM**, since fixed |
 | `two_projects_one_portable_name` | pass (correct behaviour) |
 | `an_absence_that_is_not_a_fix` | **CRITICAL**, since fixed |
 | `a_history_of_somebody_elses_repository` | a defect in the target, found before the case could run |
@@ -106,8 +106,21 @@ next commit that changes a count. For these detectors the baseline is
 permanently inert.
 
 There is no purely content-derived identity that is both stable under a
-rename and distinct across files, so this is not a one-line fix. It is two
-separate pieces of work, and `docs/THREAT_MODEL.md` records them as open.
+rename and distinct across files, so this is not one fix. It is two.
+
+**The summary half is fixed** in ghost_tools 1.7.3. A detector may now state
+what identifies its finding, because only the detector knows which part of
+its own sentence is the defect and which part is this morning's arithmetic.
+Stripping digits from every summary would have been wrong: `'core_0' is
+defined but never referenced` and `'core_1' ...` differ only in a digit, and
+collapsing those means accepting one suppresses the other -- the same
+failure in the worse direction. `an_identity_that_counts_something` now
+passes.
+
+**The rename half is open.** It needs rename detection between recorded
+runs: when a finding is absent and git says its file moved, carry the
+history across rather than recording an absence and a first sighting.
+`the_same_defect_at_a_new_address` still reproduces at HIGH + MEDIUM.
 
 ### The control that passed
 
