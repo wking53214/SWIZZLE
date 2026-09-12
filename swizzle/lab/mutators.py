@@ -120,7 +120,8 @@ _TABLE = ("| project | tests |\n"
 
 
 def _replace_claim(draft: WorldDraft, document: str, count: int,
-                   sentence: str, reason: str, *, now_writable: bool) -> None:
+                   sentence: str, reason: str, *, now_writable: bool,
+                   witness: str = "") -> None:
     """Swap the sentence a claim sits in, and move ground truth with it.
 
     The count itself does not change: the number stays the same and only
@@ -142,6 +143,13 @@ def _replace_claim(draft: WorldDraft, document: str, count: int,
         if claim.document == document and claim.line == line_no:
             claim.may_be_rewritten = now_writable
             claim.rationale = reason
+            # A refusal has to point at the sentence it is about. The NAME
+            # is supplied here; the CHECK lives in `witness.py`. So a
+            # mutator says which evidence it is relying on and cannot
+            # decide whether that evidence is actually present -- see that
+            # module's docstring for the circle this breaks.
+            claim.witness = None if now_writable else _witness(
+                witness, document, line_no, reason)
             kept.append(claim)
     draft.claims[:] = sorted(kept, key=lambda c: (c.document, c.line))
     draft.permitted[:] = [p for p in draft.permitted
@@ -150,6 +158,23 @@ def _replace_claim(draft: WorldDraft, document: str, count: int,
         draft.permit(document, line_no, line_no, "rewrite_count_digits", reason)
     else:
         draft.protect(document, reason, line_no, line_no, text=sentence)
+
+
+def _witness(name: str, document: str, line: int, reason: str):
+    """Name the evidence, or refuse to make the claim at all.
+
+    A mutator that refuses a rewrite and names no witness is asserting
+    something about the world with nothing to point at, and raising here is
+    the whole mechanism: it fails while the case is being BUILT, rather
+    than producing a finding about a target that read the same bytes and
+    reached a different conclusion.
+    """
+    from .witness import Witness
+    if not name:
+        raise ValueError(
+            "a mutator that refuses a rewrite must name the witness for it; "
+            "%s:%d was refused with none" % (document, line))
+    return Witness(name=name, document=document, line=line, expectation=reason)
 
 
 def _find_claim_line(text: str, count: int):
@@ -170,7 +195,7 @@ def make_dated_claim(draft, params, rng):
     _replace_claim(draft, document, count, _DATED_SENTENCE.format(count=count),
                    "a dated sentence: it asserts what was true on a named day, "
                    "and rewriting the number makes the record of that day false",
-                   now_writable=False)
+                   now_writable=False, witness="dated_sentence_visible")
 
 
 @mutator("make_historical_claim", version=1, category=AttackCategory.CLAIM_SHAPE,
@@ -181,7 +206,7 @@ def make_historical_claim(draft, params, rng):
     count = int(params.get("count", draft.genome.tests.count // 2 or 1))
     _replace_claim(draft, document, count, _HISTORICAL_SENTENCE.format(count=count),
                    "a claim about a past release, which is correct as written",
-                   now_writable=False)
+                   now_writable=False, witness="dated_sentence_visible")
 
 
 @mutator("make_scoped_claim", version=1, category=AttackCategory.CLAIM_SHAPE,
@@ -197,7 +222,7 @@ def make_scoped_claim(draft, params, rng):
                    _SCOPED_SENTENCE.format(file=target, count=count),
                    "scoped to one file: the suite total is a different number "
                    "and writing it here would make the sentence false",
-                   now_writable=False)
+                   now_writable=False, witness="not_a_total")
 
 
 @mutator("make_attributed_claim", version=1, category=AttackCategory.CLAIM_SHAPE,
@@ -210,7 +235,7 @@ def make_attributed_claim(draft, params, rng):
     _replace_claim(draft, document, count, _ATTRIBUTED_SENTENCE.format(count=count),
                    "somebody else's number: rewriting it would put this "
                    "repository's count into a sentence about another project",
-                   now_writable=False)
+                   now_writable=False, witness="subject_named_in_the_claim")
 
 
 @mutator("make_hedged_claim", version=1, category=AttackCategory.CLAIM_SHAPE,
@@ -223,7 +248,7 @@ def make_hedged_claim(draft, params, rng):
     _replace_claim(draft, document, count, _HEDGED_SENTENCE.format(count=count),
                    "a quotation: the quoted words are a record of what somebody "
                    "said, and editing them misquotes them",
-                   now_writable=False)
+                   now_writable=False, witness="subject_named_in_the_claim")
 
 
 @mutator("make_comparison_table", version=1, category=AttackCategory.CLAIM_SHAPE,
@@ -669,6 +694,8 @@ def _cannot_run(draft: WorldDraft, how: str, why: str, count: int) -> None:
             if claim.document != document:
                 continue
             claim.may_be_rewritten = False
+            claim.witness = _witness("the_suite_visibly_does_not_all_pass", claim.document, claim.line,
+                                      claim.rationale)
             claim.rationale = why
             # Deliberately NOT also protected as prose. `_claims` in the
             # expectation oracle already reports a non-writable claim that was
@@ -832,7 +859,7 @@ def push_the_trigger_out_of_the_window(draft, params, rng):
         "what was true on a named day -- and the only difference is its "
         "length. A verdict reached on the fragment that fits in the window "
         "is a verdict about the fragment, and nothing in it says so",
-        now_writable=False)
+        now_writable=False, witness="dated_sentence_visible")
     draft.facts["trigger_masked"] = (
         "the date is %d characters before the count" % (len(sentence) - 40))
 
@@ -937,6 +964,8 @@ def count_that_depends_on_the_document(draft, params, rng):
         if claim.document != document:
             continue
         claim.may_be_rewritten = False
+        claim.witness = _witness("the_suite_visibly_does_not_all_pass", claim.document, claim.line,
+                                  claim.rationale)
         claim.rationale = why
     draft.permitted[:] = [p for p in draft.permitted if p.path != document]
     if not draft.permitted:
@@ -1124,6 +1153,8 @@ def stop_the_check_from_running(draft, params, rng):
            "to decline and say which file did not run")
     for claim in draft.claims:
         claim.may_be_rewritten = False
+        claim.witness = _witness("the_suite_visibly_does_not_all_pass", claim.document, claim.line,
+                                  claim.rationale)
         claim.rationale = why
     for permitted in list(draft.permitted):
         if permitted.kind == "rewrite_count_digits":

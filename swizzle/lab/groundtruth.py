@@ -121,10 +121,21 @@ class ContradictoryGroundTruth(ValueError):
     """A case that expects two incompatible things of the same file."""
 
 
+class UnwitnessedGroundTruth(ValueError):
+    """A case that discriminates against the world and cannot point at it.
+
+    Raised rather than reported, and at BUILD time rather than after the
+    target has run, because the alternative is a finding about the target
+    that is really a finding about this laboratory. Measured once already,
+    eight times in one search.
+    """
+
+
 def of(draft: WorldDraft) -> GroundTruth:
     """Freeze what the draft accumulated while it was being built."""
     movable = {edit.path for edit in draft.permitted}
     _check_consistent(draft, movable)
+    _check_witnessed(draft)
     return GroundTruth(
         case=draft.genome.name,
         hypothesis=draft.genome.hypothesis,
@@ -144,6 +155,45 @@ def of(draft: WorldDraft) -> GroundTruth:
         facts=dict(draft.facts),
         construction=tuple(draft.history),
     )
+
+
+def _check_witnessed(draft: WorldDraft) -> None:
+    """Every refusal must point at bytes the target could have read.
+
+    A contradiction is two of SWIZZLE's judgements disagreeing. This is a
+    weaker and differently-shaped check: one of SWIZZLE's judgements that
+    the WORLD does not corroborate. Neither can tell that a judgement is
+    wrong; both can tell that it is unsupported.
+    """
+    from . import witness
+    problems = witness.audit(_as_the_target_reads_it(draft), draft.claims)
+    if problems:
+        raise UnwitnessedGroundTruth(
+            "%s: ground truth refuses a rewrite that the world gives no sign "
+            "of. A target reading these bytes could not have reached the same "
+            "conclusion, so a failure here would be this laboratory's, not "
+            "the target's.\n  %s" % (draft.genome.name, "\n  ".join(problems)))
+
+
+def _as_the_target_reads_it(draft: WorldDraft) -> dict:
+    """The world the judged run is handed, not the one that was built.
+
+    An after-baseline case builds a world, lets the target record it, and
+    THEN makes its change. The evidence for a refusal lives in the second
+    world, so checking the first one asks for evidence at a moment nobody
+    claimed it existed.
+
+    Measured: `an_absence_that_is_not_a_fix` refuses a count because part
+    of the suite stops being collectable, and the module that stops being
+    collectable does not exist until after the priming run.
+    """
+    files = dict(draft.files)
+    for path, text in draft.after_baseline:
+        if text is None:
+            files.pop(path, None)
+        else:
+            files[path] = text
+    return files
 
 
 def _check_consistent(draft: WorldDraft, movable) -> None:

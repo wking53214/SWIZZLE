@@ -145,7 +145,8 @@ def _render_document(draft: WorldDraft, doc: DocumentSpec,
         reason = _STYLE_RATIONALE[claim.style]
         if doc.kind is not DocumentKind.CURRENT_STATE:
             reason = "%s, in %s" % (reason, _KIND_RATIONALE[doc.kind])
-        draft.claims.append(_placement(doc.path, line_no, claim, live, reason))
+        draft.claims.append(_placement(doc.path, line_no, claim, live, reason,
+                                       doc.kind))
         if live:
             draft.permit(doc.path, line_no, line_no, "rewrite_count_digits", reason)
         else:
@@ -162,11 +163,52 @@ def _render_document(draft: WorldDraft, doc: DocumentSpec,
                           block_line + offset, block_line + offset, text=sentence)
 
 
-def _placement(path: str, line: int, claim: ClaimSpec, live: bool, reason: str):
+#: Which witness can corroborate a refusal, by what makes it a refusal.
+#:
+#: The mapping is here, beside the renderer, because the renderer is what
+#: puts the evidence into the file. It names a checker; it does not supply
+#: one. If the two ever disagree -- a kind that refuses and a renderer that
+#: leaves no mark -- ground truth refuses to build, which is how the
+#: changelog defect would have been caught before it produced a finding.
+_WITNESS_FOR_STYLE = {
+    ClaimStyle.DATED: "dated_sentence_visible",
+    ClaimStyle.DELTA: "not_a_total",
+    ClaimStyle.TRANSITION: "not_a_total",
+    ClaimStyle.TABLE_ROW: "not_a_total",
+    ClaimStyle.SCOPED: "not_a_total",
+    ClaimStyle.ATTRIBUTED: "subject_named_in_the_claim",
+    ClaimStyle.BARE: "nothing_says_what_is_counted",
+}
+
+
+def witness_for(kind: DocumentKind, style: ClaimStyle, path: str, line: int,
+                expectation: str = ""):
+    """The evidence a refusal of this shape must be able to point at.
+
+    The DOCUMENT's declaration is asked for first. A live claim in a
+    changelog is refused because of the document, not because of the
+    sentence, and demanding the sentence carry a date would be asking the
+    world for the wrong thing.
+    """
+    from .witness import Witness
+    if kind is not DocumentKind.CURRENT_STATE:
+        name = "document_declares_itself_not_current"
+    else:
+        name = _WITNESS_FOR_STYLE.get(style, "")
+    if not name:
+        return None
+    return Witness(name=name, document=path, line=line,
+                   expectation=expectation)
+
+
+def _placement(path: str, line: int, claim: ClaimSpec, live: bool, reason: str,
+               kind: DocumentKind = DocumentKind.CURRENT_STATE):
     from .draft import ClaimPlacement
     return ClaimPlacement(document=path, line=line, style=claim.style.value,
                           documented_count=claim.documented_count,
-                          may_be_rewritten=live, rationale=reason)
+                          may_be_rewritten=live, rationale=reason,
+                          witness=None if live else witness_for(
+                              kind, claim.style, path, line, reason))
 
 
 # ===========================================================================

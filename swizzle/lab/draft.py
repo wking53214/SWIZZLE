@@ -28,6 +28,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Mapping, Optional, Sequence, Tuple
 
 from .genome import RepositoryGenome
+from .witness import Witness
 
 
 @dataclass(frozen=True)
@@ -66,6 +67,11 @@ class ClaimPlacement:
     documented_count: int
     may_be_rewritten: bool
     rationale: str
+    #: Evidence IN THE WORLD for a refusal, checked by code that knows
+    #: nothing about this genome. Required whenever `may_be_rewritten` is
+    #: False, because that is where ground truth overrides what the world
+    #: looks like. See `witness.py` for why a rationale alone is not enough.
+    witness: Optional["Witness"] = None
 
 
 @dataclass
