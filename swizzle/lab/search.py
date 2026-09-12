@@ -350,13 +350,32 @@ def _stem(name: str) -> str:
 
 # ------------------------------------------------------------------ driver
 
+class HoldoutContaminated(ValueError):
+    """The search was asked to adapt to a case that exists to measure what
+    it has not adapted to."""
+
+
 def evolve(seeds: Sequence[RepositoryGenome], adapter: TargetAdapter, *,
            budget: int = 40, population: int = 6, elite: int = 2,
            seed: int = 0, timeout: float = 900.0,
-           knowledge=None,
+           knowledge=None, holdout=None,
            on_case: Optional[Callable[[CaseResult, int], None]] = None
            ) -> SearchReport:
-    """Run the search until the evaluation budget is spent."""
+    """Run the search until the evaluation budget is spent.
+
+    `holdout`, when given, is refused as seed material. Raising rather than
+    filtering is deliberate: a caller that hands the search a holdout case
+    has misunderstood what the holdout is for, and silently dropping it
+    would let them keep believing the run measured generalisation.
+    """
+    if holdout:
+        trespass = [g.name for g in seeds if holdout.holds(g)]
+        if trespass:
+            raise HoldoutContaminated(
+                "the search was seeded from %d holdout case(s) (%s). A holdout "
+                "measures what nothing has adapted to; adapting to one spends "
+                "it. Seed from the catalogue or from corpus/discovered."
+                % (len(trespass), ", ".join(sorted(trespass)[:3])))
     rng = random.Random(seed)
     revision = str(dict(adapter.version()).get("commit", ""))
     #: The best score any evaluated genome containing each mutator has

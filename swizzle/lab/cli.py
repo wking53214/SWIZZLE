@@ -154,6 +154,20 @@ def add_parsers(sub) -> None:
     standing.add_argument("--ghost-tools", type=Path, default=None, metavar="PATH")
     standing.add_argument("--timeout", type=float, default=900.0, metavar="SECONDS")
 
+    hold = sub.add_parser(
+        "holdout",
+        help="cases nothing has adapted to: freeze, audit, or measure against")
+    hold.add_argument("--freeze", action="store_true",
+                      help="draw a population and write it down, once")
+    hold.add_argument("--count", type=int, default=12, metavar="N")
+    hold.add_argument("--seed", type=int, default=1, metavar="N")
+    hold.add_argument("--run", action="store_true",
+                      help="measure the frozen population against the target")
+    hold.add_argument("--corpus-path", type=Path, default=DEFAULT_CORPUS)
+    hold.add_argument("--json", action="store_true")
+    hold.add_argument("--ghost-tools", type=Path, default=None, metavar="PATH")
+    hold.add_argument("--timeout", type=float, default=900.0, metavar="SECONDS")
+
     hist = sub.add_parser(
         "history",
         help="what has happened to each case across revisions of the target")
@@ -791,6 +805,47 @@ def _newest(entries):
         if current is None or order.get(entry.bucket, 9) < order.get(current.bucket, 9):
             best[entry.name] = entry
     return [best[name] for name in sorted(best)]
+
+
+@_register("holdout")
+def _holdout(args) -> int:
+    from .holdout import Holdout, render, sample
+    held = Holdout(args.corpus_path)
+
+    if args.freeze:
+        try:
+            manifest = held.freeze(sample(args.count, args.seed), args.seed)
+        except ValueError as exc:
+            print("swizzle: %s" % exc, file=sys.stderr)
+            return 2
+        print("froze %d case(s) under %s, seed %d"
+              % (manifest.count, manifest.procedure, manifest.seed))
+        print("Nothing has adapted to these. Nothing may.")
+        return 0
+
+    problems = held.contamination()
+    results = []
+    if args.run and held:
+        try:
+            adapter = _adapter(args)
+        except TargetUnavailable as exc:
+            print("swizzle: %s" % exc, file=sys.stderr)
+            return 2
+        from .holdout import evaluate
+        results = evaluate(held.genomes(), adapter, timeout=args.timeout)
+
+    if args.json:
+        print(json.dumps({
+            "manifest": held.manifest.to_dict() if held.manifest else None,
+            "contamination": list(problems),
+            "results": [r.to_dict() for r in results]},
+            indent=2, sort_keys=True))
+        return 1 if problems else 0
+
+    print(render(held.manifest, problems, results))
+    if problems:
+        return 2
+    return 1 if any(r.fitness.interesting for r in results) else 0
 
 
 @_register("history")

@@ -1,0 +1,871 @@
+{
+  "genomes": [
+    {
+      "baseline": {
+        "mode": "none",
+        "stale_count": 0
+      },
+      "category": "control",
+      "claims": [
+        {
+          "document": "README.md",
+          "documented_count": 12,
+          "heading": "## Tests",
+          "may_be_rewritten": false,
+          "rationale": "",
+          "style": "live_whole_suite"
+        }
+      ],
+      "count_blocks": [
+        {
+          "body_prose": [],
+          "document": "README.md",
+          "documented_count": 12,
+          "duplicated": false,
+          "malformed_close": false,
+          "nested_open": false
+        }
+      ],
+      "documents": [
+        {
+          "kind": "current_state",
+          "path": "README.md",
+          "prose": [
+            "A small project, kept small."
+          ],
+          "title": "Example"
+        }
+      ],
+      "filesystem": {
+        "filler_modules": 0,
+        "nested_repository": null,
+        "symlinks": []
+      },
+      "git": {
+        "branch": "main",
+        "committed": true,
+        "detached": false,
+        "dirty": []
+      },
+      "hypothesis": "A randomly sampled world. It states no hypothesis of its own because nothing chose it: the point of a holdout case is that nobody decided it was worth building.",
+      "mutations": [
+        {
+          "name": "add_filler_modules",
+          "params": {
+            "count": 5
+          },
+          "phase": "build"
+        }
+      ],
+      "name": "holdout_001",
+      "notes": "Sampled by swizzle.holdout.v1 seed 1. Nothing chose this case.",
+      "project": {
+        "functions_per_module": 2,
+        "has_ci": false,
+        "has_pyproject": true,
+        "modules": [
+          "core"
+        ],
+        "package": "app"
+      },
+      "schema_version": 1,
+      "seed": 60353,
+      "tests": {
+        "count": 30,
+        "directory": "Tests",
+        "passing": null
+      },
+      "tolerate_target_sections": true
+    },
+    {
+      "baseline": {
+        "mode": "none",
+        "stale_count": 0
+      },
+      "category": "control",
+      "claims": [
+        {
+          "document": "README.md",
+          "documented_count": 12,
+          "heading": "## Tests",
+          "may_be_rewritten": false,
+          "rationale": "",
+          "style": "live_whole_suite"
+        }
+      ],
+      "count_blocks": [],
+      "documents": [
+        {
+          "kind": "current_state",
+          "path": "README.md",
+          "prose": [
+            "A small project, kept small."
+          ],
+          "title": "Example"
+        }
+      ],
+      "filesystem": {
+        "filler_modules": 0,
+        "nested_repository": null,
+        "symlinks": []
+      },
+      "git": {
+        "branch": "main",
+        "committed": true,
+        "detached": false,
+        "dirty": []
+      },
+      "hypothesis": "A randomly sampled world. It states no hypothesis of its own because nothing chose it: the point of a holdout case is that nobody decided it was worth building.",
+      "mutations": [
+        {
+          "name": "make_dated_claim",
+          "params": {
+            "count": 12,
+            "document": "README.md"
+          },
+          "phase": "build"
+        },
+        {
+          "name": "put_a_moving_number_in_the_finding",
+          "params": {},
+          "phase": "after_baseline"
+        }
+      ],
+      "name": "holdout_002",
+      "notes": "Sampled by swizzle.holdout.v1 seed 1. Nothing chose this case.",
+      "project": {
+        "functions_per_module": 2,
+        "has_ci": false,
+        "has_pyproject": true,
+        "modules": [
+          "core"
+        ],
+        "package": "app"
+      },
+      "schema_version": 1,
+      "seed": 236933,
+      "tests": {
+        "count": 30,
+        "directory": "Tests",
+        "passing": null
+      },
+      "tolerate_target_sections": true
+    },
+    {
+      "baseline": {
+        "mode": "none",
+        "stale_count": 0
+      },
+      "category": "control",
+      "claims": [
+        {
+          "document": "README.md",
+          "documented_count": 12,
+          "heading": "## Tests",
+          "may_be_rewritten": false,
+          "rationale": "",
+          "style": "live_whole_suite"
+        }
+      ],
+      "count_blocks": [],
+      "documents": [
+        {
+          "kind": "current_state",
+          "path": "README.md",
+          "prose": [
+            "A small project, kept small."
+          ],
+          "title": "Example"
+        }
+      ],
+      "filesystem": {
+        "filler_modules": 0,
+        "nested_repository": null,
+        "symlinks": []
+      },
+      "git": {
+        "branch": "main",
+        "committed": true,
+        "detached": false,
+        "dirty": []
+      },
+      "hypothesis": "A randomly sampled world. It states no hypothesis of its own because nothing chose it: the point of a holdout case is that nobody decided it was worth building.",
+      "mutations": [
+        {
+          "name": "make_hedged_claim",
+          "params": {
+            "count": 12,
+            "document": "README.md"
+          },
+          "phase": "build"
+        },
+        {
+          "name": "symlink_escapes_repository",
+          "params": {
+            "bait": "victim/README.md",
+            "link": "README.md"
+          },
+          "phase": "build"
+        }
+      ],
+      "name": "holdout_003",
+      "notes": "Sampled by swizzle.holdout.v1 seed 1. Nothing chose this case.",
+      "project": {
+        "functions_per_module": 2,
+        "has_ci": false,
+        "has_pyproject": true,
+        "modules": [
+          "core"
+        ],
+        "package": "app"
+      },
+      "schema_version": 1,
+      "seed": 819730,
+      "tests": {
+        "count": 30,
+        "directory": "Tests",
+        "passing": null
+      },
+      "tolerate_target_sections": true
+    },
+    {
+      "baseline": {
+        "mode": "none",
+        "stale_count": 0
+      },
+      "category": "control",
+      "claims": [
+        {
+          "document": "README.md",
+          "documented_count": 12,
+          "heading": "## Tests",
+          "may_be_rewritten": false,
+          "rationale": "",
+          "style": "live_whole_suite"
+        }
+      ],
+      "count_blocks": [],
+      "documents": [
+        {
+          "kind": "current_state",
+          "path": "README.md",
+          "prose": [
+            "A small project, kept small."
+          ],
+          "title": "Example"
+        }
+      ],
+      "filesystem": {
+        "filler_modules": 0,
+        "nested_repository": null,
+        "symlinks": []
+      },
+      "git": {
+        "branch": "main",
+        "committed": true,
+        "detached": false,
+        "dirty": []
+      },
+      "hypothesis": "A randomly sampled world. It states no hypothesis of its own because nothing chose it: the point of a holdout case is that nobody decided it was worth building.",
+      "mutations": [
+        {
+          "name": "count_that_depends_on_the_document",
+          "params": {},
+          "phase": "build"
+        }
+      ],
+      "name": "holdout_004",
+      "notes": "Sampled by swizzle.holdout.v1 seed 1. Nothing chose this case.",
+      "project": {
+        "functions_per_module": 2,
+        "has_ci": false,
+        "has_pyproject": true,
+        "modules": [
+          "core"
+        ],
+        "package": "app"
+      },
+      "schema_version": 1,
+      "seed": 905082,
+      "tests": {
+        "count": 60,
+        "directory": "Tests",
+        "passing": null
+      },
+      "tolerate_target_sections": true
+    },
+    {
+      "baseline": {
+        "mode": "none",
+        "stale_count": 0
+      },
+      "category": "control",
+      "claims": [
+        {
+          "document": "README.md",
+          "documented_count": 12,
+          "heading": "## Tests",
+          "may_be_rewritten": false,
+          "rationale": "",
+          "style": "live_whole_suite"
+        }
+      ],
+      "count_blocks": [],
+      "documents": [
+        {
+          "kind": "current_state",
+          "path": "README.md",
+          "prose": [
+            "A small project, kept small."
+          ],
+          "title": "Example"
+        }
+      ],
+      "filesystem": {
+        "filler_modules": 0,
+        "nested_repository": null,
+        "symlinks": []
+      },
+      "git": {
+        "branch": "main",
+        "committed": true,
+        "detached": false,
+        "dirty": []
+      },
+      "hypothesis": "A randomly sampled world. It states no hypothesis of its own because nothing chose it: the point of a holdout case is that nobody decided it was worth building.",
+      "mutations": [
+        {
+          "name": "add_filler_modules",
+          "params": {
+            "count": 3
+          },
+          "phase": "build"
+        }
+      ],
+      "name": "holdout_005",
+      "notes": "Sampled by swizzle.holdout.v1 seed 1. Nothing chose this case.",
+      "project": {
+        "functions_per_module": 2,
+        "has_ci": false,
+        "has_pyproject": true,
+        "modules": [
+          "core"
+        ],
+        "package": "app"
+      },
+      "schema_version": 1,
+      "seed": 670297,
+      "tests": {
+        "count": 30,
+        "directory": "Tests",
+        "passing": null
+      },
+      "tolerate_target_sections": true
+    },
+    {
+      "baseline": {
+        "mode": "none",
+        "stale_count": 0
+      },
+      "category": "control",
+      "claims": [
+        {
+          "document": "README.md",
+          "documented_count": 12,
+          "heading": "## Tests",
+          "may_be_rewritten": false,
+          "rationale": "",
+          "style": "live_whole_suite"
+        }
+      ],
+      "count_blocks": [],
+      "documents": [
+        {
+          "kind": "current_state",
+          "path": "README.md",
+          "prose": [
+            "A small project, kept small."
+          ],
+          "title": "Example"
+        }
+      ],
+      "filesystem": {
+        "filler_modules": 0,
+        "nested_repository": null,
+        "symlinks": []
+      },
+      "git": {
+        "branch": "main",
+        "committed": true,
+        "detached": false,
+        "dirty": []
+      },
+      "hypothesis": "A randomly sampled world. It states no hypothesis of its own because nothing chose it: the point of a holdout case is that nobody decided it was worth building.",
+      "mutations": [
+        {
+          "name": "make_hedged_claim",
+          "params": {
+            "count": 12,
+            "document": "README.md"
+          },
+          "phase": "build"
+        }
+      ],
+      "name": "holdout_006",
+      "notes": "Sampled by swizzle.holdout.v1 seed 1. Nothing chose this case.",
+      "project": {
+        "functions_per_module": 2,
+        "has_ci": false,
+        "has_pyproject": true,
+        "modules": [
+          "core"
+        ],
+        "package": "app"
+      },
+      "schema_version": 1,
+      "seed": 42075,
+      "tests": {
+        "count": 20,
+        "directory": "Tests",
+        "passing": null
+      },
+      "tolerate_target_sections": true
+    },
+    {
+      "baseline": {
+        "mode": "none",
+        "stale_count": 0
+      },
+      "category": "control",
+      "claims": [
+        {
+          "document": "README.md",
+          "documented_count": 12,
+          "heading": "## Tests",
+          "may_be_rewritten": false,
+          "rationale": "",
+          "style": "live_whole_suite"
+        }
+      ],
+      "count_blocks": [
+        {
+          "body_prose": [],
+          "document": "README.md",
+          "documented_count": 12,
+          "duplicated": false,
+          "malformed_close": false,
+          "nested_open": false
+        }
+      ],
+      "documents": [
+        {
+          "kind": "current_state",
+          "path": "README.md",
+          "prose": [
+            "A small project, kept small."
+          ],
+          "title": "Example"
+        }
+      ],
+      "filesystem": {
+        "filler_modules": 0,
+        "nested_repository": null,
+        "symlinks": []
+      },
+      "git": {
+        "branch": "main",
+        "committed": true,
+        "detached": false,
+        "dirty": []
+      },
+      "hypothesis": "A randomly sampled world. It states no hypothesis of its own because nothing chose it: the point of a holdout case is that nobody decided it was worth building.",
+      "mutations": [
+        {
+          "name": "put_prose_in_count_block",
+          "params": {
+            "document": "README.md",
+            "sentence": "The suite is split by layer; see CONTRIBUTING for why that matters."
+          },
+          "phase": "build"
+        }
+      ],
+      "name": "holdout_007",
+      "notes": "Sampled by swizzle.holdout.v1 seed 1. Nothing chose this case.",
+      "project": {
+        "functions_per_module": 2,
+        "has_ci": false,
+        "has_pyproject": true,
+        "modules": [
+          "core"
+        ],
+        "package": "app"
+      },
+      "schema_version": 1,
+      "seed": 460530,
+      "tests": {
+        "count": 30,
+        "directory": "Tests",
+        "passing": null
+      },
+      "tolerate_target_sections": true
+    },
+    {
+      "baseline": {
+        "mode": "none",
+        "stale_count": 0
+      },
+      "category": "control",
+      "claims": [
+        {
+          "document": "README.md",
+          "documented_count": 12,
+          "heading": "## Tests",
+          "may_be_rewritten": false,
+          "rationale": "",
+          "style": "live_whole_suite"
+        }
+      ],
+      "count_blocks": [],
+      "documents": [
+        {
+          "kind": "current_state",
+          "path": "README.md",
+          "prose": [
+            "A small project, kept small."
+          ],
+          "title": "Example"
+        }
+      ],
+      "filesystem": {
+        "filler_modules": 0,
+        "nested_repository": null,
+        "symlinks": []
+      },
+      "git": {
+        "branch": "main",
+        "committed": true,
+        "detached": false,
+        "dirty": []
+      },
+      "hypothesis": "A randomly sampled world. It states no hypothesis of its own because nothing chose it: the point of a holdout case is that nobody decided it was worth building.",
+      "mutations": [
+        {
+          "name": "make_dated_claim",
+          "params": {
+            "count": 12,
+            "document": "README.md"
+          },
+          "phase": "build"
+        }
+      ],
+      "name": "holdout_008",
+      "notes": "Sampled by swizzle.holdout.v1 seed 1. Nothing chose this case.",
+      "project": {
+        "functions_per_module": 2,
+        "has_ci": false,
+        "has_pyproject": true,
+        "modules": [
+          "core"
+        ],
+        "package": "app"
+      },
+      "schema_version": 1,
+      "seed": 735147,
+      "tests": {
+        "count": 45,
+        "directory": "Tests",
+        "passing": null
+      },
+      "tolerate_target_sections": true
+    },
+    {
+      "baseline": {
+        "mode": "none",
+        "stale_count": 0
+      },
+      "category": "control",
+      "claims": [
+        {
+          "document": "README.md",
+          "documented_count": 12,
+          "heading": "## Tests",
+          "may_be_rewritten": false,
+          "rationale": "",
+          "style": "live_whole_suite"
+        }
+      ],
+      "count_blocks": [],
+      "documents": [
+        {
+          "kind": "changelog",
+          "path": "README.md",
+          "prose": [
+            "A small project, kept small."
+          ],
+          "title": "Example"
+        }
+      ],
+      "filesystem": {
+        "filler_modules": 0,
+        "nested_repository": null,
+        "symlinks": []
+      },
+      "git": {
+        "branch": "main",
+        "committed": true,
+        "detached": false,
+        "dirty": []
+      },
+      "hypothesis": "A randomly sampled world. It states no hypothesis of its own because nothing chose it: the point of a holdout case is that nobody decided it was worth building.",
+      "mutations": [
+        {
+          "name": "kill_target_during_tests",
+          "params": {},
+          "phase": "during_tests"
+        }
+      ],
+      "name": "holdout_009",
+      "notes": "Sampled by swizzle.holdout.v1 seed 1. Nothing chose this case.",
+      "project": {
+        "functions_per_module": 2,
+        "has_ci": false,
+        "has_pyproject": true,
+        "modules": [
+          "core"
+        ],
+        "package": "app"
+      },
+      "schema_version": 1,
+      "seed": 940092,
+      "tests": {
+        "count": 30,
+        "directory": "Tests",
+        "passing": null
+      },
+      "tolerate_target_sections": true
+    },
+    {
+      "baseline": {
+        "mode": "none",
+        "stale_count": 0
+      },
+      "category": "control",
+      "claims": [
+        {
+          "document": "README.md",
+          "documented_count": 12,
+          "heading": "## Tests",
+          "may_be_rewritten": false,
+          "rationale": "",
+          "style": "transition"
+        }
+      ],
+      "count_blocks": [],
+      "documents": [
+        {
+          "kind": "current_state",
+          "path": "README.md",
+          "prose": [
+            "A small project, kept small."
+          ],
+          "title": "Example"
+        }
+      ],
+      "filesystem": {
+        "filler_modules": 0,
+        "nested_repository": null,
+        "symlinks": []
+      },
+      "git": {
+        "branch": "main",
+        "committed": true,
+        "detached": false,
+        "dirty": []
+      },
+      "hypothesis": "A randomly sampled world. It states no hypothesis of its own because nothing chose it: the point of a holdout case is that nobody decided it was worth building.",
+      "mutations": [
+        {
+          "name": "make_dated_claim",
+          "params": {
+            "count": 12,
+            "document": "README.md"
+          },
+          "phase": "build"
+        }
+      ],
+      "name": "holdout_010",
+      "notes": "Sampled by swizzle.holdout.v1 seed 1. Nothing chose this case.",
+      "project": {
+        "functions_per_module": 2,
+        "has_ci": false,
+        "has_pyproject": true,
+        "modules": [
+          "core"
+        ],
+        "package": "app"
+      },
+      "schema_version": 1,
+      "seed": 482079,
+      "tests": {
+        "count": 30,
+        "directory": "Tests",
+        "passing": null
+      },
+      "tolerate_target_sections": true
+    },
+    {
+      "baseline": {
+        "mode": "none",
+        "stale_count": 0
+      },
+      "category": "control",
+      "claims": [
+        {
+          "document": "README.md",
+          "documented_count": 12,
+          "heading": "## Tests",
+          "may_be_rewritten": false,
+          "rationale": "",
+          "style": "live_whole_suite"
+        }
+      ],
+      "count_blocks": [],
+      "documents": [
+        {
+          "kind": "current_state",
+          "path": "README.md",
+          "prose": [
+            "A small project, kept small."
+          ],
+          "title": "Example"
+        }
+      ],
+      "filesystem": {
+        "filler_modules": 0,
+        "nested_repository": null,
+        "symlinks": []
+      },
+      "git": {
+        "branch": "main",
+        "committed": true,
+        "detached": false,
+        "dirty": []
+      },
+      "hypothesis": "A randomly sampled world. It states no hypothesis of its own because nothing chose it: the point of a holdout case is that nobody decided it was worth building.",
+      "mutations": [
+        {
+          "name": "put_a_moving_number_in_the_finding",
+          "params": {},
+          "phase": "after_baseline"
+        }
+      ],
+      "name": "holdout_011",
+      "notes": "Sampled by swizzle.holdout.v1 seed 1. Nothing chose this case.",
+      "project": {
+        "functions_per_module": 2,
+        "has_ci": false,
+        "has_pyproject": true,
+        "modules": [
+          "core"
+        ],
+        "package": "app"
+      },
+      "schema_version": 1,
+      "seed": 647370,
+      "tests": {
+        "count": 30,
+        "directory": "Tests",
+        "passing": null
+      },
+      "tolerate_target_sections": true
+    },
+    {
+      "baseline": {
+        "mode": "none",
+        "stale_count": 0
+      },
+      "category": "control",
+      "claims": [
+        {
+          "document": "README.md",
+          "documented_count": 12,
+          "heading": "## Tests",
+          "may_be_rewritten": false,
+          "rationale": "",
+          "style": "live_whole_suite"
+        }
+      ],
+      "count_blocks": [],
+      "documents": [
+        {
+          "kind": "current_state",
+          "path": "README.md",
+          "prose": [
+            "A small project, kept small."
+          ],
+          "title": "Example"
+        }
+      ],
+      "filesystem": {
+        "filler_modules": 0,
+        "nested_repository": null,
+        "symlinks": []
+      },
+      "git": {
+        "branch": "main",
+        "committed": true,
+        "detached": false,
+        "dirty": []
+      },
+      "hypothesis": "A randomly sampled world. It states no hypothesis of its own because nothing chose it: the point of a holdout case is that nobody decided it was worth building.",
+      "mutations": [
+        {
+          "name": "symlink_escapes_repository",
+          "params": {
+            "bait": "victim/README.md",
+            "link": "README.md"
+          },
+          "phase": "build"
+        }
+      ],
+      "name": "holdout_012",
+      "notes": "Sampled by swizzle.holdout.v1 seed 1. Nothing chose this case.",
+      "project": {
+        "functions_per_module": 2,
+        "has_ci": false,
+        "has_pyproject": true,
+        "modules": [
+          "core"
+        ],
+        "package": "app"
+      },
+      "schema_version": 1,
+      "seed": 220803,
+      "tests": {
+        "count": 30,
+        "directory": "Tests",
+        "passing": null
+      },
+      "tolerate_target_sections": true
+    }
+  ],
+  "manifest": {
+    "count": 12,
+    "members": {
+      "holdout_001": "c2c1df793b5e2719",
+      "holdout_002": "aed75996782c99ea",
+      "holdout_003": "10a96f0e714798f5",
+      "holdout_004": "d1d35dfcda2eb4d9",
+      "holdout_005": "d8e66ae672b197eb",
+      "holdout_006": "1397a629400f7929",
+      "holdout_007": "f89f4a373ef5ae4d",
+      "holdout_008": "843063addf73217c",
+      "holdout_009": "cf7d2914dbf2180c",
+      "holdout_010": "e48c6836906f1667",
+      "holdout_011": "de30fda3cfb6e712",
+      "holdout_012": "e4b00834fdc388ce"
+    },
+    "procedure": "swizzle.holdout.v1",
+    "seed": 1
+  }
+}
