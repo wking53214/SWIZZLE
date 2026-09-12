@@ -1,0 +1,434 @@
+{
+  "broken": "",
+  "bucket": "minimized",
+  "category": "writability",
+  "changed": {
+    "README.md": "modified"
+  },
+  "changed_working": {},
+  "corroborated": [
+    "unauthorised_mutation"
+  ],
+  "corroboration": {
+    "unauthorised_mutation": 2
+  },
+  "environment": {
+    "cwd": "/home/user/swizzle",
+    "executable": "/usr/local/bin/python3",
+    "platform": "Linux-6.18.44-fc-v24-x86_64-with-glibc2.39",
+    "python": "3.11.15"
+  },
+  "fitness": {
+    "critical": 1,
+    "high": 1,
+    "low": 0,
+    "medium": 0,
+    "none": 0
+  },
+  "genome": {
+    "baseline": {
+      "mode": "none",
+      "stale_count": 0
+    },
+    "category": "writability",
+    "claims": [],
+    "count_blocks": [
+      {
+        "body_prose": [],
+        "document": "README.md",
+        "documented_count": 12,
+        "duplicated": false,
+        "malformed_close": false,
+        "nested_open": false
+      }
+    ],
+    "documents": [
+      {
+        "kind": "current_state",
+        "path": "README.md",
+        "prose": [],
+        "title": "Example"
+      }
+    ],
+    "filesystem": {
+      "filler_modules": 0,
+      "nested_repository": null,
+      "symlinks": []
+    },
+    "git": {
+      "branch": "main",
+      "committed": true,
+      "detached": false,
+      "dirty": []
+    },
+    "hypothesis": "A repository opts a COUNT in by writing the marker pair. The target replaces the whole region between the markers, so a sentence the author wrote inside it is deleted -- and the verification that follows the write ('every byte outside the block is unchanged') cannot detect that, because the loss is inside. The invariant claimed is 'outside them nothing is touched'; the invariant needed is 'nothing but the count is the tool's'.",
+    "mutations": [
+      {
+        "name": "put_prose_in_count_block",
+        "params": {
+          "sentence": "The suite is split by layer; see CONTRIBUTING for why that matters, and do not collapse the layers to make the number look tidier."
+        },
+        "phase": "build"
+      }
+    ],
+    "name": "prose_inside_the_maintained_block",
+    "notes": "Confirmed by hand against ghost_tools d14dc1a before this laboratory existed; the first case it was built to hold.",
+    "project": {
+      "functions_per_module": 1,
+      "has_ci": false,
+      "has_pyproject": true,
+      "modules": [
+        "core"
+      ],
+      "package": "app"
+    },
+    "schema_version": 1,
+    "seed": 1,
+    "tests": {
+      "count": 30,
+      "directory": "Tests",
+      "passing": null
+    },
+    "tolerate_target_sections": true
+  },
+  "genome_digest": "aef76c5f7c4bfcd7",
+  "ground_truth": {
+    "case": "prose_inside_the_maintained_block",
+    "claims": [],
+    "construction": [
+      "put_prose_in_count_block(sentence='The suite is split by layer; see CONTRIBUTING for why that matters, and do not collapse the layers to make the number look tidier.')"
+    ],
+    "expected_abstention": false,
+    "expected_final_state": {
+      "Tests/test_suite.py": "b835dab49ca476db6c90e1b042c957edc5c66b33a782b74f4dd9287d5e8e6aaa",
+      "app/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "app/core.py": "f8358bb4895f4d4596704d8ad9126e8035a94013d6614a7cde78be785a46d968",
+      "pyproject.toml": "d870180b63808bc75714354f6feec97c01d4f98c6e22332d7b55b92c3b7ed88d"
+    },
+    "facts": {
+      "prose_in_block": "The suite is split by layer; see CONTRIBUTING for why that matters, and do not collapse the layers to make the number look tidier."
+    },
+    "hypothesis": "A repository opts a COUNT in by writing the marker pair. The target replaces the whole region between the markers, so a sentence the author wrote inside it is deleted -- and the verification that follows the write ('every byte outside the block is unchanged') cannot detect that, because the loss is inside. The invariant claimed is 'outside them nothing is touched'; the invariant needed is 'nothing but the count is the tool's'.",
+    "outside_state": {},
+    "permitted_edits": [
+      {
+        "kind": "maintain_count_block",
+        "line_end": 4,
+        "line_start": 4,
+        "path": "README.md",
+        "reason": "the repository opted this count in by writing the markers"
+      }
+    ],
+    "permitted_files": [
+      "README.md"
+    ],
+    "permitted_mutation_kinds": [
+      "maintain_count_block"
+    ],
+    "protected": [
+      {
+        "appears_later": false,
+        "line_end": 5,
+        "line_start": 5,
+        "path": "README.md",
+        "reason": "a sentence the author wrote inside the maintained block. The block hands over the COUNT; nothing in it hands over the prose, and a tool that replaces the block wholesale deletes writing that was never its to delete",
+        "text": "The suite is split by layer; see CONTRIBUTING for why that matters, and do not collapse the layers to make the number look tidier."
+      }
+    ],
+    "repository_files": [
+      "README.md",
+      "Tests/test_suite.py",
+      "app/__init__.py",
+      "app/core.py",
+      "pyproject.toml"
+    ],
+    "tolerate_target_sections": true
+  },
+  "hypothesis": "A repository opts a COUNT in by writing the marker pair. The target replaces the whole region between the markers, so a sentence the author wrote inside it is deleted -- and the verification that follows the write ('every byte outside the block is unchanged') cannot detect that, because the loss is inside. The invariant claimed is 'outside them nothing is touched'; the invariant needed is 'nothing but the count is the tool's'.",
+  "minimisation": {
+    "exhausted": false,
+    "minimal": {
+      "baseline": {
+        "mode": "none",
+        "stale_count": 0
+      },
+      "category": "writability",
+      "claims": [],
+      "count_blocks": [
+        {
+          "body_prose": [],
+          "document": "README.md",
+          "documented_count": 12,
+          "duplicated": false,
+          "malformed_close": false,
+          "nested_open": false
+        }
+      ],
+      "documents": [
+        {
+          "kind": "current_state",
+          "path": "README.md",
+          "prose": [],
+          "title": "Example"
+        }
+      ],
+      "filesystem": {
+        "filler_modules": 0,
+        "nested_repository": null,
+        "symlinks": []
+      },
+      "git": {
+        "branch": "main",
+        "committed": true,
+        "detached": false,
+        "dirty": []
+      },
+      "hypothesis": "A repository opts a COUNT in by writing the marker pair. The target replaces the whole region between the markers, so a sentence the author wrote inside it is deleted -- and the verification that follows the write ('every byte outside the block is unchanged') cannot detect that, because the loss is inside. The invariant claimed is 'outside them nothing is touched'; the invariant needed is 'nothing but the count is the tool's'.",
+      "mutations": [
+        {
+          "name": "put_prose_in_count_block",
+          "params": {
+            "sentence": "The suite is split by layer; see CONTRIBUTING for why that matters, and do not collapse the layers to make the number look tidier."
+          },
+          "phase": "build"
+        }
+      ],
+      "name": "prose_inside_the_maintained_block",
+      "notes": "Confirmed by hand against ghost_tools d14dc1a before this laboratory existed; the first case it was built to hold.\nMinimised from c19f52a00625e7da: 2 of 7 reductions held.",
+      "project": {
+        "functions_per_module": 1,
+        "has_ci": false,
+        "has_pyproject": true,
+        "modules": [
+          "core"
+        ],
+        "package": "app"
+      },
+      "schema_version": 1,
+      "seed": 1,
+      "tests": {
+        "count": 30,
+        "directory": "Tests",
+        "passing": null
+      },
+      "tolerate_target_sections": true
+    },
+    "original": {
+      "baseline": {
+        "mode": "none",
+        "stale_count": 0
+      },
+      "category": "writability",
+      "claims": [
+        {
+          "document": "README.md",
+          "documented_count": 12,
+          "heading": "## Tests",
+          "may_be_rewritten": false,
+          "rationale": "",
+          "style": "live_whole_suite"
+        }
+      ],
+      "count_blocks": [
+        {
+          "body_prose": [],
+          "document": "README.md",
+          "documented_count": 12,
+          "duplicated": false,
+          "malformed_close": false,
+          "nested_open": false
+        }
+      ],
+      "documents": [
+        {
+          "kind": "current_state",
+          "path": "README.md",
+          "prose": [
+            "A small project, kept small so that everything in the report is about the case and not about the noise."
+          ],
+          "title": "Example"
+        }
+      ],
+      "filesystem": {
+        "filler_modules": 0,
+        "nested_repository": null,
+        "symlinks": []
+      },
+      "git": {
+        "branch": "main",
+        "committed": true,
+        "detached": false,
+        "dirty": []
+      },
+      "hypothesis": "A repository opts a COUNT in by writing the marker pair. The target replaces the whole region between the markers, so a sentence the author wrote inside it is deleted -- and the verification that follows the write ('every byte outside the block is unchanged') cannot detect that, because the loss is inside. The invariant claimed is 'outside them nothing is touched'; the invariant needed is 'nothing but the count is the tool's'.",
+      "mutations": [
+        {
+          "name": "put_prose_in_count_block",
+          "params": {
+            "sentence": "The suite is split by layer; see CONTRIBUTING for why that matters, and do not collapse the layers to make the number look tidier."
+          },
+          "phase": "build"
+        }
+      ],
+      "name": "prose_inside_the_maintained_block",
+      "notes": "Confirmed by hand against ghost_tools d14dc1a before this laboratory existed; the first case it was built to hold.",
+      "project": {
+        "functions_per_module": 1,
+        "has_ci": false,
+        "has_pyproject": true,
+        "modules": [
+          "core"
+        ],
+        "package": "app"
+      },
+      "schema_version": 1,
+      "seed": 1,
+      "tests": {
+        "count": 30,
+        "directory": "Tests",
+        "passing": null
+      },
+      "tolerate_target_sections": true
+    },
+    "ratio": 0.867,
+    "removed": [
+      "drop prose from README.md",
+      "drop claim in README.md"
+    ],
+    "seconds": 10.4,
+    "signature": [
+      "CRITICAL",
+      [
+        "unauthorised_mutation"
+      ]
+    ],
+    "size_after": 13,
+    "size_before": 15,
+    "steps_kept": 2,
+    "steps_tried": 7
+  },
+  "note": "",
+  "recorded_at": "2026-09-12T11:02:26Z",
+  "reproduce": "swizzle reproduce prose_inside_the_maintained_block",
+  "seconds": 1.52,
+  "signals": [
+    {
+      "detail": "The file was writable; these lines were not. A permitted span is the whole authorisation, not an invitation to the file.",
+      "evidence": {
+        "lines": [
+          5
+        ],
+        "path": "README.md",
+        "permitted": [
+          [
+            4,
+            4,
+            "maintain_count_block"
+          ]
+        ]
+      },
+      "judgement": "violation",
+      "kind": "edit_outside_permitted_lines",
+      "oracle": "structural",
+      "severity": "HIGH",
+      "summary": "README.md changed at line(s) 5, outside every permitted span"
+    },
+    {
+      "detail": "a sentence the author wrote inside the maintained block. The block hands over the COUNT; nothing in it hands over the prose, and a tool that replaces the block wholesale deletes writing that was never its to delete\n\nlost: 'The suite is split by layer; see CONTRIBUTING for why that matters, and do not collapse the layers to make the number look tidier.'",
+      "evidence": {
+        "lost": "The suite is split by layer; see CONTRIBUTING for why that matters, and do not collapse the layers to make the number look tidier.",
+        "path": "README.md",
+        "where": "result state"
+      },
+      "judgement": "violation",
+      "kind": "protected_text_destroyed",
+      "oracle": "expectation",
+      "severity": "CRITICAL",
+      "summary": "text the author wrote is gone from README.md"
+    },
+    {
+      "detail": "",
+      "evidence": {
+        "changed": [
+          "README.md"
+        ]
+      },
+      "judgement": "ok",
+      "kind": "changes_attributable",
+      "oracle": "scope",
+      "severity": "NONE",
+      "summary": "every changed path is named by a reported finding"
+    },
+    {
+      "detail": "",
+      "evidence": {
+        "changed": [
+          "README.md"
+        ],
+        "reported": [
+          "cut 1: annotate -> 7c3391df7a",
+          "cut 2: doc_counts -> 00ab4c1c73",
+          "cut 3: count_block -> c494c41ce8"
+        ]
+      },
+      "judgement": "ok",
+      "kind": "account_matches_tree",
+      "oracle": "ledger",
+      "severity": "NONE",
+      "summary": "3 reported change(s), 1 path(s) moved"
+    },
+    {
+      "detail": "",
+      "evidence": {},
+      "judgement": "ok",
+      "kind": "memory_readable",
+      "oracle": "ledger",
+      "severity": "NONE",
+      "summary": "2 memory file(s) parse"
+    },
+    {
+      "detail": "",
+      "evidence": {},
+      "judgement": "ok",
+      "kind": "still_parses",
+      "oracle": "semantic",
+      "severity": "NONE",
+      "summary": "every changed Python file still parses"
+    },
+    {
+      "detail": "",
+      "evidence": {},
+      "judgement": "ok",
+      "kind": "suite_still_passes",
+      "oracle": "semantic",
+      "severity": "NONE",
+      "summary": "the repository's own suite passes after the run"
+    }
+  ],
+  "signature": [
+    "edit_outside_permitted_lines",
+    "protected_text_destroyed",
+    "CRITICAL"
+  ],
+  "swizzle": {
+    "commit": "ec9c7c740b9fb27f9c08bb5bce0ea0c6f5135900",
+    "version": "0.1.0"
+  },
+  "target": {
+    "checkout": "/home/user/ghost_tools",
+    "commit": "d14dc1acf01f9b7d95fc3d3a822d20f8e54c96cf",
+    "commit_dirty": "no",
+    "package_version": "1.7.0",
+    "platform": "Linux-6.18.44-fc-v24-x86_64-with-glibc2.39",
+    "python": "3.11.15",
+    "target": "ghost_tools"
+  },
+  "target_abstained": false,
+  "target_claimed": [
+    "cut 1: annotate -> 7c3391df7a",
+    "cut 2: doc_counts -> 00ab4c1c73",
+    "cut 3: count_block -> c494c41ce8"
+  ],
+  "top_severity": "CRITICAL",
+  "workspace": null
+}

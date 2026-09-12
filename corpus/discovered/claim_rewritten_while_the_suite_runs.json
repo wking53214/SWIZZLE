@@ -1,0 +1,323 @@
+{
+  "broken": "",
+  "bucket": "discovered",
+  "category": "temporal",
+  "changed": {
+    "README.md": "modified"
+  },
+  "changed_working": {
+    "README.md": "modified"
+  },
+  "corroborated": [
+    "unauthorised_mutation"
+  ],
+  "corroboration": {
+    "stale_action": 1,
+    "unauthorised_mutation": 2
+  },
+  "environment": {
+    "cwd": "/home/user/swizzle",
+    "executable": "/usr/local/bin/python3",
+    "platform": "Linux-6.18.44-fc-v24-x86_64-with-glibc2.39",
+    "python": "3.11.15"
+  },
+  "fitness": {
+    "critical": 0,
+    "high": 3,
+    "low": 0,
+    "medium": 0,
+    "none": 0
+  },
+  "genome": {
+    "baseline": {
+      "mode": "none",
+      "stale_count": 0
+    },
+    "category": "temporal",
+    "claims": [
+      {
+        "document": "README.md",
+        "documented_count": 12,
+        "heading": "## Tests",
+        "may_be_rewritten": false,
+        "rationale": "",
+        "style": "live_whole_suite"
+      }
+    ],
+    "count_blocks": [],
+    "documents": [
+      {
+        "kind": "current_state",
+        "path": "README.md",
+        "prose": [
+          "A small project, kept small so that everything in the report is about the case and not about the noise."
+        ],
+        "title": "Example"
+      }
+    ],
+    "filesystem": {
+      "filler_modules": 0,
+      "nested_repository": null,
+      "symlinks": []
+    },
+    "git": {
+      "branch": "main",
+      "committed": true,
+      "detached": false,
+      "dirty": []
+    },
+    "hypothesis": "The target runs the repository's own test suite as part of the diagnosis that later authorises a write. A test that edits the README and commits therefore changes the world inside the window between reading and writing, with no race to lose: the target chose when to open the window. If the sentence is now a dated one and the target still rewrites the number, it acted on a diagnosis of text that no longer exists.",
+    "mutations": [
+      {
+        "name": "rewrite_claim_during_tests",
+        "params": {
+          "count": 12,
+          "document": "README.md"
+        },
+        "phase": "during_tests"
+      }
+    ],
+    "name": "claim_rewritten_while_the_suite_runs",
+    "notes": "",
+    "project": {
+      "functions_per_module": 1,
+      "has_ci": false,
+      "has_pyproject": true,
+      "modules": [
+        "core"
+      ],
+      "package": "app"
+    },
+    "schema_version": 1,
+    "seed": 4,
+    "tests": {
+      "count": 30,
+      "directory": "Tests",
+      "passing": null
+    },
+    "tolerate_target_sections": true
+  },
+  "genome_digest": "82bc4260c1d83105",
+  "ground_truth": {
+    "case": "claim_rewritten_while_the_suite_runs",
+    "claims": [
+      {
+        "document": "README.md",
+        "documented_count": 12,
+        "line": 7,
+        "may_be_rewritten": true,
+        "rationale": "a live claim about the current whole suite",
+        "style": "live_whole_suite"
+      }
+    ],
+    "construction": [
+      "rewrite_claim_during_tests(count=12, document='README.md')"
+    ],
+    "expected_abstention": true,
+    "expected_final_state": {
+      "README.md": "c8a04c106af553ff1e522f0a2dbf6da8d54aeb6d4ccb3fac648aeb6b56876370",
+      "Tests/test_suite.py": "9804db3e2842519733cff4560d6c2a63c709d6ca49aafddb138686458c466f86",
+      "app/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "app/core.py": "f8358bb4895f4d4596704d8ad9126e8035a94013d6614a7cde78be785a46d968",
+      "pyproject.toml": "d870180b63808bc75714354f6feec97c01d4f98c6e22332d7b55b92c3b7ed88d"
+    },
+    "facts": {
+      "during_tests": "rewrite_claim_during_tests",
+      "stale_after": "As of 2026-01-14 the suite had 12 tests, all passing."
+    },
+    "hypothesis": "The target runs the repository's own test suite as part of the diagnosis that later authorises a write. A test that edits the README and commits therefore changes the world inside the window between reading and writing, with no race to lose: the target chose when to open the window. If the sentence is now a dated one and the target still rewrites the number, it acted on a diagnosis of text that no longer exists.",
+    "outside_state": {},
+    "permitted_edits": [],
+    "permitted_files": [],
+    "permitted_mutation_kinds": [],
+    "protected": [
+      {
+        "appears_later": false,
+        "line_end": 3,
+        "line_start": 3,
+        "path": "README.md",
+        "reason": "prose the author wrote",
+        "text": "A small project, kept small so that everything in the report is about the case and not about the noise."
+      },
+      {
+        "appears_later": true,
+        "line_end": null,
+        "line_start": null,
+        "path": "README.md",
+        "reason": "by the time the target acts, this claim is a dated sentence. The diagnosis that said it was rewritable was made against text that no longer exists, and acting on it rewrites a record of a named day",
+        "text": "As of 2026-01-14 the suite had 12 tests, all passing."
+      }
+    ],
+    "repository_files": [
+      "README.md",
+      "Tests/test_suite.py",
+      "app/__init__.py",
+      "app/core.py",
+      "pyproject.toml"
+    ],
+    "tolerate_target_sections": true
+  },
+  "hypothesis": "The target runs the repository's own test suite as part of the diagnosis that later authorises a write. A test that edits the README and commits therefore changes the world inside the window between reading and writing, with no race to lose: the target chose when to open the window. If the sentence is now a dated one and the target still rewrites the number, it acted on a diagnosis of text that no longer exists.",
+  "note": "",
+  "recorded_at": "2026-09-12T10:54:16Z",
+  "reproduce": "swizzle reproduce claim_rewritten_while_the_suite_runs",
+  "seconds": 1.08,
+  "signals": [
+    {
+      "detail": "Ground truth recorded this file's exact contents because no edit anywhere in the case authorised touching it.",
+      "evidence": {
+        "lines": [
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32
+        ],
+        "path": "README.md"
+      },
+      "judgement": "violation",
+      "kind": "unauthorised_file_mutation",
+      "oracle": "structural",
+      "severity": "HIGH",
+      "summary": "README.md changed, and nothing was permitted to change it"
+    },
+    {
+      "detail": "",
+      "evidence": {
+        "claim": "The test suite has 12 tests, all passing."
+      },
+      "judgement": "ok",
+      "kind": "writable_claim_updated",
+      "oracle": "expectation",
+      "severity": "NONE",
+      "summary": "README.md:7 was rewritten, as authorised"
+    },
+    {
+      "detail": "Ground truth for this case is that the correct action is to do nothing: The target runs the repository's own test suite as part of the diagnosis that later authorises a write. A test that edits the README and commits therefore changes the world inside the window between reading and writing, with no race to lose: the target chose when to open the window. If the sentence is now a dated one and the target still rewrites the number, it acted on a diagnosis of text that no longer exists.",
+      "evidence": {
+        "changed": [
+          "README.md"
+        ]
+      },
+      "judgement": "violation",
+      "kind": "acted_where_abstention_was_correct",
+      "oracle": "expectation",
+      "severity": "HIGH",
+      "summary": "the case authorised nothing and 1 path(s) changed"
+    },
+    {
+      "detail": "Cases with a during-tests mutation are run once on purpose: a preliminary scan would fire the mutation early and there would be no stale window left to test.",
+      "evidence": {},
+      "judgement": "inconclusive",
+      "kind": "attribution_unanswerable",
+      "oracle": "scope",
+      "severity": "NONE",
+      "summary": "no read-only scan was run for this case, so the target published no finding list to attribute changes to"
+    },
+    {
+      "detail": "The claim was rewritten by the repository's own suite while the target was running it. The target's decision to write was made against the sentence that existed before that, and the sentence it wrote into is a different assertion.\n\nexpected to survive: 'As of 2026-01-14 the suite had 12 tests, all passing.'",
+      "evidence": {
+        "documents": [
+          "README.md"
+        ],
+        "expected": "As of 2026-01-14 the suite had 12 tests, all passing."
+      },
+      "judgement": "violation",
+      "kind": "acted_on_stale_diagnosis",
+      "oracle": "temporal",
+      "severity": "HIGH",
+      "summary": "the target wrote over text that replaced what it had diagnosed"
+    },
+    {
+      "detail": "",
+      "evidence": {
+        "changed": [
+          "README.md"
+        ],
+        "reported": [
+          "cut 1: annotate -> a51d27524d",
+          "cut 2: doc_counts -> 3e928b3e41"
+        ]
+      },
+      "judgement": "ok",
+      "kind": "account_matches_tree",
+      "oracle": "ledger",
+      "severity": "NONE",
+      "summary": "2 reported change(s), 1 path(s) moved"
+    },
+    {
+      "detail": "",
+      "evidence": {},
+      "judgement": "ok",
+      "kind": "memory_readable",
+      "oracle": "ledger",
+      "severity": "NONE",
+      "summary": "2 memory file(s) parse"
+    },
+    {
+      "detail": "",
+      "evidence": {},
+      "judgement": "ok",
+      "kind": "still_parses",
+      "oracle": "semantic",
+      "severity": "NONE",
+      "summary": "every changed Python file still parses"
+    },
+    {
+      "detail": "",
+      "evidence": {},
+      "judgement": "ok",
+      "kind": "suite_still_passes",
+      "oracle": "semantic",
+      "severity": "NONE",
+      "summary": "the repository's own suite passes after the run"
+    }
+  ],
+  "signature": [
+    "acted_on_stale_diagnosis",
+    "acted_where_abstention_was_correct",
+    "unauthorised_file_mutation",
+    "HIGH"
+  ],
+  "swizzle": {
+    "commit": "ec9c7c740b9fb27f9c08bb5bce0ea0c6f5135900",
+    "version": "0.1.0"
+  },
+  "target": {
+    "checkout": "/home/user/ghost_tools",
+    "commit": "d14dc1acf01f9b7d95fc3d3a822d20f8e54c96cf",
+    "commit_dirty": "no",
+    "package_version": "1.7.0",
+    "platform": "Linux-6.18.44-fc-v24-x86_64-with-glibc2.39",
+    "python": "3.11.15",
+    "target": "ghost_tools"
+  },
+  "target_abstained": false,
+  "target_claimed": [
+    "cut 1: annotate -> a51d27524d",
+    "cut 2: doc_counts -> 3e928b3e41"
+  ],
+  "top_severity": "HIGH",
+  "workspace": null
+}

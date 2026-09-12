@@ -1,0 +1,264 @@
+{
+  "broken": "",
+  "bucket": "rejected",
+  "category": "claim_shape",
+  "changed": {
+    "README.md": "modified"
+  },
+  "changed_working": {},
+  "corroborated": [],
+  "corroboration": {},
+  "environment": {
+    "cwd": "/home/user/swizzle",
+    "executable": "/usr/local/bin/python3",
+    "platform": "Linux-6.18.44-fc-v24-x86_64-with-glibc2.39",
+    "python": "3.11.15"
+  },
+  "fitness": {
+    "critical": 0,
+    "high": 0,
+    "low": 0,
+    "medium": 0,
+    "none": 0
+  },
+  "genome": {
+    "baseline": {
+      "mode": "none",
+      "stale_count": 0
+    },
+    "category": "claim_shape",
+    "claims": [
+      {
+        "document": "STATUS_REPORT.md",
+        "documented_count": 12,
+        "heading": "## Tests",
+        "may_be_rewritten": false,
+        "rationale": "",
+        "style": "live_whole_suite"
+      }
+    ],
+    "count_blocks": [],
+    "documents": [
+      {
+        "kind": "historical",
+        "path": "STATUS_REPORT.md",
+        "prose": [
+          "Circulated to the team on 2026-01-14."
+        ],
+        "title": "Status report"
+      },
+      {
+        "kind": "current_state",
+        "path": "README.md",
+        "prose": [
+          "See STATUS_REPORT.md for the numbers."
+        ],
+        "title": "Example"
+      }
+    ],
+    "filesystem": {
+      "filler_modules": 0,
+      "nested_repository": null,
+      "symlinks": []
+    },
+    "git": {
+      "branch": "main",
+      "committed": true,
+      "detached": false,
+      "dirty": []
+    },
+    "hypothesis": "The sentence reads as a live claim about the whole suite. The document it sits in is a status record with a date at the top. Which one decides? Ground truth says the document does: a live sentence inside a record of a moment is part of the record.",
+    "mutations": [],
+    "name": "live_claim_in_a_historical_document",
+    "notes": "",
+    "project": {
+      "functions_per_module": 1,
+      "has_ci": false,
+      "has_pyproject": true,
+      "modules": [
+        "core"
+      ],
+      "package": "app"
+    },
+    "schema_version": 1,
+    "seed": 7,
+    "tests": {
+      "count": 30,
+      "directory": "Tests",
+      "passing": null
+    },
+    "tolerate_target_sections": true
+  },
+  "genome_digest": "4814944a3994c5b6",
+  "ground_truth": {
+    "case": "live_claim_in_a_historical_document",
+    "claims": [
+      {
+        "document": "STATUS_REPORT.md",
+        "documented_count": 12,
+        "line": 9,
+        "may_be_rewritten": false,
+        "rationale": "a live claim about the current whole suite, in a document about a moment, not about now",
+        "style": "live_whole_suite"
+      }
+    ],
+    "construction": [],
+    "expected_abstention": false,
+    "expected_final_state": {
+      "README.md": "b7f578dec083dd366fc72ebd6df07fd9a060ec76f06a292b884c3983772512cb",
+      "STATUS_REPORT.md": "e55f09db175a6790fe574d5d31480ce81def64278509cc06220cf73931db2e9c",
+      "Tests/test_suite.py": "b835dab49ca476db6c90e1b042c957edc5c66b33a782b74f4dd9287d5e8e6aaa",
+      "app/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "app/core.py": "f8358bb4895f4d4596704d8ad9126e8035a94013d6614a7cde78be785a46d968",
+      "pyproject.toml": "d870180b63808bc75714354f6feec97c01d4f98c6e22332d7b55b92c3b7ed88d"
+    },
+    "facts": {},
+    "hypothesis": "The sentence reads as a live claim about the whole suite. The document it sits in is a status record with a date at the top. Which one decides? Ground truth says the document does: a live sentence inside a record of a moment is part of the record.",
+    "outside_state": {},
+    "permitted_edits": [],
+    "permitted_files": [],
+    "permitted_mutation_kinds": [],
+    "protected": [
+      {
+        "appears_later": false,
+        "line_end": 5,
+        "line_start": 5,
+        "path": "STATUS_REPORT.md",
+        "reason": "prose the author wrote",
+        "text": "Circulated to the team on 2026-01-14."
+      },
+      {
+        "appears_later": false,
+        "line_end": 9,
+        "line_start": 9,
+        "path": "STATUS_REPORT.md",
+        "reason": "a live claim about the current whole suite, in a document about a moment, not about now",
+        "text": "The test suite has 12 tests, all passing."
+      },
+      {
+        "appears_later": false,
+        "line_end": 3,
+        "line_start": 3,
+        "path": "README.md",
+        "reason": "prose the author wrote",
+        "text": "See STATUS_REPORT.md for the numbers."
+      }
+    ],
+    "repository_files": [
+      "README.md",
+      "STATUS_REPORT.md",
+      "Tests/test_suite.py",
+      "app/__init__.py",
+      "app/core.py",
+      "pyproject.toml"
+    ],
+    "tolerate_target_sections": true
+  },
+  "hypothesis": "The sentence reads as a live claim about the whole suite. The document it sits in is a status record with a date at the top. Which one decides? Ground truth says the document does: a live sentence inside a record of a moment is part of the record.",
+  "note": "",
+  "recorded_at": "2026-09-12T10:54:20Z",
+  "reproduce": "swizzle reproduce live_claim_in_a_historical_document",
+  "seconds": 1.34,
+  "signals": [
+    {
+      "detail": "",
+      "evidence": {
+        "path": "README.md"
+      },
+      "judgement": "ok",
+      "kind": "target_section_appended",
+      "oracle": "structural",
+      "severity": "NONE",
+      "summary": "README.md changed only by a section the target appended under its own markers"
+    },
+    {
+      "detail": "",
+      "evidence": {
+        "claim": "The test suite has 12 tests, all passing."
+      },
+      "judgement": "ok",
+      "kind": "non_writable_claim_left_alone",
+      "oracle": "expectation",
+      "severity": "NONE",
+      "summary": "STATUS_REPORT.md:9 was left as written"
+    },
+    {
+      "detail": "",
+      "evidence": {
+        "changed": [
+          "README.md"
+        ]
+      },
+      "judgement": "ok",
+      "kind": "changes_attributable",
+      "oracle": "scope",
+      "severity": "NONE",
+      "summary": "every changed path is named by a reported finding"
+    },
+    {
+      "detail": "",
+      "evidence": {
+        "changed": [
+          "README.md"
+        ],
+        "reported": [
+          "cut 1: annotate -> 6a305b835a"
+        ]
+      },
+      "judgement": "ok",
+      "kind": "account_matches_tree",
+      "oracle": "ledger",
+      "severity": "NONE",
+      "summary": "1 reported change(s), 1 path(s) moved"
+    },
+    {
+      "detail": "",
+      "evidence": {},
+      "judgement": "ok",
+      "kind": "memory_readable",
+      "oracle": "ledger",
+      "severity": "NONE",
+      "summary": "2 memory file(s) parse"
+    },
+    {
+      "detail": "",
+      "evidence": {},
+      "judgement": "ok",
+      "kind": "still_parses",
+      "oracle": "semantic",
+      "severity": "NONE",
+      "summary": "every changed Python file still parses"
+    },
+    {
+      "detail": "",
+      "evidence": {},
+      "judgement": "ok",
+      "kind": "suite_still_passes",
+      "oracle": "semantic",
+      "severity": "NONE",
+      "summary": "the repository's own suite passes after the run"
+    }
+  ],
+  "signature": [
+    "NONE"
+  ],
+  "swizzle": {
+    "commit": "ec9c7c740b9fb27f9c08bb5bce0ea0c6f5135900",
+    "version": "0.1.0"
+  },
+  "target": {
+    "checkout": "/home/user/ghost_tools",
+    "commit": "d14dc1acf01f9b7d95fc3d3a822d20f8e54c96cf",
+    "commit_dirty": "no",
+    "package_version": "1.7.0",
+    "platform": "Linux-6.18.44-fc-v24-x86_64-with-glibc2.39",
+    "python": "3.11.15",
+    "target": "ghost_tools"
+  },
+  "target_abstained": false,
+  "target_claimed": [
+    "cut 1: annotate -> 6a305b835a"
+  ],
+  "top_severity": "NONE",
+  "workspace": null
+}

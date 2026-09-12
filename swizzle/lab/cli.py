@@ -1,0 +1,575 @@
+"""The laboratory's half of the command line.
+
+Kept separate from `swizzle/cli.py` so the original four commands keep
+working exactly as they did. `swizzle list`, `prove`, `run` and `summon`
+are the first version of this project and still do what they always did;
+everything here is additional.
+"""
+
+from __future__ import annotations
+
+import json
+import shutil
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+from typing import List, Optional, Sequence
+
+from . import catalogue, coverage, metrics, minimize, reporting, search
+from .adapter import TargetUnavailable
+from .adapters import GhostToolsAdapter
+from .attack import run as run_case
+from .corpus import Corpus, PromotionRefused
+from .differential import compare
+from .genome import AttackCategory, RepositoryGenome
+from .mutators import registry
+from .sandbox import Sandbox, purge
+
+DEFAULT_CORPUS = Path("corpus")
+
+
+def add_parsers(sub) -> None:
+    """Register the laboratory commands on an existing subparser set."""
+    audit = sub.add_parser("audit", help="check the laboratory can run, and "
+                                         "print what it currently attacks")
+    audit.add_argument("--ghost-tools", type=Path, default=None, metavar="PATH")
+
+    seed = sub.add_parser("seed", help="the seed catalogue, with hypotheses")
+    seed.add_argument("--only", default="", metavar="SUBSTRING")
+    seed.add_argument("--full", action="store_true",
+                      help="print each hypothesis in full")
+
+    muts = sub.add_parser("mutators", help="the deterministic mutation registry")
+    muts.add_argument("--only", default="", metavar="SUBSTRING")
+
+    attack = sub.add_parser("attack", help="build cases, run the target, judge")
+    attack.add_argument("--case", default="", metavar="NAME",
+                        help="one seed case by name")
+    attack.add_argument("--category", default="", metavar="CATEGORY",
+                        help="every seed case in a category")
+    attack.add_argument("--seed", type=int, default=None, metavar="N",
+                        help="override the genome seed, for reproducibility runs")
+    attack.add_argument("--from-corpus", default="", metavar="BUCKET",
+                        help="run archived cases instead of the seed catalogue")
+    attack.add_argument("--minimize", action="store_true",
+                        help="minimise every case that finds something")
+    attack.add_argument("--corpus", action="store_true",
+                        help="archive results (attacks to discovered, clean "
+                             "cases to rejected)")
+    attack.add_argument("--corpus-path", type=Path, default=DEFAULT_CORPUS)
+    attack.add_argument("--report", action="store_true",
+                        help="print the full report for every case that fails")
+    attack.add_argument("--json", action="store_true")
+    attack.add_argument("--keep", action="store_true",
+                        help="leave each sandbox on disk and print where")
+    attack.add_argument("--ghost-tools", type=Path, default=None, metavar="PATH")
+    attack.add_argument("--timeout", type=float, default=900.0, metavar="SECONDS")
+
+    evolve = sub.add_parser("evolve", help="adaptive search for new cases")
+    evolve.add_argument("--budget", type=int, default=30, metavar="N",
+                        help="target invocations to spend (default 30)")
+    evolve.add_argument("--population", type=int, default=6, metavar="N")
+    evolve.add_argument("--seed", type=int, default=0, metavar="N")
+    evolve.add_argument("--from", dest="start", default="", metavar="SUBSTRING",
+                        help="seed the population from these catalogue cases")
+    evolve.add_argument("--corpus", action="store_true")
+    evolve.add_argument("--corpus-path", type=Path, default=DEFAULT_CORPUS)
+    evolve.add_argument("--json", action="store_true")
+    evolve.add_argument("--ghost-tools", type=Path, default=None, metavar="PATH")
+
+    minimise = sub.add_parser("minimize", help="reduce a case to the smallest "
+                                               "world that still fails")
+    minimise.add_argument("case")
+    minimise.add_argument("--budget", type=int, default=minimize.DEFAULT_BUDGET)
+    minimise.add_argument("--corpus", action="store_true")
+    minimise.add_argument("--corpus-path", type=Path, default=DEFAULT_CORPUS)
+    minimise.add_argument("--json", action="store_true")
+    minimise.add_argument("--ghost-tools", type=Path, default=None, metavar="PATH")
+
+    reproduce = sub.add_parser("reproduce", help="rebuild and re-run one case "
+                                                 "from its genome")
+    reproduce.add_argument("case")
+    reproduce.add_argument("--corpus-path", type=Path, default=DEFAULT_CORPUS)
+    reproduce.add_argument("--keep", type=Path, default=None, metavar="DIR",
+                           help="materialise the world here and leave it")
+    reproduce.add_argument("--build-only", action="store_true",
+                           help="write the world and stop, without running "
+                                "the target")
+    reproduce.add_argument("--json", action="store_true")
+    reproduce.add_argument("--ghost-tools", type=Path, default=None, metavar="PATH")
+
+    corpus_cmd = sub.add_parser("corpus", help="the attack memory")
+    corpus_cmd.add_argument("--bucket", default="", metavar="NAME")
+    corpus_cmd.add_argument("--corpus-path", type=Path, default=DEFAULT_CORPUS)
+    corpus_cmd.add_argument("--promote", default="", metavar="CASE")
+    corpus_cmd.add_argument("--force", action="store_true",
+                            help="promote a case only one oracle saw")
+    corpus_cmd.add_argument("--reason", default="", metavar="TEXT")
+    corpus_cmd.add_argument("--json", action="store_true")
+
+    diff = sub.add_parser("diff", help="compare two revisions of the target")
+    diff.add_argument("--ghost", action="append", default=[], metavar="PATH_OR_REV",
+                      help="give twice: baseline then candidate")
+    diff.add_argument("--bucket", default="regression", metavar="NAME",
+                      help="which archived cases to run (default regression)")
+    diff.add_argument("--seeds", action="store_true",
+                      help="use the seed catalogue instead of the corpus")
+    diff.add_argument("--corpus-path", type=Path, default=DEFAULT_CORPUS)
+    diff.add_argument("--json", action="store_true")
+
+    report = sub.add_parser("report", help="scorecard and coverage")
+    report.add_argument("--from-json", type=Path, default=None, metavar="FILE",
+                        help="read a machine report instead of running anything")
+    report.add_argument("--bucket", default="", metavar="NAME",
+                        help="run archived cases from this bucket")
+    report.add_argument("--corpus-path", type=Path, default=DEFAULT_CORPUS)
+    report.add_argument("--json", action="store_true")
+    report.add_argument("--ghost-tools", type=Path, default=None, metavar="PATH")
+
+    tidy = sub.add_parser("sandboxes", help="list or delete stray sandboxes")
+    tidy.add_argument("--purge", action="store_true")
+
+
+HANDLERS = {}
+
+
+def handle(command: str, args) -> int:
+    return HANDLERS[command](args)
+
+
+def _register(name):
+    def wrap(fn):
+        HANDLERS[name] = fn
+        return fn
+    return wrap
+
+
+def _adapter(args) -> GhostToolsAdapter:
+    return GhostToolsAdapter(getattr(args, "ghost_tools", None))
+
+
+def _genomes(args) -> List[RepositoryGenome]:
+    if getattr(args, "from_corpus", ""):
+        return Corpus(args.corpus_path).genomes(args.from_corpus)
+    if getattr(args, "case", ""):
+        return [catalogue.get(args.case)]
+    if getattr(args, "category", ""):
+        return [g for g in catalogue.CATALOGUE if g.category.value == args.category]
+    return list(catalogue.CATALOGUE)
+
+
+# ------------------------------------------------------------------- audit
+
+@_register("audit")
+def _audit(args) -> int:
+    print("SWIZZLE SELF-CHECK")
+    print("=" * 66)
+    ok = True
+    if shutil.which("git"):
+        print("  git                   found")
+    else:
+        print("  git                   MISSING -- a case is a repository")
+        ok = False
+    try:
+        adapter = _adapter(args)
+        version = adapter.version()
+        print("  target                %s %s at %s"
+              % (version["target"], version["package_version"],
+                 version["commit"][:10]))
+        if version.get("commit_dirty") == "yes":
+            print("                        (checkout has uncommitted changes; "
+                  "results are not attributable to that commit)")
+    except TargetUnavailable as exc:
+        print("  target                MISSING -- %s" % exc)
+        ok = False
+    with Sandbox() as box:
+        box.write("probe/a.txt", "x")
+        try:
+            box.resolve("../escape.txt")
+            print("  sandbox               BROKEN: accepted a path outside itself")
+            ok = False
+        except Exception:
+            print("  sandbox               refuses paths outside itself")
+    print("  mutators              %d registered" % len(registry()))
+    print("  seed cases            %d" % len(catalogue.CATALOGUE))
+    print("  oracles               %d independent" % len(_oracle_names()))
+    print()
+    print(coverage.render(coverage.matrix()))
+    print("Documentation: docs/ARCHITECTURE.md, docs/ADVERSARIAL_CONTRACT.md,")
+    print("docs/THREAT_MODEL.md, docs/ORACLES.md, docs/FITNESS.md.")
+    return 0 if ok else 2
+
+
+def _oracle_names():
+    from .oracles import ORACLES
+    return list(ORACLES)
+
+
+# -------------------------------------------------------------------- seed
+
+@_register("seed")
+def _seed(args) -> int:
+    for genome in catalogue.select(args.only):
+        print("%-40s %-12s seed=%-4d %d mutation(s)"
+              % (genome.name, genome.category.value, genome.seed,
+                 len(genome.mutations)))
+        if args.full:
+            import textwrap
+            print(textwrap.fill(genome.hypothesis, width=74,
+                                initial_indent="    ", subsequent_indent="    "))
+            print()
+    return 0
+
+
+@_register("mutators")
+def _mutators(args) -> int:
+    for name, mutator in sorted(registry().items()):
+        if args.only and args.only not in name and args.only not in mutator.category.value:
+            continue
+        print("%-32s v%d  %-13s %s"
+              % (name, mutator.version, mutator.category.value, mutator.phase.value))
+        import textwrap
+        print(textwrap.fill(mutator.summary, width=74,
+                            initial_indent="    ", subsequent_indent="    "))
+        if mutator.params:
+            print("    params: " + ", ".join("%s (%s)" % kv
+                                             for kv in sorted(mutator.params.items())))
+        print()
+    return 0
+
+
+# ------------------------------------------------------------------ attack
+
+@_register("attack")
+def _attack(args) -> int:
+    try:
+        adapter = _adapter(args)
+    except TargetUnavailable as exc:
+        print("swizzle: %s" % exc, file=sys.stderr)
+        return 2
+
+    genomes = _genomes(args)
+    if args.seed is not None:
+        genomes = [g.evolved(seed=args.seed) for g in genomes]
+    if not genomes:
+        print("swizzle: no cases selected", file=sys.stderr)
+        return 2
+
+    store = Corpus(args.corpus_path) if args.corpus else None
+    results, minimisations = [], {}
+    for genome in genomes:
+        result = run_case(genome, adapter, keep=args.keep, timeout=args.timeout)
+        results.append(result)
+        if not args.json:
+            print(reporting.summary_table([result]).splitlines()[-1])
+        if result.fitness.interesting and args.minimize:
+            reduction = minimize.minimise(genome, adapter, baseline=result)
+            minimisations[genome.name] = reduction
+            if not args.json:
+                print("    minimised: %d of %d reductions held, size ratio %.2f"
+                      % (reduction.steps_kept, reduction.steps_tried, reduction.ratio))
+        if store is not None:
+            bucket = "discovered" if result.fitness.interesting else "rejected"
+            entry = store.record(result, bucket,
+                                 minimisation=minimisations.get(genome.name))
+            if minimisations.get(genome.name):
+                store.record(
+                    result.__class__(**{**result.__dict__,
+                                        "genome": minimisations[genome.name].minimal}),
+                    "minimized", minimisation=minimisations[genome.name])
+            if not args.json:
+                print("    archived: %s" % entry.path)
+
+    card = metrics.scorecard(results, list(minimisations.values()))
+    if args.json:
+        print(reporting.machine_report(results, minimisations, card))
+        return 0
+
+    print()
+    if args.report:
+        for result in results:
+            if result.fitness.interesting or result.broken:
+                print(reporting.attack_report(result, minimisations.get(result.genome.name)))
+    print(metrics.render(card))
+    return 0
+
+
+# ------------------------------------------------------------------ evolve
+
+@_register("evolve")
+def _evolve(args) -> int:
+    try:
+        adapter = _adapter(args)
+    except TargetUnavailable as exc:
+        print("swizzle: %s" % exc, file=sys.stderr)
+        return 2
+    seeds = catalogue.select(args.start)
+    if not seeds:
+        print("swizzle: no seed cases matched %r" % args.start, file=sys.stderr)
+        return 2
+
+    def announce(result, index):
+        if args.json:
+            return
+        mark = result.fitness.top.name if result.fitness.interesting else "pass"
+        print("  %3d  %-40s %-9s %s" % (index, result.genome.name[:40], mark,
+                                        result.fitness.render()))
+
+    if not args.json:
+        print("evolving from %d seed(s), budget %d evaluation(s)"
+              % (len(seeds), args.budget))
+    report = search.evolve(seeds, adapter, budget=args.budget,
+                           population=args.population, seed=args.seed,
+                           on_case=announce)
+    if args.corpus:
+        store = Corpus(args.corpus_path)
+        for result in report.best:
+            store.record(result, "discovered", note="found by search")
+
+    if args.json:
+        print(json.dumps(report.to_dict(), indent=2, sort_keys=True))
+        return 0
+
+    print()
+    print("%d evaluation(s) over %d generation(s) in %.0fs"
+          % (report.evaluations, report.generations, report.seconds))
+    print("failure classes, and the evaluation each was first seen at:")
+    for name, index in sorted(report.first_seen.items(), key=lambda kv: kv[1]):
+        print("  %-26s %d" % (name, index))
+    if report.rediscovered:
+        print("rediscovered seed cases: %s" % ", ".join(report.rediscovered))
+    print()
+    print("mutator      offered  improved  critical  hit rate")
+    for name, stats in sorted(report.stats.items()):
+        if stats.offered:
+            print("  %-30s %3d      %3d       %3d      %.2f"
+                  % (name, stats.offered, stats.improved, stats.critical,
+                     stats.hit_rate))
+    print()
+    print(reporting.summary_table(report.best))
+    return 0
+
+
+# ---------------------------------------------------------------- minimize
+
+@_register("minimize")
+def _minimize(args) -> int:
+    try:
+        adapter = _adapter(args)
+    except TargetUnavailable as exc:
+        print("swizzle: %s" % exc, file=sys.stderr)
+        return 2
+    genome = _find_genome(args.case, args.corpus_path)
+    if genome is None:
+        print("swizzle: no case called %r in the catalogue or the corpus"
+              % args.case, file=sys.stderr)
+        return 2
+
+    def step(label, held, index):
+        if not args.json:
+            print("  %-3d %-9s %s" % (index, "kept" if held else "dropped", label))
+
+    reduction = minimize.minimise(genome, adapter, budget=args.budget, on_step=step)
+    if args.corpus and reduction.result is not None:
+        Corpus(args.corpus_path).record(reduction.result, "minimized",
+                                        minimisation=reduction)
+    if args.json:
+        print(json.dumps(reduction.to_dict(), indent=2, sort_keys=True))
+        return 0
+    print()
+    print("minimised %s: %d of %d reductions held (size %d -> %d, ratio %.2f)"
+          % (genome.name, reduction.steps_kept, reduction.steps_tried,
+             minimize._size(reduction.original), minimize._size(reduction.minimal),
+             reduction.ratio))
+    if reduction.exhausted:
+        print("the budget ran out before the fixpoint; the result is reduced, "
+              "not locally minimal")
+    for removed in reduction.removed:
+        print("  removed: %s" % removed)
+    if reduction.result is not None:
+        print()
+        print(reporting.attack_report(reduction.result, reduction))
+    return 0
+
+
+# --------------------------------------------------------------- reproduce
+
+@_register("reproduce")
+def _reproduce(args) -> int:
+    genome = _find_genome(args.case, args.corpus_path)
+    if genome is None:
+        print("swizzle: no case called %r" % args.case, file=sys.stderr)
+        return 2
+
+    if args.build_only:
+        from . import world
+        from .draft import TargetDialect
+        try:
+            dialect = _adapter(args).dialect()
+        except TargetUnavailable:
+            dialect = TargetDialect("generic", "<!-- count -->", "<!-- /count -->")
+        draft = world.build(genome, dialect)
+        destination = args.keep or Path(tempfile.mkdtemp(prefix="swizzle-case-"))
+        box = Sandbox(root=destination, keep=True)
+        root = world.materialise(draft, box)
+        print(root)
+        return 0
+
+    try:
+        adapter = _adapter(args)
+    except TargetUnavailable as exc:
+        print("swizzle: %s" % exc, file=sys.stderr)
+        return 2
+    result = run_case(genome, adapter, keep=args.keep is not None,
+                      workspace=args.keep)
+    if args.json:
+        print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+        return 0
+    print(reporting.attack_report(result))
+    return 0 if not result.broken else 2
+
+
+# ------------------------------------------------------------------ corpus
+
+@_register("corpus")
+def _corpus(args) -> int:
+    store = Corpus(args.corpus_path)
+    if args.promote:
+        try:
+            entry = store.promote(args.promote, force=args.force, reason=args.reason)
+        except (KeyError, PromotionRefused) as exc:
+            print("swizzle: %s" % exc, file=sys.stderr)
+            return 2
+        print("promoted %s to regression: %s" % (entry.name, entry.path))
+        return 0
+
+    entries = store.entries(args.bucket)
+    if args.json:
+        print(json.dumps([{"bucket": e.bucket, "name": e.name,
+                           "severity": e.severity,
+                           "corroborated": list(e.corroborated),
+                           "path": str(e.path)} for e in entries],
+                         indent=2, sort_keys=True))
+        return 0
+    if not entries:
+        print("the corpus is empty%s." % (" in %s" % args.bucket if args.bucket else ""))
+        return 0
+    for entry in entries:
+        print("%-12s %-38s %-9s %s"
+              % (entry.bucket, entry.name[:38], entry.severity,
+                 ", ".join(entry.corroborated) or "single oracle"))
+    print()
+    print("%d entr(ies). Promote with: swizzle corpus --promote NAME" % len(entries))
+    return 0
+
+
+# -------------------------------------------------------------------- diff
+
+@_register("diff")
+def _diff(args) -> int:
+    if len(args.ghost) != 2:
+        print("swizzle: give --ghost twice, baseline first", file=sys.stderr)
+        return 2
+    scratch: List[Path] = []
+    try:
+        baseline = _adapter_for(args.ghost[0], scratch)
+        candidate = _adapter_for(args.ghost[1], scratch)
+    except (TargetUnavailable, RuntimeError) as exc:
+        print("swizzle: %s" % exc, file=sys.stderr)
+        return 2
+    genomes = (list(catalogue.CATALOGUE) if args.seeds
+               else Corpus(args.corpus_path).genomes(args.bucket))
+    if not genomes:
+        print("swizzle: nothing to run. Pass --seeds, or archive some cases "
+              "first.", file=sys.stderr)
+        return 2
+    try:
+        result = compare(genomes, baseline, candidate)
+    finally:
+        for path in scratch:
+            shutil.rmtree(path, ignore_errors=True)
+    if args.json:
+        print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+        return 0
+    print(result.render())
+    counts = result.counts()
+    return 1 if counts.get("regressed") or counts.get("worsened") else 0
+
+
+def _adapter_for(what: str, scratch: List[Path]) -> GhostToolsAdapter:
+    """A target adapter for a checkout path or a git revision of one."""
+    path = Path(what)
+    if (path / "ghost_buster" / "cli.py").is_file():
+        return GhostToolsAdapter(path)
+    base = GhostToolsAdapter().checkout
+    destination = Path(tempfile.mkdtemp(prefix="swizzle-ghost-"))
+    scratch.append(destination)
+    done = subprocess.run(("git", "worktree", "add", "--quiet", "--detach",
+                           str(destination / "ghost_tools"), what),
+                          cwd=str(base), capture_output=True, text=True, timeout=300)
+    if done.returncode != 0:
+        raise RuntimeError("%r is neither a checkout nor a revision of %s: %s"
+                           % (what, base, done.stderr.strip()))
+    return GhostToolsAdapter(destination / "ghost_tools")
+
+
+# ------------------------------------------------------------------ report
+
+@_register("report")
+def _report(args) -> int:
+    if args.from_json is not None:
+        payload = json.loads(args.from_json.read_text(encoding="utf-8"))
+        card = payload.get("scorecard")
+        if card:
+            print(metrics.render(card))
+        print(coverage.render(coverage.matrix()))
+        return 0
+    try:
+        adapter = _adapter(args)
+    except TargetUnavailable as exc:
+        print("swizzle: %s" % exc, file=sys.stderr)
+        return 2
+    genomes = (Corpus(args.corpus_path).genomes(args.bucket) if args.bucket
+               else list(catalogue.CATALOGUE))
+    results = [run_case(g, adapter) for g in genomes]
+    card = metrics.scorecard(results)
+    if args.json:
+        print(reporting.machine_report(results, {}, card))
+        return 0
+    print(reporting.summary_table(results))
+    print()
+    print(metrics.render(card))
+    print(coverage.render(coverage.matrix(results)))
+    return 0
+
+
+@_register("sandboxes")
+def _sandboxes(args) -> int:
+    if args.purge:
+        removed = list(purge())
+        for path in removed:
+            print("removed %s" % path)
+        print("%d sandbox(es) removed." % len(removed))
+        return 0
+    found = sorted(Path(tempfile.gettempdir()).glob(Sandbox.PREFIX + "*"))
+    for path in found:
+        print(path)
+    print("%d sandbox(es). Remove them with --purge." % len(found))
+    return 0
+
+
+def _find_genome(name: str, corpus_path: Path) -> Optional[RepositoryGenome]:
+    """A case by name: the seed catalogue first, then the corpus.
+
+    The catalogue is asked by membership rather than by catching its KeyError.
+    An `except KeyError: pass` here would also swallow a KeyError raised from
+    somewhere deeper inside the lookup, and reported it as "no such case" --
+    which is the defect this project's own catalogue is built to report in
+    other people's code.
+    """
+    known = catalogue.by_name()
+    if name in known:
+        return known[name]
+    entry = Corpus(corpus_path).get(name)
+    return entry.genome if entry is not None else None

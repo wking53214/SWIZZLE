@@ -41,10 +41,11 @@ def _selected(pattern: str | None) -> List[Warp]:
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="swizzle",
-        description="A reality warper with a defeat condition: it builds "
-                    "repositories with proven defects in them, declares the "
-                    "finding that would banish each one, and reports which "
-                    "ones ghost_buster named.")
+        description="An adaptive adversarial evaluator for repository-level "
+                    "autonomous modification systems. It builds repository "
+                    "states in which the target is likely to make an "
+                    "incorrect epistemic, diagnostic or mutational decision, "
+                    "then proves independently whether it did.")
     parser.add_argument("--version", action="version",
                         version="swizzle %s" % __version__)
     sub = parser.add_subparsers(dest="command")
@@ -76,12 +77,22 @@ def main(argv: Sequence[str] | None = None) -> int:
     summoning.add_argument("warp")
     summoning.add_argument("--into", type=Path, default=Path.cwd(), metavar="DIR")
 
+    # The laboratory's commands. The four above are the original SWIZZLE and
+    # keep their behaviour exactly; everything the adversarial laboratory adds
+    # registers itself here.
+    from .lab import cli as lab_cli
+    lab_cli.add_parsers(sub)
+
     args = parser.parse_args(argv)
     if args.command is None:
         parser.print_help()
         return 0
-    handler = {"list": _list, "prove": _prove, "run": _run,
-               "summon": _summon}[args.command]
+    handlers = {"list": _list, "prove": _prove, "run": _run, "summon": _summon}
+    if args.command in handlers:
+        handler = handlers[args.command]
+    else:
+        from .lab import cli as lab_cli
+        handler = lambda a: lab_cli.handle(a.command, a)
     try:
         return handler(args)
     except BrokenPipeError:

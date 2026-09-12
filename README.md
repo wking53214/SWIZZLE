@@ -1,4 +1,174 @@
-# SWIZZLE -- v0.1.0
+# SWIZZLE -- v0.2.0
+
+An adaptive adversarial evaluator for repository-level autonomous
+modification systems.
+
+    swizzle audit      can the laboratory run, and what does it currently attack
+    swizzle seed       the catalogue of adversarial worlds, with hypotheses
+    swizzle attack     build cases, run the target, judge what happened
+    swizzle evolve     search for cases nobody wrote down
+    swizzle minimize   reduce a failure to the smallest world that still shows it
+    swizzle reproduce  rebuild one case from its genome
+    swizzle corpus     attack memory, and promotion to a regression case
+    swizzle diff       two revisions of the target, compared per case
+    swizzle report     scorecard and coverage
+
+    swizzle list|prove|run|summon    the original scanner-blind-spot catalogue,
+                                     unchanged (see "The first SWIZZLE" below)
+
+## What it optimises for
+
+Not "finding bugs in Ghost Tools". This:
+
+> finding the smallest reproducible repository state in which an autonomous
+> software-modification system violates an invariant it claims to enforce
+
+The distinction decides everything else. A framework aimed at the first goal
+keeps whatever makes the target look bad. A framework aimed at the second has
+to produce a scientific artefact each time: a hypothesis, a constructed world,
+an independent observation, a classification, a minimisation, and a command
+that reproduces it.
+
+## The shape of it
+
+```
+RepositoryGenome  ->  world.build()  ->  Sandbox  ->  TargetAdapter
+   (typed, seeded,         |                              |
+    serialisable,    GroundTruth                      Evidence
+    with a stated     (frozen BEFORE                      |
+    hypothesis)        anything runs)              six independent oracles
+                                                          |
+                                          Fitness (strict severity dominance)
+                                                          |
+                                     report / minimise / archive / evolve
+```
+
+Three boundaries hold it up, and each is enforced by a test rather than by
+intention:
+
+**Ground truth cannot reach the target.** `Tests/test_lab_oracle_independence.py`
+walks the import graph and fails if any module that decides what *should* have
+happened can reach anything that can ask the target a question. Without it, the
+expectation could be shaped by the behaviour it exists to judge.
+
+**The target lives behind an adapter.** Nothing above `lab/adapter.py` names a
+target. A second adapter — a configurable fake with ten behaviours — runs the
+entire laboratory unmodified, which is the evidence that the abstraction is
+real rather than decorative.
+
+**Oracles are pure functions of evidence.** They never touch the filesystem, so
+two of them cannot disagree by looking at different moments, and an archived
+case can be re-judged without rebuilding it.
+
+## Results against Ghost Tools 1.7.0
+
+Seven attacks, five clean passes. Two of the attacks are CRITICAL:
+
+**A write landed outside the repository.** One remedy composes `root/"README.md"`
+and writes to it with no containment check. A symlink carries the write out of
+the tree — where the branch the tool opened cannot revert it, and where the
+tool's own commit then fails because there is nothing in the repository to
+commit. Its error path sees a symptom after the damage.
+
+**Author prose inside an opt-in block was deleted.** A repository hands over a
+*count* by writing a marker pair. The tool replaces the *region*, so a sentence
+somebody wrote inside it is gone — and the verification that follows the write
+checks that bytes *outside* the block are unchanged, so it cannot see the loss.
+The verification was not weak; it answered a different question from the one
+the invariant needed.
+
+The differential pins the second one to a release:
+
+```
+baseline   1.6.1 at e5ad44b57a
+candidate  1.7.0 at d14dc1acf0
+worsened   prose_inside_the_maintained_block  LOW -> CRITICAL
+```
+
+And the five passes matter as much. Ghost correctly declined to rewrite a
+dated claim, a live-looking claim inside a historical document, and a document
+whose marker pair never closes; it handled two maintained blocks
+consistently; and when it was sent SIGKILL in the middle of an operation it
+left the repository on its original branch, clean, with nothing changed. A
+corpus with no passes in it is a corpus whose oracles nobody should trust.
+
+## Severity, and the one rule that cannot be tuned
+
+A case where the target destroyed a paragraph outranks any number of cases
+where it filed a report badly. Not by a lot -- absolutely. Severity counts are
+compared lexicographically, so the trade cannot be expressed.
+
+Weights were the first design and they were wrong: a search optimising
+`4*critical + 3*high + ...` trades one CRITICAL for two HIGHs, and cosmetic
+complaints are far easier to generate than real damage, so within a few
+generations the population scores well and means nothing.
+
+Harmless abstention scores zero. Over-cautious abstention scores LOW, because
+an evaluator that cannot see over-caution cannot tell a safe target from a
+broken one -- and LOW so that no quantity of it competes with damage.
+
+## Who watches the adversary
+
+`Tests/test_lab_self_adversarial.py` attacks SWIZZLE's own oracles with targets
+built to satisfy them while doing the wrong thing. It contains two kinds of
+test, and the difference is the point:
+
+- tests asserting an attack on the oracles **fails**. Guarantees.
+- tests asserting an attack on the oracles **succeeds**. Each names a blind
+  spot that is real today and will fail the day somebody closes it.
+
+Three blind spots are recorded that way: a change that is reverted is
+invisible, an escape that is restored is invisible, and a wrong ground truth
+cannot be detected by anything here. They are in `docs/ORACLES.md` under "What
+the oracles cannot see".
+
+## Documentation
+
+| | |
+|---|---|
+| `docs/ARCHITECTURE.md` | modules, pipeline, and where this sits among fuzzing, mutation testing, property testing, red teaming and repair benchmarking |
+| `docs/ARCHITECTURE_AUDIT.md` | the audit of v0.1.0, and what was deliberately not rewritten |
+| `docs/ADVERSARIAL_CONTRACT.md` | what counts as an attack; the eight invariants |
+| `docs/THREAT_MODEL.md` | nine threats, why each is reachable, which are constructed |
+| `docs/MUTATION_MODEL.md` | the mutator contract |
+| `docs/ORACLES.md` | the six, and what none of them can see |
+| `docs/FITNESS.md` | the dominance rule |
+| `docs/MINIMIZATION.md` | reduction, and a worked example |
+| `docs/ADAPTIVE_SEARCH.md` | the search, and why it is not machine learning |
+| `docs/REPRODUCIBILITY.md` | what is recorded, and the properties tested |
+| `docs/ATTACK_CORPUS.md` | the four buckets and the promotion rule |
+| `docs/SECURITY.md` | what the sandbox guarantees, and what it does not |
+| `docs/IMPLEMENTATION_STATUS.md` | what exists, what does not, what is next |
+
+## Install
+
+    pip install -e ".[dev]"
+    swizzle audit --ghost-tools ../ghost_tools
+
+Python 3.11, `git`, and nothing else. The generated worlds are stdlib-only,
+because a fixture that needs a package installed is a fixture that can fail
+for a reason the report cannot explain.
+
+## Tests
+
+    python -m pytest
+
+343 tests. The ones that matter most are not the ones that check the
+laboratory works: they are `test_lab_oracle_independence.py`, which proves the
+expectation cannot be influenced by the target, and
+`test_lab_self_adversarial.py`, which tries to fool the evaluation layer.
+
+---
+
+# The first SWIZZLE
+
+Everything below is the original project, unchanged and still running. It asks
+a different question -- whether a scanner's *reading* of a defect is correct,
+rather than whether a modification system's *writing* is safe -- and that
+question did not stop being worth asking. `swizzle list`, `prove`, `run` and
+`summon` behave exactly as they always did.
+
+## The defeat condition
 
 A reality warper whose entire intent is to trick `ghost_tools`, and whose
 entire design is to be caught doing it.
@@ -224,21 +394,31 @@ pointed the wrong way.
 
 ## SWIZZLE under ghost_buster
 
-The adversary is scanned by its target, and as of 2026-09-12 comes back
-with zero findings on 1.7.0:
+The adversary is scanned by its target. As of 2026-09-12, v0.2.0 comes back
+with 42 findings, every one of them MINOR, and the breakdown is worth stating
+rather than rounding to a claim:
 
-    ghost-buster . --single-repo --no-secrets --no-ledger --no-branches
+    29  dead_code        every one a false positive, and a disclosed one:
+                         they are the CLI's command handlers and the
+                         mutator registry, all reached through decorators
+                         and a dispatch table. ghost_buster documents that
+                         it cannot trace decorator registration and that it
+                         self-flags on its own `@register` pattern -- which
+                         is exactly what `dispatch_by_decorator`, a decoy in
+                         the warp catalogue below, exists to demonstrate
+     7  duplicate block  repeated `lines.append("")` in report renderers
+     3  long_function    argparse setup, one report renderer, the search loop
+     3  name_disagreement
+    ...
 
-That is not a claim of quality -- SWIZZLE's own report is a list of things
-this scan does not look for. It is a claim of good faith. Everything
-ghost_buster did find on the first pass was real and is fixed: a `render`
-function past the length threshold, a repeated statement inside it, one
-value carried under two names, `Path(...)` rebuilt on every turn of two
-loops, and an `except BrokenPipeError: pass` that is now a real handler
-with a reason written next to it.
-
-The last one is worth naming, because `swallowed_exception` caught SWIZZLE
-doing the exact thing two of its own warps are built to demonstrate.
+v0.1.0 scanned clean at zero findings; the laboratory added enough code to
+change that, and the honest version of this section is the table above rather
+than a smaller number obtained by writing less. Everything actionable the
+scan found on the first pass was fixed: an `except KeyError: pass` in the
+case lookup (the exact defect this project reports in other people's code),
+three loop-invariant calls, and a name disagreement. What is left is the
+disclosed false-positive class and formatting churn in code that renders
+reports.
 
 ## Adding a warp
 

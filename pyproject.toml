@@ -4,13 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "swizzle"
-version = "0.1.0"
-description = "A reality warper with a defeat condition: builds repositories with proven defects, declares the finding that would banish each one, and reports which ones a scanner named"
+version = "0.2.0"
+description = "An adaptive adversarial evaluator for repository-level autonomous modification systems: builds reproducible repository states in which a target is likely to make an incorrect epistemic, diagnostic or mutational decision, and proves independently whether it did"
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [{ name = "William King" }]
-keywords = ["adversarial-testing", "static-analysis", "false-negatives",
-            "blind-spots", "code-quality", "red-team"]
+keywords = ["adversarial-testing", "adversarial-evaluation", "fuzzing",
+            "minimization", "oracles", "static-analysis", "blind-spots",
+            "autonomous-agents", "red-team"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
@@ -33,7 +34,7 @@ swizzle = "swizzle.cli:main"
 dev = ["pytest>=8"]
 
 [tool.setuptools]
-packages = ["swizzle", "swizzle.warps"]
+packages = ["swizzle", "swizzle.warps", "swizzle.lab", "swizzle.lab.oracles", "swizzle.lab.adapters"]
 
 [tool.pytest.ini_options]
 testpaths = ["Tests"]
