@@ -108,6 +108,27 @@ class TargetAdapter(ABC):
         output state (in which case the working tree is the result).
         """
 
+    def prime_baseline(self, root: Path, sandbox: Sandbox,
+                       timeout: float = 900.0) -> Optional[Observation]:
+        """Run the target once so it records whatever it remembers.
+
+        A baseline, a ledger, a set of accepted finding ids: none of these
+        exist until the tool has seen the repository once. Until then a
+        mutation is a change to a world the tool has no history of, and
+        every question about IDENTITY ("is this the same finding as last
+        time") and MEMORY ("did it come back, or did the check not run")
+        is unaskable.
+
+        Returns None when the target keeps nothing between runs, in which
+        case after-baseline mutations are not askable of it and the case
+        says so rather than pretending it ran. The default implementation
+        decides that from the dialect's declared memory files, so a target
+        gets this for free by describing itself honestly.
+        """
+        if not self.dialect().memory_files:
+            return None
+        return self.scan(root, sandbox, timeout=timeout)
+
     def adopt_output(self, root: Path, sandbox: Sandbox,
                      observation: Observation) -> bool:
         """Make the target's result the repository's current state.

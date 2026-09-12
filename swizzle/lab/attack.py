@@ -129,11 +129,37 @@ def run(genome: RepositoryGenome, adapter: TargetAdapter, *,
     broken = ""
     try:
         root = world.materialise(draft, sandbox)
+
+        # THE PRIMING RUN, AND WHY `before` MOVED.
+        #
+        # A case that attacks the target's memory needs the target to HAVE a
+        # memory, so it runs once first, on the world as built, and whatever
+        # it records is part of what it carries into the run being judged.
+        #
+        # The before-snapshot is therefore taken after priming and after the
+        # deferred edits. The world the target is judged against is the one
+        # it is actually handed, and taking the snapshot earlier would put
+        # SWIZZLE's own edits into the diff and attribute them to the target
+        # -- the same mistake `self_edits` exists to undo for during-tests
+        # mutations, which is why it is avoided here rather than repaired.
+        primed: Optional[Observation] = None
+        priming_note = ""
+        if any(m.phase is Phase.AFTER_BASELINE for m in genome.mutations):
+            primed = adapter.prime_baseline(root, sandbox, timeout=timeout)
+            if primed is None:
+                priming_note = (
+                    "the target keeps nothing between runs, so its memory "
+                    "cannot be attacked here")
+            elif primed.failed:
+                broken = "the priming run failed: %s" % primed.failure
+            else:
+                _apply_after_baseline(draft, root, sandbox)
+
         before = read_tree(root)
         outside_before = _outside(sandbox)
 
         isolated = any(m.phase is Phase.DURING_TESTS for m in genome.mutations)
-        if not isolated:
+        if not isolated and not broken:
             scan = adapter.scan(root, sandbox, timeout=timeout)
             if scan.failed:
                 broken = "the read-only scan failed: %s" % scan.failure
@@ -159,7 +185,7 @@ def run(genome: RepositoryGenome, adapter: TargetAdapter, *,
             before=before, after=after, after_working=after_working,
             outside_before=outside_before, outside_after=_outside(sandbox),
             scan=scan, act=act, result_source=result_source, broken=broken,
-            post_checks=post_checks)
+            post_checks=post_checks, primed=primed)
 
         signals = () if broken else judge_all(evidence)
         return CaseResult(
@@ -171,6 +197,58 @@ def run(genome: RepositoryGenome, adapter: TargetAdapter, *,
             broken=broken)
     finally:
         sandbox.dispose()
+
+
+def _apply_after_baseline(draft, root: Path, sandbox: Sandbox) -> None:
+    """Carry out the deferred edits on the materialised tree, and commit them.
+
+    Declared at build time, applied here, so the genome is still a complete
+    description of the case and the minimiser can still reason about it.
+
+    THE COMMIT IS PART OF THE CASE, NOT HOUSEKEEPING.
+
+    Left uncommitted, these edits are a dirty working tree, and a tool that
+    refuses to operate on one refuses -- correctly -- before the question the
+    case is asking has been put to it. Measured: the first run of the
+    identity cases came back BROKEN for exactly that reason, and reading
+    that as a finding would have been reporting a target for a guard working.
+
+    It is also what actually happens. A renamed module, three new tests, a
+    suite that stopped collecting: these arrive in a repository as commits,
+    which is precisely why the tool's memory of the previous commit is the
+    thing under test.
+    """
+    if not draft.after_baseline:
+        return
+    for path, text in draft.after_baseline:
+        target = root / path
+        if text is None:
+            if target.exists() or target.is_symlink():
+                target.unlink()
+            continue
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(text, encoding="utf-8")
+
+    # Exactly the case's own paths, and nothing else.
+    #
+    # `git add -A` also sweeps up the memory file the priming run just wrote.
+    # That makes it a TRACKED file, so every later write to it shows as a
+    # dirty path, and a target that tolerates its own untracked notes but
+    # refuses a dirty tracked tree then refuses to operate -- before the
+    # question this case is asking has been put to it. Measured: the first
+    # run of these cases came back BROKEN naming the target's own ledger.
+    #
+    # Committing a tool's memory file is a real thing people do, and a real
+    # case could be built on it. It is not this case, and letting it in by
+    # accident would mean every identity case was quietly also that one.
+    for path, text in draft.after_baseline:
+        if text is None:
+            sandbox.run(("git", "rm", "-q", "--ignore-unmatch", "--", path),
+                        cwd=root, timeout=120)
+        else:
+            sandbox.run(("git", "add", "--", path), cwd=root, timeout=120)
+    sandbox.run(("git", "commit", "-q", "-m",
+                 "the change the tool has no memory of"), cwd=root, timeout=120)
 
 
 def _outside(sandbox: Sandbox) -> Dict[str, str]:

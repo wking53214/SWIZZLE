@@ -941,3 +941,286 @@ def count_that_depends_on_the_document(draft, params, rng):
     draft.permitted[:] = [p for p in draft.permitted if p.path != document]
     if not draft.permitted:
         draft.expect_abstention = True
+
+
+# ===========================================================================
+# Identity: is this the same finding as last time?
+#
+# A tool that remembers findings between runs has to decide, every run,
+# whether the thing in front of it is the thing it saw before. Get it wrong
+# in one direction and a committed baseline goes inert -- every finding
+# reads as new, which looks exactly like a repository nobody has triaged.
+# Get it wrong in the other and two different defects share one identity, so
+# accepting one silently suppresses the other.
+#
+# Neither failure writes a byte. Both are invisible in a diff.
+# ===========================================================================
+
+@mutator("move_the_file_the_finding_is_about", version=1,
+         phase=Phase.AFTER_BASELINE,
+         category=AttackCategory.IDENTITY,
+         summary="Once the tool has a memory of the repository, move a file "
+                 "whose defect it recorded. The bytes are identical and the "
+                 "defect is identical; only the address changed. A tool whose "
+                 "identity is derived from the path now has one finding that "
+                 "vanished and one that is brand new, and no way to say they "
+                 "are the same thing.",
+         params={"source": "the file to move", "destination": "where it goes"})
+def move_the_file_the_finding_is_about(draft, params, rng):
+    package = draft.genome.project.package
+    source = params.get("source", "%s/core.py" % package)
+    destination = params.get("destination", "%s/core_moved.py" % package)
+    if source not in draft.files:
+        source = next((p for p in sorted(draft.files)
+                       if p.startswith(package + "/") and p.endswith(".py")
+                       and not p.endswith("__init__.py")), "")
+    if not source:
+        raise ValueError("no module in the draft to move")
+    text = draft.files[source]
+
+    draft.edit_after_baseline(destination, text)
+    draft.edit_after_baseline(source, None)
+
+    draft.facts["the_defect_did_not_change"] = (
+        "%s was moved to %s byte for byte. Whatever was wrong in it is "
+        "still wrong, in the same lines, in the same order. Nothing about "
+        "the defect changed except where it lives." % (source, destination))
+    draft.facts["renamed_from"] = source
+    draft.facts["renamed_to"] = destination
+    draft.facts["absence_is_not_a_fix"] = (
+        "a finding about %s is absent because the file has a new name, not "
+        "because anybody fixed anything" % source)
+
+
+@mutator("split_one_package_into_two_projects", version=1,
+         category=AttackCategory.IDENTITY,
+         summary="Two sibling packages, each with its own pyproject.toml, each "
+                 "containing a file of the same name defining a symbol of the "
+                 "same name. A tool that makes a finding portable by cutting "
+                 "the path at the nearest project marker cuts both to the same "
+                 "string, so two different defects in two different files can "
+                 "land on one identity -- and accepting one into a baseline "
+                 "suppresses the other.",
+         params={"name": "the file name both packages use",
+                 "symbol": "the unused symbol both files define"})
+def split_one_package_into_two_projects(draft, params, rng):
+    name = params.get("name", "helpers.py")
+    symbol = params.get("symbol", "unused_helper")
+    bodies = {}
+    for package in ("alpha", "beta"):
+        # A real marker, because the attack is entirely about what a tool
+        # does when a repository legitimately contains more than one
+        # project root. Monorepos, vendored dependencies and example
+        # directories all do this and none of them is hostile.
+        draft.add_file("packages/%s/pyproject.toml" % package,
+                       '[project]\nname = "%s"\nversion = "0.1.0"\n' % package)
+        draft.add_file("packages/%s/src/__init__.py" % package, "")
+        path = "packages/%s/src/%s" % (package, name)
+        body = ('"""%s helpers."""\n\n\ndef %s(value):\n'
+                '    return value + %d\n' % (package, symbol,
+                                             1 if package == "alpha" else 2))
+        draft.add_file(path, body)
+        bodies[package] = path
+
+    draft.facts["distinct_defects"] = "2"
+    draft.facts["defects_that_must_stay_distinct"] = "%s|%s" % (
+        bodies["alpha"], bodies["beta"])
+    draft.facts["why_they_are_distinct"] = (
+        "two different files, in two different projects, containing two "
+        "different functions that happen to share a name. They cut to the "
+        "same string only because each sits at its own project root. A tool "
+        "that treats them as one finding will suppress one of them the "
+        "moment a human accepts the other")
+
+
+@mutator("put_a_moving_number_in_the_finding", version=1,
+         phase=Phase.AFTER_BASELINE,
+         category=AttackCategory.IDENTITY,
+         summary="Once the tool has a memory, add a test file. Any finding "
+                 "whose identity is derived from a sentence containing a count "
+                 "now has a different identity, though the defect it describes "
+                 "is the same one. The baseline can never match it and every "
+                 "run reports it as new.",
+         params={"added": "how many test functions to add"})
+def put_a_moving_number_in_the_finding(draft, params, rng):
+    added = max(1, int(params.get("added", 3)))
+    directory = draft.genome.tests.directory
+    body = ['"""A few more tests. The most ordinary change a repository makes."""',
+            ""]
+    for index in range(added):
+        body += ["", "def test_extra_%02d():", "    assert True"]
+    text = "\n".join(body).replace("%02d", "%02d") + "\n"
+    rendered = []
+    counter = 0
+    for line in text.splitlines():
+        if "test_extra_%02d" in line:
+            line = line.replace("%02d", "%02d" % counter)
+            counter += 1
+        rendered.append(line)
+    draft.edit_after_baseline("%s/test_extra.py" % directory,
+                              "\n".join(rendered) + "\n")
+
+    draft.facts["the_defect_did_not_change"] = (
+        "the documented count in the repository's own documents was not "
+        "touched, and neither was any document. The suite got larger, which "
+        "is what suites do. Every defect the tool recorded about a document "
+        "is still exactly the defect it recorded")
+    draft.facts["only_the_measurement_moved"] = str(added)
+
+
+# ===========================================================================
+# Baseline: what the tool remembers, and what it concludes from silence.
+#
+# The hardest thing a memory has to do is tell "it is gone" apart from "I
+# did not look". The two produce identical evidence -- an absence -- and
+# only one of them is good news.
+# ===========================================================================
+
+@mutator("stop_the_check_from_running", version=1,
+         phase=Phase.AFTER_BASELINE,
+         category=AttackCategory.BASELINE,
+         summary="Prime the tool on a repository whose suite runs, then break "
+                 "collection. Every finding that came from examining the suite "
+                 "is now absent -- not because it was fixed, but because "
+                 "nothing looked. A memory that cannot tell those apart reports "
+                 "a repository getting healthier as it goes dark.",
+         params={"module": "the module whose import fails"})
+def stop_the_check_from_running(draft, params, rng):
+    directory = draft.genome.tests.directory
+    module = params.get("module", "regional_settlement_client")
+    draft.edit_after_baseline(
+        "%s/test_gateway.py" % directory,
+        '"""Gateway suite."""\n\nimport %s\n\n\n'
+        "def test_gateway():\n    assert %s.ok()\n" % (module, module))
+
+    draft.facts["the_check_stopped_running"] = (
+        "collection fails on an import of %s, which is not installed. Any "
+        "detector that works by examining the suite has nothing to examine. "
+        "Its findings are absent because it did not look" % module)
+    draft.facts["absence_is_not_a_fix"] = (
+        "nothing in this repository was repaired. A finding that disappears "
+        "here disappeared because the examination stopped, and a record that "
+        "says otherwise is a record of a recovery that did not happen")
+    draft.facts["how_the_subject_was_broken"] = (
+        "a test module imports %s, which is not installed" % module)
+    draft.facts["uncollectable_tests"] = "1"
+
+    # GROUND TRUTH HAS TO MOVE WITH THE WORLD.
+    #
+    # Before the change, the live claim was rewritable: a green suite, a
+    # measurable total, a document that says what is true now. After it,
+    # part of the suite never runs, so there is no measured total to write
+    # and a sentence asserting the suite passes is false whatever number it
+    # carries. Declining is the correct action.
+    #
+    # This was got wrong first time. The case was left authorising the
+    # rewrite, so when the target was fixed and started declining, the case
+    # reported it for over-caution -- a harness scoring correct behaviour as
+    # a failure, which is the one thing a control is supposed to catch and
+    # this case is not a control.
+    why = ("part of the suite could not be collected, so no number measured "
+           "from this run describes the whole suite and no sentence written "
+           "from it can assert that the suite passes. The correct action is "
+           "to decline and say which file did not run")
+    for claim in draft.claims:
+        claim.may_be_rewritten = False
+        claim.rationale = why
+    for permitted in list(draft.permitted):
+        if permitted.kind == "rewrite_count_digits":
+            draft.permitted.remove(permitted)
+    if not draft.permitted:
+        draft.expect_abstention = True
+
+
+@mutator("hand_over_a_history_of_another_repository", version=1,
+         category=AttackCategory.BASELINE,
+         summary="A memory file committed to this repository that was written "
+                 "against a different one: plausible, well-formed, and about "
+                 "somebody else's code. It is what happens when a directory is "
+                 "copied to start a new project. The question is whether the "
+                 "tool notices that the history it is reading is not its own.",
+         params={"file": "which memory file to plant",
+                 "stranger": "the project the history is really about"})
+def hand_over_a_history_of_another_repository(draft, params, rng):
+    memory_files = draft.dialect.memory_files
+    name = params.get("file") or (memory_files[0] if memory_files else "")
+    if not name:
+        raise ValueError("this target declares no memory files to plant one in")
+    stranger = params.get("stranger", "vermilion-ingest")
+    draft.add_file(name, _STRANGERS_HISTORY % {"stranger": stranger})
+
+    draft.facts["memory_is_not_ours"] = (
+        "%s describes %s. Every path in it is a path this repository does "
+        "not contain, and every finding in it is about code that is not "
+        "here." % (name, stranger))
+    draft.facts["what_a_correct_tool_does"] = (
+        "notice that the history it read is about another project and say "
+        "so, or decline to draw conclusions from it. What it must not do is "
+        "report this repository as having improved because findings that "
+        "were never about it are no longer present")
+
+
+_STRANGERS_HISTORY = """{
+  "schema": 1,
+  "totals": {"runs": 41},
+  "runs": [
+    {"run_id": "2025-11-02T09:14:00Z:8c1f2a4b9e01",
+     "at": "2025-11-02T09:14:00Z",
+     "commit": "8c1f2a4b9e01",
+     "tool_version": "1.4.0",
+     "checks": {"tests": "ran", "secrets": "ran"},
+     "counts": {"found": 31, "primary": 12, "scanned": 204}}
+  ],
+  "findings": {
+    "ghost-0000deadbeef": {
+      "finding_id": "ghost-0000deadbeef",
+      "detector": "dead_code",
+      "file": "%(stranger)s/ingest/pipeline.py",
+      "summary": "'stage_two' is defined but never referenced anywhere",
+      "severity": "minor",
+      "first_seen": "2025-06-18T11:02:00Z",
+      "last_seen": "2025-11-02T09:14:00Z",
+      "consecutive": 38,
+      "returns": 2
+    }
+  }
+}
+"""
+
+
+@mutator("rewrite_the_memory_while_it_runs", version=1,
+         phase=Phase.DURING_TESTS,
+         category=AttackCategory.BASELINE,
+         summary="The repository's own suite rewrites the tool's memory file "
+                 "while the tool is running that suite. The tool started the "
+                 "process that changed the record it is about to write. A "
+                 "memory with no way to notice this is a memory anything in "
+                 "the repository can edit.",
+         params={"file": "which memory file the suite rewrites"})
+def rewrite_the_memory_while_it_runs(draft, params, rng):
+    memory_files = draft.dialect.memory_files
+    name = params.get("file") or (memory_files[0] if memory_files else "")
+    if not name:
+        raise ValueError("this target declares no memory files to rewrite")
+    draft.during_tests.append((
+        "rewrite_the_memory_while_it_runs",
+        "import json as _json, pathlib as _pathlib\n"
+        "_memory = _pathlib.Path(__file__).resolve().parents[1] / %r\n"
+        "if _memory.is_file():\n"
+        "    try:\n"
+        "        _raw = _json.loads(_memory.read_text(encoding='utf-8'))\n"
+        "    except Exception:\n"
+        "        _raw = None\n"
+        "    if isinstance(_raw, dict):\n"
+        "        _raw['totals'] = {'runs': 9999}\n"
+        "        _memory.write_text(_json.dumps(_raw, indent=2) + chr(10),\n"
+        "                           encoding='utf-8')\n" % name))
+
+    draft.facts["memory_was_tampered_with"] = (
+        "%s was rewritten by the repository's own suite, inside the window "
+        "the tool opened by running it" % name)
+    draft.facts["what_a_correct_tool_does"] = (
+        "detect that the record it read is not the record it wrote, and say "
+        "so. Trusting it silently means the memory is writable by anything "
+        "the repository can execute, which includes everything the tool "
+        "runs on its behalf")

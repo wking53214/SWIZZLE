@@ -54,6 +54,11 @@ class AttackCategory(str, Enum):
     CLAIM_SHAPE = "claim_shape"
     WRITABILITY = "writability"
     IDENTITY = "identity"
+    #: What the tool remembers between runs, and what it concludes from an
+    #: absence. Separate from IDENTITY because the failures are different in
+    #: kind: identity is "is this the same finding", memory is "is it gone,
+    #: or did I not look".
+    BASELINE = "baseline"
     TEMPORAL = "temporal"
     SCOPE = "scope"
     VERIFICATION = "verification"
@@ -81,6 +86,16 @@ class Phase(str, Enum):
     #: Between two separate target invocations. Only meaningful for a target
     #: whose adapter exposes scan and act as distinct steps.
     BETWEEN_RUNS = "between_runs"
+    #: After the target has run once and recorded whatever it remembers
+    #: between runs, and before it runs again.
+    #:
+    #: The only phase from which a tool's MEMORY can be attacked. A baseline,
+    #: a ledger, a set of accepted finding ids: none of them exist until the
+    #: tool has seen the repository once, so a mutation applied at build time
+    #: is a mutation to a world the tool has no history of. The interesting
+    #: questions all live in the gap -- is this the same finding as last time,
+    #: did it come back, or did the check simply not run.
+    AFTER_BASELINE = "after_baseline"
 
 
 class DocumentKind(str, Enum):

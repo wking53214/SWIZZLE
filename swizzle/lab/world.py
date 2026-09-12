@@ -194,6 +194,13 @@ def build(genome: RepositoryGenome, dialect: TargetDialect) -> WorldDraft:
 
     mutators.apply_all(draft, genome.mutations, Phase.BUILD)
     mutators.apply_all(draft, genome.mutations, Phase.DURING_TESTS)
+    # After-baseline mutators run here too, and only DECLARE their edits.
+    # The world is built once and the deferred edits are carried out later,
+    # by `attack.run`, once the target has a memory of the world without
+    # them. Doing it this way keeps a mutator a pure function of the draft:
+    # one that reached out and touched the disk itself would not survive
+    # serialisation, and the minimiser could not reason about it.
+    mutators.apply_all(draft, genome.mutations, Phase.AFTER_BASELINE)
     _append_during_tests(draft)
     return draft
 

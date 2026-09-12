@@ -40,6 +40,7 @@ _CATEGORY_SURFACES: Dict[str, Tuple[str, ...]] = {
     AttackCategory.CLAIM_SHAPE.value: ("claim shape", "writability"),
     AttackCategory.WRITABILITY.value: ("writability", "verification", "annotation"),
     AttackCategory.IDENTITY.value: ("identity", "baseline"),
+    AttackCategory.BASELINE.value: ("baseline", "ledger"),
     AttackCategory.TEMPORAL.value: ("temporal", "verification"),
     AttackCategory.SCOPE.value: ("scope", "annotation"),
     AttackCategory.VERIFICATION.value: ("verification",),
@@ -50,6 +51,8 @@ _CATEGORY_SURFACES: Dict[str, Tuple[str, ...]] = {
 }
 
 _FAILURE_SURFACES: Dict[str, str] = {
+    "identity_drift": "identity",
+    "false_memory": "baseline",
     "unauthorised_mutation": "writability",
     "escape": "scope",
     "unattributable_change": "scope",

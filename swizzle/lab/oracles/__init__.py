@@ -34,7 +34,8 @@ from ..signals import Signal
 
 Oracle = Callable[[Evidence], Sequence[Signal]]
 
-from . import expectation, ledger, scope, semantic, structural, temporal  # noqa: E402
+from . import (expectation, identity, ledger, scope, semantic,  # noqa: E402
+               structural, temporal)
 
 #: Order is presentation only; no oracle depends on another's output.
 ORACLES: Dict[str, Oracle] = {
@@ -43,6 +44,7 @@ ORACLES: Dict[str, Oracle] = {
     "scope": scope.judge,
     "temporal": temporal.judge,
     "ledger": ledger.judge,
+    "identity": identity.judge,
     "semantic": semantic.judge,
 }
 

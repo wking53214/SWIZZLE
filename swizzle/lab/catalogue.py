@@ -427,6 +427,141 @@ CATALOGUE: Tuple[RepositoryGenome, ...] = (
               "hypothesis is measurable. Toleration is a measurement decision "
               "taken once, here, in the open.",
     ),
+
+    # ================================================================ 19-24
+    # Identity and memory. The two surfaces nothing had ever tested, and the
+    # only ones whose failures are invisible in a diff.
+    # ---------------------------------------------------------------------
+    RepositoryGenome(
+        name="the_same_defect_at_a_new_address",
+        category=AttackCategory.IDENTITY,
+        hypothesis=(
+            "The tool is shown the repository, records what it found, and "
+            "then a file is moved byte for byte. The defect in it did not "
+            "change: same lines, same order, same everything except where it "
+            "lives.\n\nA tool whose finding identity is derived from the path "
+            "now has one finding that vanished and one that is brand new, and "
+            "nothing joining them. Two costs, both invisible in a diff: a "
+            "committed baseline stops matching, so a triaged repository reads "
+            "as untriaged; and the history shows a defect resolved that "
+            "nobody resolved.\n\nRenaming a module is the most ordinary thing "
+            "a repository does."),
+        seed=19,
+        tests=TestShape(count=ACTUAL),
+        documents=(_readme(),),
+        claims=(_live_claim(),),
+        project=ProjectShape(package="app", modules=("core", "gateway"),
+                             functions_per_module=2),
+        mutations=(MutationSpec("move_the_file_the_finding_is_about",
+                                {"source": "app/gateway.py",
+                                 "destination": "app/gateway_v2.py"},
+                                phase=Phase.AFTER_BASELINE),),
+    ),
+
+    RepositoryGenome(
+        name="two_projects_one_portable_name",
+        category=AttackCategory.IDENTITY,
+        hypothesis=(
+            "A repository containing two packages, each with its own "
+            "pyproject.toml, each with a file of the same name defining a "
+            "function of the same name. A monorepo. Nothing hostile.\n\nA "
+            "tool that makes a finding portable by cutting the path at the "
+            "nearest project marker cuts both of these to the same string. "
+            "Detector, path and summary are then identical, so two different "
+            "defects in two different files can be given one identity -- and "
+            "a baseline suppresses by identity, so accepting one stops the "
+            "other being reported.\n\nThe tool's output never says this "
+            "happened."),
+        seed=20,
+        tests=TestShape(count=ACTUAL),
+        documents=(_readme(),),
+        claims=(_live_claim(),),
+        mutations=(MutationSpec("split_one_package_into_two_projects",
+                                {"name": "helpers.py",
+                                 "symbol": "unused_helper"}),),
+    ),
+
+    RepositoryGenome(
+        name="an_identity_that_counts_something",
+        category=AttackCategory.IDENTITY,
+        hypothesis=(
+            "The tool is primed, and then the suite gets three more tests. "
+            "No document was touched and no defect was repaired.\n\nAny "
+            "finding whose identity is derived from a sentence containing a "
+            "measurement now has a different identity, because the "
+            "measurement moved. The defect it describes is the same defect. "
+            "A baseline can never match such a finding twice, so it is new "
+            "every run, forever, and 'accept this finding' silently means "
+            "'accept it until the next commit'."),
+        seed=21,
+        tests=TestShape(count=ACTUAL),
+        documents=(_readme(),),
+        claims=(_live_claim(),),
+        mutations=(MutationSpec("put_a_moving_number_in_the_finding",
+                                {"added": 3}, phase=Phase.AFTER_BASELINE),),
+    ),
+
+    RepositoryGenome(
+        name="an_absence_that_is_not_a_fix",
+        category=AttackCategory.BASELINE,
+        hypothesis=(
+            "The tool is primed on a repository whose suite runs, and then "
+            "collection breaks on an import of a package that is not "
+            "installed.\n\nEvery finding that came from examining the suite "
+            "is now absent. Not because it was fixed: because nothing "
+            "looked. The two produce identical evidence, an absence, and "
+            "only one of them is good news.\n\nThis tool's own ledger "
+            "documentation names this exact confusion as the reason the "
+            "ledger exists, so the case is a test of a stated invariant "
+            "rather than of an assumption."),
+        seed=22,
+        tests=TestShape(count=ACTUAL),
+        documents=(_readme(),),
+        claims=(_live_claim(),),
+        mutations=(MutationSpec("stop_the_check_from_running",
+                                {"module": "regional_settlement_client"},
+                                phase=Phase.AFTER_BASELINE),),
+    ),
+
+    RepositoryGenome(
+        name="a_history_of_somebody_elses_repository",
+        category=AttackCategory.BASELINE,
+        hypothesis=(
+            "A well-formed memory file, committed to this repository, that "
+            "was written against a different one. Every path in it names a "
+            "file this repository does not contain.\n\nThis is what happens "
+            "when somebody copies a directory to start a new project, which "
+            "is not rare and is not an attack. A correct tool notices that "
+            "the history it read is not its own, or declines to conclude "
+            "anything from it. What it must not do is report this repository "
+            "as having improved because findings that were never about it "
+            "are no longer present."),
+        seed=23,
+        tests=TestShape(count=ACTUAL),
+        documents=(_readme(),),
+        claims=(_live_claim(),),
+        mutations=(MutationSpec("hand_over_a_history_of_another_repository",
+                                {"stranger": "vermilion-ingest"}),),
+    ),
+
+    RepositoryGenome(
+        name="memory_rewritten_by_the_suite_it_runs",
+        category=AttackCategory.BASELINE,
+        hypothesis=(
+            "The repository's own test suite rewrites the tool's memory file "
+            "while the tool is running that suite. The tool started the "
+            "process that edited the record it is about to write.\n\nThis is "
+            "the same window the temporal cases use, aimed at the one file "
+            "the tool treats as its own. A memory with no way to notice this "
+            "is a memory anything the repository can execute may edit, which "
+            "includes everything the tool runs on the repository's behalf."),
+        seed=24,
+        tests=TestShape(count=ACTUAL),
+        documents=(_readme(),),
+        claims=(_live_claim(),),
+        mutations=(MutationSpec("rewrite_the_memory_while_it_runs", {},
+                                phase=Phase.DURING_TESTS),),
+    ),
 )
 
 

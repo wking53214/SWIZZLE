@@ -60,6 +60,19 @@ class Evidence:
     #: oracles stay pure functions of evidence and two of them can never
     #: disagree by running the same check at different moments.
     post_checks: Mapping[str, str] = field(default_factory=dict)
+    #: The priming run, for a case that attacks the target's memory: the
+    #: invocation that gave the target something to remember. None when the
+    #: case did not need one, or when the target keeps nothing between runs.
+    #:
+    #: It is EVIDENCE, not authority. What the target said it found while
+    #: being primed is the target's account of itself, exactly like `scan`,
+    #: and the identity oracle compares the two accounts rather than
+    #: believing either.
+    primed: Optional[Observation] = None
+
+    @property
+    def was_primed(self) -> bool:
+        return self.primed is not None
 
     # ------------------------------------------------------------ helpers
 

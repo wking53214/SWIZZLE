@@ -20,6 +20,7 @@ might do, including the correct thing.
 
 from __future__ import annotations
 
+import hashlib
 import os
 import re
 from pathlib import Path
@@ -60,12 +61,33 @@ class FakeTarget(TargetAdapter):
     name = "fake_target"
 
     def __init__(self, behaviour: str = "abstain", *, measured: int = 30,
-                 report_paths: Sequence[str] = ("README.md",)) -> None:
+                 report_paths: Sequence[str] = ("README.md",),
+                 identity: str = "path", reports: str = "declared") -> None:
+        """`identity` and `reports` are orthogonal to `behaviour`.
+
+        Behaviour is what the target WRITES. These two are what it SAYS, and
+        the questions about memory are entirely about what it says:
+
+            identity="path"      a finding is identified by where it is, so
+                                 moving a file makes it a different finding
+            identity="content"   identified by what it is, so a move is
+                                 invisible to the identity. The correct one,
+                                 and the control that must not be reported
+            reports="declared"   one finding per `report_paths`
+            reports="modules"    one finding per source file that exists,
+                                 so the account changes when the tree does
+        """
         if behaviour not in BEHAVIOURS:
             raise ValueError("no such behaviour: %s" % behaviour)
         self.behaviour = behaviour
         self.measured = measured
         self.report_paths = tuple(report_paths)
+        if identity not in ("path", "content"):
+            raise ValueError("no such identity policy: %s" % identity)
+        if reports not in ("declared", "modules"):
+            raise ValueError("no such reporting policy: %s" % reports)
+        self.identity = identity
+        self.reports = reports
         #: How many times `act` has been called. The convergence behaviours
         #: are the only ones that read it, because they are the only ones
         #: whose whole point is what happens on the SECOND run.
@@ -83,12 +105,50 @@ class FakeTarget(TargetAdapter):
                 "python": "0", "platform": "test", "behaviour": self.behaviour}
 
     def scan(self, root: Path, sandbox: Sandbox, timeout: float = 900.0) -> Observation:
-        findings = tuple(
-            {"detector": "documented_count", "evidence": {"file": path,
-                                                          "line_start": 1}}
-            for path in self.report_paths)
+        findings = self._findings(root)
+        self._remember(root, findings)
         return Observation(target=self.name, mode="scan", version=self.version(),
-                           invocations=(_nothing(),), findings=findings)
+                           invocations=(_nothing(),), findings=findings,
+                           memory=self._memory(root))
+
+    # ------------------------------------------------------------- saying
+
+    def _subjects(self, root: Path):
+        if self.reports == "declared":
+            return [(path, _read(root / path)) for path in self.report_paths]
+        out = []
+        for path in sorted(root.rglob("*.py")):
+            relative = path.relative_to(root).as_posix()
+            if relative.startswith("Tests/") or relative.endswith("__init__.py"):
+                continue
+            out.append((relative, _read(path)))
+        return out
+
+    def _findings(self, root: Path):
+        out = []
+        for relative, text in self._subjects(root):
+            basis = relative if self.identity == "path" else text
+            out.append({
+                "id": "fake-" + hashlib.sha256(
+                    ("documented_count|" + basis).encode("utf-8")).hexdigest()[:12],
+                "detector": "documented_count",
+                "evidence": {"file": relative, "line_start": 1}})
+        return tuple(out)
+
+    def _memory(self, root: Path):
+        path = root / ".fake_memory.json"
+        return {".fake_memory.json": _read(path)} if path.is_file() else {}
+
+    def _remember(self, root: Path, findings) -> None:
+        """Write the memory file, so `prime_baseline` is a real priming run
+        and the dialect's claim to have memory files is not a fiction."""
+        import json
+        try:
+            (root / ".fake_memory.json").write_text(
+                json.dumps({"seen": sorted(f["id"] for f in findings)},
+                           indent=2) + "\n", encoding="utf-8")
+        except OSError:
+            pass
 
     def act(self, root: Path, sandbox: Sandbox, timeout: float = 900.0) -> Observation:
         self.rounds += 1
@@ -109,7 +169,7 @@ class FakeTarget(TargetAdapter):
         return Observation(
             target=self.name, mode="act", version=self.version(),
             invocations=(_nothing(),),
-            findings=self.scan(root, sandbox).findings,
+            findings=self._findings(root),
             claimed_changes=() if abstained else tuple("wrote %s" % p for p in changed),
             abstained=abstained, output_ref=None)
 

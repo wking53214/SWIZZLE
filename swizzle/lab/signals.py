@@ -123,6 +123,16 @@ FAILURE_CLASSES = {
         "syntax_error_introduced", "suite_broken_by_the_run",
         "opt_in_markers_changed",
     ),
+    # The tool's record of WHICH finding this is. Both directions are
+    # failures and they fail in opposite ways: an identity that moves makes
+    # a committed baseline inert, and one that collides makes accepting a
+    # known finding suppress an unknown one.
+    "identity_drift": ("identity_not_preserved", "distinct_defects_collapsed"),
+    # The tool's record asserts something about the past that is not so.
+    # Kept apart from `record_mismatch`, which is about this run's account of
+    # this run: the damage here is that a human reading the history concludes
+    # a defect was dealt with when nobody dealt with it.
+    "false_memory": ("absence_read_as_resolution",),
     "over_caution": ("abstained_where_action_was_authorised",),
     "stray_output": ("file_added",),
 }

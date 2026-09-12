@@ -148,6 +148,14 @@ class WorldDraft:
     #: just started handling correctly. `Evidence.baseline` replays these
     #: onto the before-state so that what is left is the target's.
     self_edits: List[Tuple[str, str, str]] = field(default_factory=list)
+    #: Edits applied to the materialised tree AFTER the target has run once
+    #: and recorded its memory: (path, new text, or None to delete).
+    #:
+    #: Declared at build time and applied later, so the genome stays a pure
+    #: description and the case stays reproducible. A mutator that reached
+    #: out and touched the disk itself would not survive serialisation, and
+    #: the minimiser could not reason about it.
+    after_baseline: List[Tuple[str, Optional[str]]] = field(default_factory=list)
     #: What was done to build this world, in order, for the report and for
     #: the minimiser to reason about.
     history: List[str] = field(default_factory=list)
@@ -174,6 +182,11 @@ class WorldDraft:
 
     def note(self, what: str) -> None:
         self.history.append(what)
+
+    def edit_after_baseline(self, path: str, text: Optional[str]) -> None:
+        """Change `path` once the target has a memory of the world without
+        the change. `None` deletes it."""
+        self.after_baseline.append((path, text))
 
     # ------------------------------------------------------------ reading
 
