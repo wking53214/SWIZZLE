@@ -79,6 +79,9 @@ def add_parsers(sub) -> None:
     evolve.add_argument("--corpus-path", type=Path, default=DEFAULT_CORPUS)
     evolve.add_argument("--json", action="store_true")
     evolve.add_argument("--ghost-tools", type=Path, default=None, metavar="PATH")
+    evolve.add_argument("--no-knowledge", action="store_true",
+                        help="do not read or write the persistent knowledge "
+                             "file; every key starts at a zero base")
 
     minimise = sub.add_parser("minimize", help="reduce a case to the smallest "
                                                "world that still fails")
@@ -146,6 +149,13 @@ def add_parsers(sub) -> None:
     standing.add_argument("--json", action="store_true")
     standing.add_argument("--ghost-tools", type=Path, default=None, metavar="PATH")
     standing.add_argument("--timeout", type=float, default=900.0, metavar="SECONDS")
+
+    know = sub.add_parser(
+        "knowledge",
+        help="what the laboratory has learned, and how it came to know it")
+    know.add_argument("--corpus-path", type=Path, default=DEFAULT_CORPUS)
+    know.add_argument("--json", action="store_true")
+    know.add_argument("--ghost-tools", type=Path, default=None, metavar="PATH")
 
     tidy = sub.add_parser("sandboxes", help="list or delete stray sandboxes")
     tidy.add_argument("--purge", action="store_true")
@@ -339,9 +349,13 @@ def _evolve(args) -> int:
     if not args.json:
         print("evolving from %d seed(s), budget %d evaluation(s)"
               % (len(seeds), args.budget))
+    store = None
+    if not args.no_knowledge:
+        from .knowledge import Store
+        store = Store(args.corpus_path / "knowledge.json")
     report = search.evolve(seeds, adapter, budget=args.budget,
                            population=args.population, seed=args.seed,
-                           on_case=announce)
+                           knowledge=store, on_case=announce)
     if args.corpus:
         store = Corpus(args.corpus_path)
         for result in report.best:
@@ -359,6 +373,12 @@ def _evolve(args) -> int:
         print("  %-26s %d" % (name, index))
     if report.rediscovered:
         print("rediscovered seed cases: %s" % ", ".join(report.rediscovered))
+    if report.connections:
+        print()
+        print("connections found -- a pairing that beat every one of its "
+              "members' best:")
+        for pair in report.connections:
+            print("  %s" % pair)
     print()
     print("mutator      offered  improved  critical  hit rate")
     for name, stats in sorted(report.stats.items()):
@@ -645,6 +665,26 @@ def _newest(entries):
         if current is None or order.get(entry.bucket, 9) < order.get(current.bucket, 9):
             best[entry.name] = entry
     return [best[name] for name in sorted(best)]
+
+
+@_register("knowledge")
+def _knowledge(args) -> int:
+    from .knowledge import Store, render
+    from .mutators import registry
+    revision = ""
+    try:
+        revision = str(dict(_adapter(args).version()).get("commit", ""))
+    except TargetUnavailable:
+        pass
+    store = Store(args.corpus_path / "knowledge.json")
+    rows = store.table(revision, registry())
+    if args.json:
+        print(json.dumps({"revision": revision,
+                          "knowledge": [r.to_dict() for r in rows]},
+                         indent=2, sort_keys=True))
+        return 0
+    print(render(rows, revision))
+    return 0
 
 
 @_register("sandboxes")

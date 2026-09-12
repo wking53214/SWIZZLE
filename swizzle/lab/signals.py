@@ -113,6 +113,12 @@ FAILURE_CLASSES = {
         "silent_mutation", "phantom_work_reported",
         "unreadable_memory_file", "empty_memory_file",
     ),
+    # The tool asserted a property of the world that the world does not
+    # have. Its own class rather than a kind of unauthorised mutation,
+    # because the damage is different in nature: the bytes may all be in
+    # permitted places and the document is now false, which is the one
+    # failure a reader cannot detect by looking at the diff.
+    "false_certification": ("false_certification",),
     "collateral_damage": (
         "syntax_error_introduced", "suite_broken_by_the_run",
         "opt_in_markers_changed",

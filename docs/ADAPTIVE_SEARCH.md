@@ -26,6 +26,61 @@ mutator that missed on its first two genomes would never be tried again, and
 the search would foreclose on an entire attack class in its first generation
 on the strength of two samples.
 
+## What is learned, and how it came to be known
+
+Carrying a number forward is not the same as knowing something. Anything
+this laboratory learns arrives one of three ways, and `swizzle knowledge`
+shows which:
+
+**Enhancement.** A structure exists and new evidence refines it. A mutator
+offered against this revision has a real posterior: `improved / offered`.
+
+**Connection.** Two things separately known turn out to be related. Recorded
+as its own key (`a + b`) with a lift, *not* as a bigger number about either
+member — neither member's tally can express "these two together beat
+anything either has managed alone". Both open classes found this session
+were that shape: `variant` connected two dimensions that were separately
+unremarkable.
+
+**Zero base.** Genuinely new, with no prior structure at all.
+
+The third is the one a frequency table gets wrong. The first weighting here
+gave a never-offered mutator a floor of `0.15` — a number invented and then
+consumed as though it had been measured, which is the same unearned
+promotion `docs/EPISTEMIC_STANDING.md` refuses about a fix, one layer down.
+
+So **`Knowledge.weight()` returns `None` for a zero base.** Not a small
+number: the absence of a measurement. A zero-base key is reached through a
+reserved share of the budget (`EXPLORE_SHARE`) instead, which says plainly
+that some effort is going on the unknown *because* it is unknown. That is an
+experiment, not a bet, and it leaves the weights describing only what was
+observed.
+
+## Evidence is about a revision, not about a tool
+
+A phase 3 result is evidence about a studied population. It is not a
+post-market observation, and reporting it as one is how a claim acquires
+standing it never earned.
+
+Statistics gathered against one revision are the same kind of thing. When
+the revision moves they become **inference about a substance that has
+changed** — marked `CARRIED`, kept, and never merged into the new
+revision's record.
+
+Carried evidence is subordinate **structurally**, not by a discount. An
+earlier version halved it, which put a perfect record from elsewhere level
+with a coin flip measured here — a judgement disguised as arithmetic, in the
+module whose subject is judgements disguised as arithmetic. It is now
+lexicographic, the same idiom `fitness.py` uses for severity: anything
+observed against this revision is chosen ahead of anything carried, however
+good the carried record looks, and the rule cannot be tuned into saying
+otherwise.
+
+This matters right now rather than in principle. The seam that paid best
+this session was writability; the writability bugs are closed. A table that
+silently reported pre-fix evidence as describing the thing in front of you
+would send the next run mining a seam that no longer exists.
+
 ## What it is deliberately not
 
 Not machine learning. A learned model of a target's weak points would need far

@@ -1,0 +1,53 @@
+{
+  "revisions": {
+    "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108": [
+      {
+        "acquisition": "observed",
+        "first_seen": "2026-09-12T12:55:23Z",
+        "key": "add_filler_modules",
+        "lift": 0.0,
+        "members": [],
+        "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108",
+        "tally": {
+          "critical": 0,
+          "improved": 0,
+          "offered": 7
+        },
+        "weight": 0.0
+      },
+      {
+        "acquisition": "connected",
+        "first_seen": "2026-09-12T12:55:23Z",
+        "key": "add_filler_modules + alias_document_with_symlink",
+        "lift": 0.25,
+        "members": [
+          "add_filler_modules",
+          "alias_document_with_symlink"
+        ],
+        "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108",
+        "tally": {
+          "critical": 0,
+          "improved": 1,
+          "offered": 1
+        },
+        "weight": 1.25
+      },
+      {
+        "acquisition": "observed",
+        "first_seen": "2026-09-12T12:55:43Z",
+        "key": "break_the_subject_import",
+        "lift": 0.0,
+        "members": [],
+        "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108",
+        "tally": {
+          "critical": 0,
+          "improved": 0,
+          "offered": 1
+        },
+        "weight": 0.0
+      }
+    ]
+  },
+  "schema": "swizzle.knowledge.v1",
+  "written_at": "2026-09-12T12:55:43Z"
+}

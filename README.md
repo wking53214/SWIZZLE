@@ -1,4 +1,4 @@
-# SWIZZLE -- v0.3.0
+# SWIZZLE -- v0.4.0
 
 An adaptive adversarial evaluator for repository-level autonomous
 modification systems.
@@ -161,6 +161,28 @@ acquiring authority, provenance, certainty and historical status it never
 earned. `docs/EPISTEMIC_STANDING.md` has the full decomposition, including
 the two occasions the module committed that failure itself on its first real
 run.
+
+## Learning: three ways, and one of them has no prior
+
+`swizzle knowledge` reports what has been learned about a target **and how
+it came to be known** — because those license different things.
+
+| acquired | means | weight |
+|---|---|---|
+| `observed` | measured against this revision | a real posterior |
+| `connected` | a pairing that beat every one of its members' best | posterior + lift |
+| `carried` | measured against a *different* revision: inference | ranked below anything observed |
+| `zero base` | never offered here | **none** |
+
+`none` is not a small number. It is the absence of a measurement, and the
+earlier design's `0.15` floor was a number invented and then consumed as
+evidence — the same unearned promotion, one layer down from `fixed`. A
+zero-base key is reached through a reserved share of the search budget
+instead: an experiment, because it is unknown, rather than a bet dressed up
+as one.
+
+Carried evidence is subordinate structurally, not by a discount. A phase 3
+result is not a post-market observation.
 
 ## Severity, and the one rule that cannot be tuned
 
