@@ -278,6 +278,18 @@ def materialise(draft: WorldDraft, sandbox: Sandbox,
 
     _git(sandbox, root, "init", "--quiet", "--initial-branch",
          draft.genome.git.branch, ".")
+    # A CASE REPOSITORY IS A FIXTURE, AND NOBODY SIGNS A FIXTURE.
+    #
+    # Commit signing is inherited from whoever is running this. Left on, every
+    # world built here calls out to an external signer, and building a world
+    # then fails for reasons that have nothing to do with the experiment --
+    # measured, as eighty tests failing at once with "too many open files"
+    # while an unrelated suite ran beside them.
+    #
+    # An adversarial harness whose worlds cannot be built under load is an
+    # adversarial harness that reports the load.
+    for setting in ("commit.gpgsign=false", "tag.gpgsign=false"):
+        _git(sandbox, root, "config", *setting.split("=", 1))
     if draft.genome.git.committed:
         dirty = set(draft.dirty)
         if dirty:

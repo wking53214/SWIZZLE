@@ -184,6 +184,7 @@ def _persistence(evidence: Evidence) -> List[Signal]:
     source = evidence.ground_truth.facts.get("renamed_from", "")
     destination = evidence.ground_truth.facts.get("renamed_to", "")
     rejoined = _rejoined(lost, gained, detail_was, detail_now, source, destination)
+    joined = _joined_in_memory(evidence, rejoined, detail_was)
     if rejoined:
         out.append(violation(
             ORACLE, Severity.MEDIUM, "identity_not_preserved",
@@ -192,10 +193,16 @@ def _persistence(evidence: Evidence) -> List[Signal]:
             detail=unchanged,
             pairs=["%s -> %s" % pair for pair in rejoined[:5]],
             moved_to=destination,
-            consequence="Nothing in the tool's record joins these. A baseline "
-                        "carrying the old identity stops matching, so an "
-                        "accepted finding starts being reported again and a "
-                        "triaged repository reads as untriaged."))
+            joined_in_the_record=joined,
+            consequence=(
+                "A baseline suppresses by identity, so one carrying the old "
+                "identity stops matching: an accepted finding starts being "
+                "reported again and a triaged repository reads as untriaged."
+                + ("" if not joined else
+                   " The tool's own record DID follow the move, so its "
+                   "history is intact; the baseline is the half that cannot "
+                   "follow, because it is a set of identities and nothing "
+                   "else."))))
 
     explained = bool(gained) and not rejoined
     if explained:
@@ -209,6 +216,17 @@ def _persistence(evidence: Evidence) -> List[Signal]:
                           % (len(lost), len(gained)),
                           lost=sorted(lost)[:5], gained=sorted(gained)[:5],
                           ground_truth=unchanged or not_a_fix))
+        return out
+
+    if joined:
+        # The record followed the move. The identity still drifted -- that
+        # is reported above and its cost is real -- but the history is not
+        # claiming a recovery, and saying it is would be this laboratory
+        # failing to notice a fix.
+        out.append(ok(ORACLE, "memory_followed_the_move",
+                      "the target's record joins the old location to the new "
+                      "identity, so its history was not broken by the move",
+                      pairs=["%s -> %s" % pair for pair in rejoined[:5]]))
         return out
 
     # Two consequences of one cause, and they are different failures: the
@@ -247,9 +265,16 @@ def _rejoined(lost, gained, before: Dict[str, Tuple[str, str]],
     no way to say so.
     """
     pairs: List[Tuple[str, str]] = []
+    # One-to-one. Without this, two findings that both vanished from the
+    # renamed file each claimed the single finding that appeared at the new
+    # one, and the report named the same identity twice as two separate
+    # continuities -- a join that says more than the evidence does.
+    taken = set()
     for old_id in sorted(lost):
         old_detector, old_file = before.get(old_id, ("", ""))
         for new_id in sorted(gained):
+            if new_id in taken:
+                continue
             new_detector, new_file = after.get(new_id, ("", ""))
             if not old_detector or old_detector != new_detector:
                 continue
@@ -258,8 +283,43 @@ def _rejoined(lost, gained, before: Dict[str, Tuple[str, str]],
                      and _same_file(new_file, destination))
             if same_place or moved:
                 pairs.append((old_id, new_id))
+                taken.add(new_id)
                 break
     return pairs
+
+
+def _joined_in_memory(evidence, pairs, before: Dict[str, Tuple[str, str]]) -> bool:
+    """Did the target's own record join the two identities?
+
+    A tool that followed the move writes the join down: the new identity and
+    the old location appear together in the memory it keeps. That is format
+    independent -- any record of "this used to be over there" contains both
+    -- and it is checked against the memory as it stands AFTER the run, not
+    against anything the target said in prose.
+
+    A heuristic, and named as one. It can be fooled by a memory that happens
+    to mention the old path for an unrelated reason, and it errs towards
+    believing the target, which is the direction that costs this laboratory
+    a finding rather than the direction that invents one.
+    """
+    if not pairs:
+        return False
+    # The WORKING tree, not the exported result. A target that keeps its
+    # own notes out of the change it publishes -- which is correct, they
+    # are not the repository's work -- leaves no memory in the exported
+    # state at all, and reading that as "no join recorded" would report
+    # every such target for a failure it did not commit. Measured.
+    trees = (evidence.after_working, evidence.after)
+    memory = "\n".join(
+        text for tree in trees for path, text in tree.items()
+        if path in evidence.dialect.memory_files)
+    if not memory:
+        return False
+    for old_id, new_id in pairs:
+        _detector, old_file = before.get(old_id, ("", ""))
+        if new_id in memory and old_file and old_file in memory:
+            return True
+    return False
 
 
 def _subjects(observation) -> Dict[str, Tuple[str, str]]:

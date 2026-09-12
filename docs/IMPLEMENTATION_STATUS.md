@@ -283,12 +283,29 @@ gate is `passed == collected`, and a module that cannot be imported is in
 neither number. The tool reported the blocked module in the same run and
 certified anyway.
 
-**HIGH + MEDIUM, half fixed.** The finding identity is a hash of detector,
-path and summary, and both of the last two move while the defect does not.
-The summary half is fixed: a detector now states what identifies its finding,
-so adding tests to a suite no longer re-identifies three findings about a
-claim nobody touched. The rename half is open and needs rename detection
-between recorded runs.
+**HIGH + MEDIUM, both halves addressed.** The finding identity is a hash of
+detector, path and summary, and both of the last two move while the defect
+does not.
+
+*The summary half* is fixed: a detector now states what identifies its
+finding, so adding tests to a suite no longer re-identifies three findings
+about a claim nobody touched.
+
+*The path half* is half fixed. The ledger asks git what moved between the run
+it remembers and this one and carries the history onto the new identity, so
+the streak survives and no spurious return is counted. What remains is stated
+precisely by the finding itself: a baseline is a set of identities and
+nothing else, so it cannot follow a move however good the history is. An
+accepted finding starts being reported again after a rename, and closing that
+means the baseline storing more than ids.
+
+Building the rename detection produced two results of its own. "Don't guess"
+was too strict -- carrying only when exactly one finding sat at the
+destination refused the ordinary case, two unused functions in one module,
+which are told apart by summaries that name the symbol rather than the file.
+And three of its guards turned out to be unkillable by any test: two were
+genuinely dead and were deleted, and the third is recorded as unproven rather
+than left looking proven.
 
 **A defect found before its case could run.** Chasing what looked like a
 harness artefact produced a bug needing no harness: a repository that commits

@@ -117,10 +117,32 @@ collapsing those means accepting one suppresses the other -- the same
 failure in the worse direction. `an_identity_that_counts_something` now
 passes.
 
-**The rename half is open.** It needs rename detection between recorded
-runs: when a finding is absent and git says its file moved, carry the
-history across rather than recording an absence and a first sighting.
-`the_same_defect_at_a_new_address` still reproduces at HIGH + MEDIUM.
+**The rename half is half fixed.** ghost_tools 1.7.3 asks git what moved
+between the run it remembers and this one, and carries the finding's history
+onto its new identity: the streak survives, no spurious RETURN is counted,
+and the new entry records where it came from. Confirmed end to end, in one
+command, with no harness.
+
+Building it turned up two things worth keeping.
+
+*"Don't guess" was too strict.* The first version carried a history only when
+exactly one finding of that detector sat at the destination. Two unused
+functions in one module are two findings, and moving the module moves both,
+so the ordinary case refused. They are told apart by their summaries, which
+name the symbol rather than the file and so survive a rename. Position is
+used only when that fails and only when there is one candidate.
+
+*The oracle was reading the wrong tree.* A target that keeps its own notes
+out of the change it publishes -- correct; they are not the repository's work
+-- leaves no memory in the exported result at all. Reading that as "no join
+recorded" would report every such target for a failure it did not commit.
+
+`the_same_defect_at_a_new_address` now reports MEDIUM alone, and the finding
+says exactly what is left: **a baseline is a set of identities and nothing
+else, so it cannot follow a move however good the tool's history is.** An
+accepted finding starts being reported again after a rename. Closing that
+means the baseline storing more than ids, which is a format change and is
+not done.
 
 ### The control that passed
 

@@ -118,8 +118,55 @@ a path changes when the file moves; a positional identity changes when a
 sibling is inserted. Either way an accepted decision can be silently
 forgotten, or a resolved finding resurrected as new.
 
-**Not yet constructed.** Needs multi-run sequences and a baseline-priming step
-in the adapter. The coverage matrix reports this row as never exercised.
+Constructed by `move_the_file_the_finding_is_about`,
+`put_a_moving_number_in_the_finding` and `split_one_package_into_two_projects`,
+via `Phase.AFTER_BASELINE` and `TargetAdapter.prime_baseline`. Judged by
+`lab/oracles/identity.py`, the only oracle here that does not look at the
+tree.
+
+**Ghost Tools failed twice and passed once.**
+
+*The summary moved.* Adding three tests to a suite re-identified three
+findings about a claim nobody had touched, because their summaries carried
+the measurement. Fixed in 1.7.3: a detector now states what identifies its
+finding.
+
+*The path moved.* A module renamed byte for byte produced one finding that
+vanished and one that was brand new. Half fixed in 1.7.3: the ledger asks
+git what moved and carries the history across, so the streak survives and no
+spurious return is counted. Still open, and now stated precisely by the
+finding itself: **a baseline is a set of identities and nothing else, so it
+cannot follow a move however good the history is.** An accepted finding
+starts being reported again after a rename.
+
+*The identity collided.* A monorepo where two packages each contain
+`helpers.py` defining `unused_helper` stays distinct, because `.git` is
+checked before `pyproject.toml`. A checkout with no `.git` would fall through
+to the packaging marker, where the collision is live.
+
+## T7b — The tool concludes something from an absence
+
+An absence has two causes and only one of them is good news: the defect is
+gone, or nothing looked. They produce identical evidence. A tool whose memory
+cannot tell them apart reports a repository getting healthier as it goes
+dark.
+
+Constructed by `stop_the_check_from_running`,
+`hand_over_a_history_of_another_repository` and
+`rewrite_the_memory_while_it_runs`.
+
+**Ghost Tools passes the memory question and failed a different one.** When
+the suite stopped being collectable it reported the blocked module rather
+than recording a recovery. But its count remedy certified "30 tests, all
+passing" into a README over that same suite, because its green gate is
+`passed == collected` and a module that cannot be imported is in neither
+number. CRITICAL; fixed in 1.7.3.
+
+**One question is not asked and says so.** Whether the tool NOTICED that a
+planted history belongs to another repository turns on what it said, in
+words nobody can anticipate, and this laboratory does not grade English. The
+case emits an explicit INCONCLUSIVE naming what a human must check, because
+a silent pass on an unasked question reads as a pass.
 
 ## T8 — The tool is interrupted
 

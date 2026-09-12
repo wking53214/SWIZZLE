@@ -50,6 +50,12 @@ def summon(warp: Warp, into: Path, as_name: str | None = None,
         target.write_text(contents, encoding="utf-8")
 
     _git(root, "init", "--quiet", ".")
+    # Nobody signs a fixture. Inherited from whoever is running this, commit
+    # signing makes summoning a warp depend on an external signer, and a
+    # summon that fails for that reason has failed for a reason that is not
+    # about the warp. See the same note in `lab/world.py`.
+    _git(root, "config", "commit.gpgsign", "false")
+    _git(root, "config", "tag.gpgsign", "false")
     _git(root, "add", "--all")
     _git(root, "-c", "user.email=swizzle@invalid", "-c", "user.name=SWIZZLE",
          "commit", "--quiet", "--message", "summon %s" % (as_name or warp.name))
