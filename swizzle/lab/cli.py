@@ -16,8 +16,8 @@ import tempfile
 from pathlib import Path
 from typing import List, Optional, Sequence
 
-from . import (catalogue, coverage, metrics, minimize, probes, reporting,
-               search)
+from . import (catalogue, convergence, coverage, metrics, minimize, probes,
+               reporting, search)
 from . import standing as standing_model
 from .adapter import TargetUnavailable
 from .adapters import GhostToolsAdapter
@@ -75,6 +75,10 @@ def add_parsers(sub) -> None:
     evolve.add_argument("--seed", type=int, default=0, metavar="N")
     evolve.add_argument("--from", dest="start", default="", metavar="SUBSTRING",
                         help="seed the population from these catalogue cases")
+    evolve.add_argument("--from-corpus", default="", metavar="BUCKET",
+                        help="seed the population from archived cases instead "
+                             "of the catalogue (minimized, regression, "
+                             "discovered, rejected, or `all`)")
     evolve.add_argument("--corpus", action="store_true")
     evolve.add_argument("--corpus-path", type=Path, default=DEFAULT_CORPUS)
     evolve.add_argument("--json", action="store_true")
@@ -156,6 +160,21 @@ def add_parsers(sub) -> None:
     know.add_argument("--corpus-path", type=Path, default=DEFAULT_CORPUS)
     know.add_argument("--json", action="store_true")
     know.add_argument("--ghost-tools", type=Path, default=None, metavar="PATH")
+
+    loop = sub.add_parser(
+        "loop",
+        help="run the target, adopt its output, run again: does it settle?")
+    loop.add_argument("case", nargs="?", default="",
+                      help="one case; omit for every catalogue case")
+    loop.add_argument("--rounds", type=int, default=convergence.DEFAULT_ROUNDS,
+                      metavar="N",
+                      help="the bound. Not settling within it is the finding, "
+                           "never a reason to keep going (default %d)"
+                           % convergence.DEFAULT_ROUNDS)
+    loop.add_argument("--corpus-path", type=Path, default=DEFAULT_CORPUS)
+    loop.add_argument("--json", action="store_true")
+    loop.add_argument("--ghost-tools", type=Path, default=None, metavar="PATH")
+    loop.add_argument("--timeout", type=float, default=900.0, metavar="SECONDS")
 
     tidy = sub.add_parser("sandboxes", help="list or delete stray sandboxes")
     tidy.add_argument("--purge", action="store_true")
@@ -327,6 +346,39 @@ def _attack(args) -> int:
 
 # ------------------------------------------------------------------ evolve
 
+def _seed_population(args) -> List[RepositoryGenome]:
+    """Where a search starts.
+
+    From the corpus when asked, because the catalogue is twelve worlds a
+    human wrote and the corpus is every world that has been found to matter
+    since -- already minimised, already known productive, and already the
+    end point of the last run. Starting from the catalogue every time makes
+    each search re-walk ground the previous one covered.
+
+    Preference order within `all` is the same order the corpus uses for
+    reading an entry back: a minimised case is a better seed than the large
+    one it came from, and a rejected case is still a seed, because a world
+    the target handled is a world one mutation from one it might not.
+    """
+    if not args.from_corpus:
+        return list(catalogue.select(args.start))
+
+    store = Corpus(args.corpus_path)
+    buckets = (("minimized", "regression", "discovered", "rejected")
+               if args.from_corpus == "all" else (args.from_corpus,))
+    seeds: List[RepositoryGenome] = []
+    seen = set()
+    for bucket in buckets:
+        for genome in store.genomes(bucket):
+            if genome.digest() in seen:
+                continue
+            if args.start and args.start not in genome.name:
+                continue
+            seen.add(genome.digest())
+            seeds.append(genome)
+    return seeds
+
+
 @_register("evolve")
 def _evolve(args) -> int:
     try:
@@ -334,9 +386,9 @@ def _evolve(args) -> int:
     except TargetUnavailable as exc:
         print("swizzle: %s" % exc, file=sys.stderr)
         return 2
-    seeds = catalogue.select(args.start)
+    seeds = _seed_population(args)
     if not seeds:
-        print("swizzle: no seed cases matched %r" % args.start, file=sys.stderr)
+        print("swizzle: no seed cases matched", file=sys.stderr)
         return 2
 
     def announce(result, index):
@@ -347,8 +399,10 @@ def _evolve(args) -> int:
                                         result.fitness.render()))
 
     if not args.json:
-        print("evolving from %d seed(s), budget %d evaluation(s)"
-              % (len(seeds), args.budget))
+        print("evolving from %d seed(s) (%s), budget %d evaluation(s)"
+              % (len(seeds),
+                 "corpus/%s" % args.from_corpus if args.from_corpus
+                 else "the catalogue", args.budget))
     store = None
     if not args.no_knowledge:
         from .knowledge import Store
@@ -685,6 +739,46 @@ def _knowledge(args) -> int:
         return 0
     print(render(rows, revision))
     return 0
+
+
+@_register("loop")
+def _loop(args) -> int:
+    try:
+        adapter = _adapter(args)
+    except TargetUnavailable as exc:
+        print("swizzle: %s" % exc, file=sys.stderr)
+        return 2
+    if args.case:
+        genome = _find_genome(args.case, args.corpus_path)
+        if genome is None:
+            print("swizzle: no case called %r" % args.case, file=sys.stderr)
+            return 2
+        genomes = [genome]
+    else:
+        genomes = list(catalogue.CATALOGUE)
+
+    results, looping = [], 0
+    for genome in genomes:
+        result = convergence.iterate(genome, adapter, rounds=args.rounds,
+                                     timeout=args.timeout)
+        results.append(result)
+        looping += int(result.settling.is_a_loop)
+        if not args.json:
+            print(result.render())
+
+    if args.json:
+        print(json.dumps([r.to_dict() for r in results], indent=2, sort_keys=True))
+        return 1 if looping else 0
+
+    print("=" * 66)
+    for result in results:
+        print("  %-40s %s" % (result.genome.name[:40], result.settling.value))
+    print()
+    print("A tool that never reaches a fixpoint is not wrong on any single "
+          "run. It is")
+    print("a pull request every time anyone looks, each one correcting the "
+          "last.")
+    return 1 if looping else 0
 
 
 @_register("sandboxes")

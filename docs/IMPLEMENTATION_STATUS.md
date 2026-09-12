@@ -56,7 +56,7 @@ shows empty rows).
 
 ## Tests added
 
-234 new tests, 343 total, all passing.
+234 new tests, 343 total, all passing. (509 total at v0.5.0.)
 
 | File | Covers |
 |---|---|
@@ -169,6 +169,55 @@ case that had been declared fixed:
   HIGH.
 
 Both genomes are archived inside the resolutions and are reproducible.
+
+## Frames, seeding, and loops (v0.5.0)
+
+Three things, in the order they were asked for.
+
+**Seeding the population from the corpus.** `swizzle evolve --from-corpus
+BUCKET` starts the search from cases that have already earned their place
+rather than only from the hand-written catalogue. The catalogue is a set of
+hypotheses; the corpus is a set of measurements, and starting from
+measurements is strictly better information.
+
+**Starting in the middle of a trigger.** `push_the_trigger_out_of_the_window`
+makes a claim dated and then pads between the date and the number, so the date
+falls outside the fixed lookback the analyser reads. The sentence asserts
+exactly what the short one asserts — what was true on a named day — and the
+only difference is its length.
+
+The consequence is the interesting part, and it is the one the brief named:
+a verdict reached on the fragment that fits in the window is a verdict about
+*the fragment*, and nothing in the output says so. A passing check is not
+wrong, exactly; it is **unfalsifiable** — correct with respect to a partial
+view, and there is no report that distinguishes it from correct with respect
+to the whole. Confirmed at the predicate level (`_CLAIM_LOOKBACK = 80`,
+`_WRITABILITY_LOOKBACK = 240`) and end to end.
+
+**Loops.** `swizzle loop CASE` runs the target, adopts its output, and runs it
+again — bounded, because a harness that can hang is a harness nobody runs, and
+not settling within the bound is the finding. Six classifications; full
+reasoning in `docs/CONVERGENCE.md`.
+
+Measured: `a_count_that_changes_when_you_write_it` cycles 31 → 32 → 33 → 31
+against ghost_tools 1.7.2, period 3, confirmed across four rounds.
+
+Two results matter more than the cycle itself.
+
+*Two of Ghost's rules are brakes on the loop.* Its drift rule is
+one-directional, so it settles the moment it writes a value at or above the
+static bound; and its green gate declines to write into a suite that is not
+passing. The first version of the case tripped the second and settled, and
+**Ghost was right to settle there**. Building a genuine cycle meant
+constructing a world where the tool has no defensible reason to stop.
+
+*The harness had the defect it hunts.* A round the target refused to begin
+leaves the same unchanged repository as a round where it ran and settled.
+Ghost names its working branch to the second, two rounds inside one second
+collided, the refusal went to stderr where nothing was looking, and a real
+period-3 cycle was reported as a fixpoint. Three corrections at three layers,
+each where the knowledge belongs, all three regression-tested against the fake
+target.
 
 ## Known limitations
 

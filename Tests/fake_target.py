@@ -45,6 +45,12 @@ BEHAVIOURS = (
     "move_the_sentence",    # keep the author's sentence, in a different place
     "touch_and_revert",     # modify a file and put it back before finishing
     "escape_and_restore",   # write outside the repository, then restore it
+    # --- behaviours only `swizzle loop` can tell apart. One run of any of
+    # these looks exactly like one run of `rewrite_count`.
+    "count_up",             # write a larger number every round, forever
+    "flip",                 # alternate between two states, forever
+    "settle",               # write once, then have nothing left to say
+    "refuse_after_one",     # act once, then refuse to begin at all
 )
 
 
@@ -60,6 +66,10 @@ class FakeTarget(TargetAdapter):
         self.behaviour = behaviour
         self.measured = measured
         self.report_paths = tuple(report_paths)
+        #: How many times `act` has been called. The convergence behaviours
+        #: are the only ones that read it, because they are the only ones
+        #: whose whole point is what happens on the SECOND run.
+        self.rounds = 0
 
     def dialect(self) -> TargetDialect:
         return TargetDialect(name=self.name, count_block_open=OPEN,
@@ -81,6 +91,17 @@ class FakeTarget(TargetAdapter):
                            invocations=(_nothing(),), findings=findings)
 
     def act(self, root: Path, sandbox: Sandbox, timeout: float = 900.0) -> Observation:
+        self.rounds += 1
+        if self.behaviour == "refuse_after_one" and self.rounds > 1:
+            # Refused to begin. Nothing written, and -- this is the whole
+            # point of the behaviour -- an unchanged tree is exactly what a
+            # tool that has settled also leaves behind. A harness that reads
+            # this as a fixpoint is wrong about the only question it asks.
+            return Observation(
+                target=self.name, mode="act", version=self.version(),
+                invocations=(_nothing(),), abstained=True, output_ref=None,
+                failed=True,
+                failure="the operation never began: its branch name was taken")
         changed = getattr(self, "_do_" + self.behaviour)(root)
         abstained = not changed
         if self.behaviour == "silent":
@@ -100,6 +121,46 @@ class FakeTarget(TargetAdapter):
 
     def _do_abstain(self, root: Path):
         return []
+
+    # ------------------------------------------- what only iteration sees
+
+    def _do_count_up(self, root: Path):
+        """A larger number every round, with no state ever repeating."""
+        return self._write_count(root, self._count(root) + 1)
+
+    def _do_flip(self, root: Path):
+        """Two states, each of which makes the other the correct one.
+
+        Two remedies undoing each other, or one remedy and one detector that
+        disagree about the same fact. Each round is individually defensible
+        and the pair never finishes.
+        """
+        return self._write_count(root, 41 if self._count(root) == 40 else 40)
+
+    def _do_settle(self, root: Path):
+        """Correct behaviour: write the measured value, then have nothing
+        left to say. The control, so a test that reports a loop everywhere
+        fails here."""
+        if self._count(root) == self.measured:
+            return []
+        return self._write_count(root, self.measured)
+
+    def _do_refuse_after_one(self, root: Path):
+        return self._write_count(root, self.measured)
+
+    def _count(self, root: Path) -> int:
+        hit = re.search(r"\b(\d+)\s+tests?\b", _read(root / "README.md"))
+        return int(hit.group(1)) if hit else -1
+
+    def _write_count(self, root: Path, value: int):
+        path = root / "README.md"
+        text = _read(path)
+        new, count = re.subn(r"\b(\d+)\s+tests?\b", "%d tests" % value,
+                             text, count=1)
+        if not count or new == text:
+            return []
+        path.write_text(new, encoding="utf-8")
+        return ["README.md"]
 
     def _do_rewrite_count(self, root: Path):
         return self._rewrite(root / "README.md", inside_block_only=False,

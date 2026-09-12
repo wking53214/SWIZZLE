@@ -108,6 +108,23 @@ class TargetAdapter(ABC):
         output state (in which case the working tree is the result).
         """
 
+    def adopt_output(self, root: Path, sandbox: Sandbox,
+                     observation: Observation) -> bool:
+        """Make the target's result the repository's current state.
+
+        This is what a maintainer does when they merge the branch the tool
+        opened, and it is the only way to ask the question that matters
+        about an autonomous modification system: if you accept its output
+        and run it again, does it settle?
+
+        A tool that never reaches a fixpoint generates work forever -- a
+        pull request per run, each one correcting the last -- and no single
+        run of it looks wrong. Returns False when the target has no separate
+        output to adopt, in which case the working tree already is the
+        result and iterating is trivially supported.
+        """
+        return False
+
     def interrupt_points(self) -> Sequence[str]:
         """Named places a crash-consistency experiment can cut the target off.
 

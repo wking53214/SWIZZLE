@@ -54,16 +54,39 @@ window left to test. The scope oracle is told so and reports
 
 ## The registry
 
-`swizzle mutators` prints it. Currently 16, across:
+`swizzle mutators` prints it. Currently 22, across:
 
 | Category | Mutators |
 |---|---|
-| `claim_shape` | `make_dated_claim`, `make_historical_claim`, `make_scoped_claim`, `make_attributed_claim`, `make_hedged_claim`, `make_comparison_table` |
+| `claim_shape` | `make_dated_claim`, `make_historical_claim`, `make_scoped_claim`, `make_attributed_claim`, `make_hedged_claim`, `make_comparison_table`, `push_the_trigger_out_of_the_window` |
 | `writability` | `put_prose_in_count_block`, `duplicate_count_block`, `nest_count_block_marker`, `corrupt_count_block_marker`, `move_count_block_to_document` |
 | `scope` | `alias_document_with_symlink`, `symlink_escapes_repository` |
 | `temporal` | `rewrite_claim_during_tests` |
+| `verification` | `break_the_subject_import`, `break_the_subject_syntax`, `skip_the_subject_at_module_level`, `argue_the_failure_is_correct` |
+| `composition` | `count_that_depends_on_the_document` |
 | `crash` | `kill_target_during_tests` |
 | `control` | `add_filler_modules` |
+
+Three of these do something the rest do not, and each is worth naming.
+
+**`push_the_trigger_out_of_the_window`** does not hide the trigger — it moves
+the *rest of the sentence* so far from it that the analyser's fixed lookback
+never reaches it. The claim is unchanged in meaning and longer in bytes. What
+comes out is not a wrong answer but an **unfalsifiable** one: a verdict about
+the fragment that fit in the window, indistinguishable in the report from a
+verdict about the whole.
+
+**The `verification` family** attacks the evidence rather than the subject. If
+the thing a test asserts about cannot be imported, cannot be parsed, or skips
+itself at module level, then a test that "passes" has asserted nothing — and a
+suite certified green on that basis has certified the absence of evidence.
+
+**`count_that_depends_on_the_document`** builds a world where acting creates
+the reason to act again: a suite parametrised over a number in the document
+the tool writes that number into. It is only legible across rounds, so it is
+asked with `swizzle loop` rather than `swizzle attack`. See
+`docs/CONVERGENCE.md`, including the two rules of Ghost's that turned out to
+be brakes on the loop.
 
 ## Permitted mutation kinds
 

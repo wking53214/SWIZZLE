@@ -38,6 +38,7 @@ import platform
 import re
 import shutil
 import sys
+import time
 from pathlib import Path
 from typing import Any, Dict, Mapping, Optional, Sequence, Tuple
 
@@ -152,9 +153,32 @@ class GhostToolsAdapter(TargetAdapter):
     def act(self, root: Path, sandbox: Sandbox, timeout: float = 900.0) -> Observation:
         argv = (self.python, "-m", "ghost_buster.cli", str(root), "--operate") + _COMMON
         done = sandbox.run(argv, cwd=root, timeout=timeout, env=self._env())
+
+        # THE TARGET NAMES ITS WORKING BRANCH BY THE SECOND, AND WE DRIVE IT
+        # FASTER THAN THAT.
+        #
+        # `ghost/operate-YYYYMMDD-HHMMSS`. Two operations that start inside
+        # the same wall-clock second collide, and the second one refuses to
+        # begin. One run of the tool never notices; `swizzle loop` runs it
+        # back to back and hits it constantly.
+        #
+        # This is the laboratory outrunning the target, so it is the
+        # laboratory's to absorb -- here, behind the adapter, because the
+        # branch-naming scheme is a fact about THIS target and nothing above
+        # this line may know it. Wait for the clock to tick and ask once
+        # more. It is still reported (`collisions`) rather than hidden: a
+        # target that cannot be operated twice in one second is a small true
+        # thing about it, and a harness that silently papered over it would
+        # be deciding on the reader's behalf that it did not matter.
+        collisions = 0
+        if _collided(done):
+            collisions = 1
+            _wait_for_the_next_second()
+            done = sandbox.run(argv, cwd=root, timeout=timeout, env=self._env())
+
         cuts = _CUT.findall(done.stdout)
         table = _TABLE.search(done.stdout)
-        refused = _REFUSED.search(done.stdout)
+        refused = _REFUSED.search(done.stdout + "\n" + (done.stderr or ""))
         branch = table.group(1) if table else _operate_branch(sandbox, root)
         return Observation(
             target=self.name, mode="act", version=self.version(),
@@ -163,12 +187,31 @@ class GhostToolsAdapter(TargetAdapter):
             abstained=not cuts,
             output_ref=branch,
             memory=_memory(root),
-            notes=("refused: " + refused.group(1)) if refused else "",
-            failed=done.timed_out,
-            failure="timed out" if done.timed_out else "",
+            notes=_act_notes(refused, collisions),
+            failed=done.timed_out or _never_began(done, table),
+            failure=_act_failure(done, table, refused),
         )
 
     # ------------------------------------------------------------- output
+
+    def adopt_output(self, root: Path, sandbox: Sandbox,
+                     observation: Observation) -> bool:
+        """Fast-forward the branch the patient came in on to the cuts.
+
+        Ghost returns the tree to the branch it found it on and leaves the
+        work on its own branch, so nothing is adopted by default -- which is
+        correct and is also why iterating has to be explicit. A maintainer
+        who merges is the normal end of that flow, and this is that merge.
+        """
+        ref = observation.output_ref
+        if not ref:
+            return False
+        done = sandbox.run(("git", "merge", "--ff-only", "--quiet", ref),
+                           cwd=root, timeout=180)
+        if not done.ok:
+            done = sandbox.run(("git", "reset", "--hard", "--quiet", ref),
+                               cwd=root, timeout=180)
+        return done.ok
 
     def export_output(self, root: Path, sandbox: Sandbox,
                       observation: Observation, into: str) -> Optional[Path]:
@@ -219,6 +262,60 @@ def _findings(stdout: str) -> Tuple[Mapping[str, Any], ...]:
                 return ()
             return tuple(parsed) if isinstance(parsed, list) else ()
     return ()
+
+
+def _collided(done: Completed) -> bool:
+    """The operation refused to begin because its branch name was taken."""
+    if done.timed_out or done.returncode in (0, 1):
+        return False
+    both = (done.stdout or "") + "\n" + (done.stderr or "")
+    hit = _REFUSED.search(both)
+    return bool(hit) and "already exists" in hit.group(1)
+
+
+def _wait_for_the_next_second() -> None:
+    """Block until the wall clock crosses into the next whole second.
+
+    Bounded by one second by construction, and the bound is the point: a
+    harness that sleeps a fixed interval to make a race go away is a harness
+    that will sleep through a real hang. This waits for the exact condition
+    that clears the collision and not one tick longer.
+    """
+    now = time.time()
+    time.sleep(max(0.01, (int(now) + 1) - now))
+
+
+def _never_began(done: Completed, table) -> bool:
+    """The operation did not open a table, and did not exit like a tool that
+    chose not to.
+
+    An operation that ran and found nothing to do still prints its report.
+    No report and a status the tool does not use for ordinary outcomes means
+    it never started -- which is not the same as "it ran and changed
+    nothing", and must never be read as one.
+    """
+    return table is None and done.returncode not in (0, 1)
+
+
+def _act_notes(refused, collisions: int) -> str:
+    notes = []
+    if refused:
+        notes.append("refused: " + refused.group(1))
+    if collisions:
+        notes.append("%d branch-name collision(s) retried after waiting for "
+                     "the clock to tick" % collisions)
+    return "; ".join(notes)
+
+
+def _act_failure(done: Completed, table, refused) -> str:
+    if done.timed_out:
+        return "timed out after %.0fs" % done.seconds
+    if not _never_began(done, table):
+        return ""
+    if refused:
+        return "the operation never began: %s" % refused.group(1)
+    return "the operation never began: exit %d: %s" % (
+        done.returncode, (done.stderr or "").strip()[-300:])
 
 
 def _failure(done: Completed, findings: Sequence[Mapping[str, Any]]) -> str:
