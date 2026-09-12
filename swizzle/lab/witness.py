@@ -74,10 +74,6 @@ class Witness:
                 "line": self.line, "expectation": self.expectation}
 
 
-class Unwitnessed(ValueError):
-    """Ground truth discriminates against the world and cannot point at it."""
-
-
 #: name -> checker. A checker returns None when the evidence is there, or a
 #: sentence saying what is missing.
 CHECKERS: Dict[str, Callable[[Mapping[str, str], Witness], Optional[str]]] = {}

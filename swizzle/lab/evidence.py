@@ -281,7 +281,3 @@ def read_tree(root: Path) -> Dict[str, str]:
                 out[relative] = "unreadable"
     return out
 
-
-def hashes(tree: Mapping[str, str]) -> Dict[str, str]:
-    return {path: hashlib.sha256(text.encode("utf-8")).hexdigest()
-            for path, text in tree.items()}

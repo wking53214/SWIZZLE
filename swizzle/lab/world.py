@@ -30,6 +30,16 @@ from .sandbox import Sandbox
 CASE_DIR = "case"
 
 
+class UnaskableExperiment(ValueError):
+    """A case this builder cannot perform, refused rather than approximated.
+
+    Kept distinct from `ContradictoryGroundTruth` and `UnwitnessedGroundTruth`
+    on purpose. Those are cases whose ground truth disagrees with itself or
+    with the world; this is a case the machinery cannot carry out at all, and
+    collapsing the three would lose which kind of thing went wrong.
+    """
+
+
 # ===========================================================================
 # Rendering
 # ===========================================================================
@@ -255,6 +265,7 @@ def build(genome: RepositoryGenome, dialect: TargetDialect) -> WorldDraft:
 
     draft.dirty.extend(genome.git.dirty)
 
+    _refuse_unaskable(genome)
     mutators.apply_all(draft, genome.mutations, Phase.BUILD)
     mutators.apply_all(draft, genome.mutations, Phase.DURING_TESTS)
     # After-baseline mutators run here too, and only DECLARE their edits.
@@ -266,6 +277,58 @@ def build(genome: RepositoryGenome, dialect: TargetDialect) -> WorldDraft:
     mutators.apply_all(draft, genome.mutations, Phase.AFTER_BASELINE)
     _append_during_tests(draft)
     return draft
+
+
+#: The phases `build` actually carries out. Anything else a genome asks for
+#: is an experiment this builder cannot perform.
+CARRIED_OUT = (Phase.BUILD, Phase.DURING_TESTS, Phase.AFTER_BASELINE)
+
+
+def _refuse_unaskable(genome: RepositoryGenome) -> None:
+    """A mutation in a phase nothing carries out makes the case unaskable.
+
+    DIAGNOSED BY THE TARGET (ghost_tools 1.7.5, `unreachable_declared_state`)
+
+    `Phase.BETWEEN_RUNS` was declared and never produced. The builder ran
+    three phases and the enum named four, so a genome asking for the fourth
+    built a world WITHOUT its mutation, recorded an empty construction
+    history, and was still judged by the temporal oracle -- which reads the
+    phase off the genome and adjusts its verdict because the phase was
+    DECLARED, not because anything happened.
+
+    The experiment stopped asking its question and produced an answer
+    anyway. That is the worst shape a defect in an instrument can take,
+    because nothing downstream can tell the answer apart from a real one.
+
+    WHY THIS IS A REFUSAL AND NOT AN IMPLEMENTATION
+
+    Three repairs were available and two are wrong.
+
+    Carrying the mutation out at build time would silently redefine what
+    `between_runs` means: the phase exists to say "between two separate
+    target invocations", and running it during construction is a different
+    experiment wearing the same name.
+
+    Deleting the member removes the vocabulary, and with it the ability of a
+    genome to say what it wanted. The temporal oracle's reference would go
+    too, and a case that needs the distinction could no longer express it.
+
+    So: the phase stays, nothing pretends to carry it out, and a case that
+    asks for it is refused where every other unbuildable case is refused --
+    at construction, loudly, before a verdict exists to be mistaken for a
+    real one. An unaskable experiment is not a failed experiment and must
+    never be reported as a passed one.
+    """
+    stranded = [m for m in genome.mutations if m.phase not in CARRIED_OUT]
+    if stranded:
+        raise UnaskableExperiment(
+            "%s asks for %d mutation(s) in a phase this builder does not "
+            "carry out (%s). The world would be built without them and the "
+            "case judged as though they had happened, so it is refused here "
+            "rather than answered wrongly."
+            % (genome.name, len(stranded),
+               ", ".join(sorted({"%s in %s" % (m.name, m.phase.value)
+                                 for m in stranded}))))
 
 
 def _render_tests(draft: WorldDraft) -> None:
