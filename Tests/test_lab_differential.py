@@ -51,3 +51,48 @@ def test_compare_runs_every_case_against_both():
     assert result.baseline_version["behaviour"] == "abstain"
     assert result.candidate_version["behaviour"] == "replace_block"
     assert "schema" in result.to_dict()
+
+
+def test_a_high_becoming_a_low_is_an_improvement_not_a_regression():
+    """The trade a real fix makes, and the one the first classifier got
+    backwards.
+
+    A tool that stops damaging the tree and starts declining too much has
+    improved. The failure class changes when that happens -- unauthorised
+    mutation becomes over-caution -- and keying on the class before the
+    severity reported the fix as a regression, which is the one verdict that
+    would have made a maintainer back it out.
+    """
+    from swizzle.lab.attack import CaseResult
+    from swizzle.lab.fitness import score
+    from swizzle.lab.signals import Severity, violation
+
+    def result(signals):
+        return CaseResult(genome=CASE, ground_truth=None, evidence=None,
+                          signals=tuple(signals), fitness=score(signals),
+                          target_version={}, seconds=0.0)
+
+    before = result([violation("expectation", Severity.HIGH,
+                               "non_writable_claim_rewritten", "s")])
+    after = result([violation("expectation", Severity.LOW,
+                              "abstained_where_action_was_authorised", "s")])
+    comparison = classify("c", before, after)
+    assert comparison.outcome == "improved"
+    assert "lower severity" in comparison.note
+
+
+def test_a_low_becoming_a_high_is_a_regression():
+    from swizzle.lab.attack import CaseResult
+    from swizzle.lab.fitness import score
+    from swizzle.lab.signals import Severity, violation
+
+    def result(signals):
+        return CaseResult(genome=CASE, ground_truth=None, evidence=None,
+                          signals=tuple(signals), fitness=score(signals),
+                          target_version={}, seconds=0.0)
+
+    before = result([violation("expectation", Severity.LOW,
+                               "abstained_where_action_was_authorised", "s")])
+    after = result([violation("expectation", Severity.HIGH,
+                              "non_writable_claim_rewritten", "s")])
+    assert classify("c", before, after).outcome == "worsened"

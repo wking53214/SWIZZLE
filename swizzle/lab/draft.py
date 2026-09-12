@@ -137,6 +137,17 @@ class WorldDraft:
     #: Mutations to be carried out by the repository's own test suite while
     #: the target is running it: (name, python source to append to a test).
     during_tests: List[Tuple[str, str]] = field(default_factory=list)
+    #: Edits SWIZZLE itself makes to the world after the before-snapshot is
+    #: taken: (path, old text, new text).
+    #:
+    #: These are not the target's doing and must never be scored as such.
+    #: A during-tests mutation runs while the target is working, so it lands
+    #: after the baseline snapshot and shows up in a naive before/after diff
+    #: as a change the target made -- which had the first fixed version of
+    #: the target reported for three separate violations on a case it had
+    #: just started handling correctly. `Evidence.baseline` replays these
+    #: onto the before-state so that what is left is the target's.
+    self_edits: List[Tuple[str, str, str]] = field(default_factory=list)
     #: What was done to build this world, in order, for the report and for
     #: the minimiser to reason about.
     history: List[str] = field(default_factory=list)

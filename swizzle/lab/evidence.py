@@ -63,6 +63,30 @@ class Evidence:
 
     # ------------------------------------------------------------ helpers
 
+    @property
+    def baseline(self) -> Mapping[str, str]:
+        """The world as it stood once SWIZZLE's own mid-run edits had landed.
+
+        `before` is the world as built. A during-tests mutation changes it
+        while the target is working, so a diff from `before` attributes
+        SWIZZLE's edit to the target. Replaying those edits onto the
+        before-state leaves a baseline whose only remaining differences are
+        the target's, which is the question every oracle is actually asking.
+
+        Replayed rather than snapshotted because there is no moment to
+        snapshot at: the edit happens inside the target's own process, at a
+        point the target chose.
+        """
+        edits = self.ground_truth.self_edits
+        if not edits:
+            return self.before
+        out = dict(self.before)
+        for path, old, new in edits:
+            text = out.get(path)
+            if text is not None and old in text:
+                out[path] = text.replace(old, new, 1)
+        return out
+
     def is_memory(self, path: str) -> bool:
         """Whether `path` is the target's own bookkeeping rather than content."""
         return path in self.dialect.memory_files or path.startswith(".git/")
@@ -76,11 +100,12 @@ class Evidence:
         finding under three false ones per run.
         """
         after = self.after_working if working else self.after
+        baseline = self.baseline
         out: Dict[str, str] = {}
-        for path in sorted(set(self.before) | set(after)):
+        for path in sorted(set(baseline) | set(after)):
             if self.is_memory(path) or "__pycache__" in path:
                 continue
-            was, now = self.before.get(path), after.get(path)
+            was, now = baseline.get(path), after.get(path)
             if was == now:
                 continue
             out[path] = "added" if was is None else "removed" if now is None else "modified"
@@ -94,7 +119,7 @@ class Evidence:
         "did it stay inside the permitted span" should get `no`.
         """
         after = self.after_working if working else self.after
-        was = (self.before.get(path) or "").splitlines()
+        was = (self.baseline.get(path) or "").splitlines()
         now = (after.get(path) or "").splitlines()
         changed = []
         for index in range(max(len(was), len(now))):
@@ -169,6 +194,16 @@ class Evidence:
         return self.after.get(path, "")
 
     def text_before(self, path: str) -> str:
+        """The text an oracle should compare against: the baseline.
+
+        Named `text_before` because that is what it means to a reader of an
+        oracle -- "before the target acted" -- which is the baseline, not
+        the as-built world, whenever SWIZZLE moved the world itself.
+        """
+        return self.baseline.get(path, "")
+
+    def text_as_built(self, path: str) -> str:
+        """The world as SWIZZLE wrote it, before anything ran."""
         return self.before.get(path, "")
 
     @property

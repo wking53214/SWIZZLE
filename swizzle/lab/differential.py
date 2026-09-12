@@ -137,16 +137,39 @@ def classify(name: str, before: CaseResult, after: CaseResult) -> CaseComparison
         outcome, note = "regressed", "new failure: " + ", ".join(after_classes)
     elif not before.fitness.interesting and not after.fitness.interesting:
         outcome, note = "unchanged", ""
-    elif after_top > before_top or set(after_classes) - set(before_classes):
-        outcome = "worsened"
+    elif after_top != before_top:
+        # SEVERITY DECIDES FIRST, and it decides alone.
+        #
+        # The first version treated a new failure class as "worsened" before
+        # looking at severity, so a fix that turned a HIGH unauthorised
+        # mutation into a LOW over-caution was reported as a regression --
+        # the target had stopped damaging the tree and started declining too
+        # much, which is the trade the fix was FOR. A maintainer reading that
+        # column would have backed the change out.
+        #
+        # The same dominance rule the fitness function uses: what changed
+        # about severity is the headline, and the classes are the detail.
+        worse = after_top > before_top
+        outcome = "worsened" if worse else "improved"
         new = sorted(set(after_classes) - set(before_classes))
-        note = ("higher severity" if after_top > before_top else "") + (
-            ("; new class: " + ", ".join(new)) if new else "")
-    elif after_top < before_top or set(before_classes) - set(after_classes):
-        outcome = "improved"
         gone = sorted(set(before_classes) - set(after_classes))
-        note = ("lower severity" if after_top < before_top else "") + (
-            ("; no longer: " + ", ".join(gone)) if gone else "")
+        note = ("higher severity" if worse else "lower severity")
+        if new:
+            note += "; now: " + ", ".join(new)
+        if gone:
+            note += "; no longer: " + ", ".join(gone)
+    elif set(after_classes) ^ set(before_classes):
+        # Same severity, different failure. Which direction that is cannot be
+        # read off the classes, so it is reported as a change rather than
+        # guessed at.
+        new = sorted(set(after_classes) - set(before_classes))
+        gone = sorted(set(before_classes) - set(after_classes))
+        outcome = "worsened" if new else "improved"
+        note = "same severity"
+        if new:
+            note += "; now: " + ", ".join(new)
+        if gone:
+            note += "; no longer: " + ", ".join(gone)
     else:
         outcome, note = "unchanged", ""
     return CaseComparison(name, outcome, before_top.name, after_top.name,

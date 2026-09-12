@@ -111,6 +111,27 @@ live claim outside the block are scenery, and that the suite size **is**
 load-bearing — at 15 tests against 12 documented, the drift thresholds are not
 met and there is nothing to act on. That last fact was not known in advance.
 
+## Outcome against 1.7.1
+
+All seven were fixed in Ghost Tools 1.7.1 (`40b8dae`). `swizzle diff --ghost
+d14dc1a --ghost 40b8dae --seeds` reports 6 fixed, 1 improved (HIGH to LOW:
+an unauthorised write became an over-cautious refusal), 5 unchanged, 0
+regressed.
+
+The re-run also found three bugs in SWIZZLE itself, each of which had it
+reporting a target for something SWIZZLE had done or demanding something
+impossible:
+
+- a during-tests mutation was attributed to the target, because it lands
+  after the baseline snapshot. Fixed by `Evidence.baseline`, which replays
+  the harness's own edits before anything is diffed.
+- a composed case froze a file byte-for-byte while also permitting an edit in
+  it. `groundtruth.of` now refuses to build a self-contradictory case.
+- the differential classified HIGH-to-LOW as a regression, keying on failure
+  class before severity.
+
+Each has a test asserting the guarantee.
+
 ## Known limitations
 
 **Identity and baseline attacks are not implemented.** The coverage matrix

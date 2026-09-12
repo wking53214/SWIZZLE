@@ -65,6 +65,17 @@ Against Ghost Tools 1.7.0 (`d14dc1a`):
 Five of thirteen are the target behaving correctly. That ratio is the point:
 a corpus with no passes in it is a corpus whose oracles nobody should trust.
 
+## After the fixes
+
+The table above is the state at `d14dc1a`, and the entries are kept as
+recorded: an archived case is attributed to the revision it was found
+against, and rewriting it to match a later one would destroy the only thing
+that makes it evidence.
+
+Against `40b8dae` (1.7.1) every discovered case comes back clean except
+`document_reached_through_an_alias`, which drops from HIGH to LOW. Re-run it
+yourself with `swizzle diff --ghost d14dc1a --ghost 40b8dae --seeds`.
+
 ## Using it
 
 ```

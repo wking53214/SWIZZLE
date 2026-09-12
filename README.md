@@ -92,6 +92,47 @@ consistently; and when it was sent SIGKILL in the middle of an operation it
 left the repository on its original branch, clean, with nothing changed. A
 corpus with no passes in it is a corpus whose oracles nobody should trust.
 
+## What happened when the findings were fixed
+
+Ghost Tools 1.7.1 fixed all seven. Re-running the same genomes across the
+two revisions:
+
+```
+baseline   1.7.0 at d14dc1acf0
+candidate  1.7.1 at 40b8daea6a
+
+  fixed        6
+  improved     1
+  unchanged    5
+  regressed    0
+```
+
+The one `improved` is the honest part. `document_reached_through_an_alias`
+went from HIGH (a writability verdict reached about a symlink and applied to
+its target) to LOW (declining to rewrite a live claim in a document whose
+resolved name is not on the tool's allow-list). The tool stopped damaging the
+tree and started being slightly too careful, which is the trade the fix was
+for, and the severity ladder says so without being asked.
+
+Two harness bugs surfaced in the same run, both of them SWIZZLE reporting a
+target for something SWIZZLE had done:
+
+- a during-tests mutation lands after the baseline snapshot, so the edit the
+  harness made mid-run was attributed to the target. `Evidence.baseline` now
+  replays SWIZZLE's own edits before anything is diffed.
+- a composed case protected a file byte-for-byte while also permitting an
+  edit in it, so a target doing exactly what it was authorised to do was
+  reported for it. `groundtruth.of` now refuses to build a case that
+  contradicts itself.
+
+And one classifier bug: the differential called HIGH-to-LOW a regression,
+because it keyed on the failure class before the severity. A maintainer
+reading that column would have backed the fix out.
+
+All three have guarantees in `Tests/test_lab_self_adversarial.py` and
+`Tests/test_lab_differential.py` now. Finding them is what re-running after a
+fix is for.
+
 ## Severity, and the one rule that cannot be tuned
 
 A case where the target destroyed a paragraph outranks any number of cases

@@ -74,6 +74,9 @@ class GroundTruth:
     #: Whether a section appended under the target's own declared markers is
     #: authorised in this case. See RepositoryGenome.tolerate_target_sections.
     tolerate_target_sections: bool
+    #: Edits SWIZZLE made to the world itself, after the baseline snapshot.
+    #: (path, old, new). Never the target's doing.
+    self_edits: Tuple[Tuple[str, str, str], ...]
     #: What the construction knows that an oracle may need.
     facts: Mapping[str, str]
     #: The construction history, in order.
@@ -105,6 +108,7 @@ class GroundTruth:
             "protected": [vars(p) for p in self.protected],
             "expected_abstention": self.expected_abstention,
             "tolerate_target_sections": self.tolerate_target_sections,
+            "self_edits": [list(e) for e in self.self_edits],
             "expected_final_state": dict(self.expected_final_state),
             "repository_files": sorted(self.repository_files),
             "outside_state": dict(self.outside_state),
@@ -113,9 +117,14 @@ class GroundTruth:
         }
 
 
+class ContradictoryGroundTruth(ValueError):
+    """A case that expects two incompatible things of the same file."""
+
+
 def of(draft: WorldDraft) -> GroundTruth:
     """Freeze what the draft accumulated while it was being built."""
     movable = {edit.path for edit in draft.permitted}
+    _check_consistent(draft, movable)
     return GroundTruth(
         case=draft.genome.name,
         hypothesis=draft.genome.hypothesis,
@@ -126,6 +135,7 @@ def of(draft: WorldDraft) -> GroundTruth:
         protected=tuple(draft.protected),
         expected_abstention=draft.expect_abstention,
         tolerate_target_sections=draft.genome.tolerate_target_sections,
+        self_edits=tuple(draft.self_edits),
         expected_final_state={path: sha256(text)
                               for path, text in sorted(draft.files.items())
                               if path not in movable},
@@ -134,3 +144,28 @@ def of(draft: WorldDraft) -> GroundTruth:
         facts=dict(draft.facts),
         construction=tuple(draft.history),
     )
+
+
+def _check_consistent(draft: WorldDraft, movable) -> None:
+    """A file cannot be both byte-frozen and permitted to change.
+
+    Ground truth is SWIZZLE's own judgement and nothing in the laboratory
+    can tell that a judgement is wrong -- but it CAN tell that two
+    judgements contradict each other, and a contradiction is the one kind
+    of wrongness that is mechanically detectable.
+
+    This exists because a composed case produced exactly that: one mutator
+    remapped a permitted edit onto a file and another protected the same
+    file whole, so the case demanded that a line change and that no byte
+    change. The target was then reported for doing the permitted thing.
+    Raising here turns a silently unfair case into a loud broken one.
+    """
+    whole = {region.path for region in draft.protected
+             if not region.text and region.line_start is None}
+    clash = sorted(whole & movable)
+    if clash:
+        raise ContradictoryGroundTruth(
+            "%s: %s is protected byte-for-byte and also carries a permitted "
+            "edit. The case cannot be satisfied and any target run against it "
+            "would be reported for doing what it was authorised to do."
+            % (draft.genome.name, ", ".join(clash)))
