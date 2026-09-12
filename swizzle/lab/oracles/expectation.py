@@ -88,6 +88,14 @@ def _protected(evidence: Evidence) -> List[Signal]:
                     path=region.path, text=region.text[:120]))
                 continue
             if region.text in after and region.text in working:
+                # Positive confirmation, not silence. An oracle that says
+                # nothing when it looked and found the sentence intact is
+                # indistinguishable from one that did not look -- which is
+                # exactly what the concealment probe reported about a clean
+                # fix, correctly, given what it had to go on.
+                out.append(ok(ORACLE, "protected_text_survived",
+                              "text the author wrote is still in %s" % region.path,
+                              path=region.path, text=region.text[:80]))
                 continue
             out.append(violation(
                 ORACLE, Severity.CRITICAL, "protected_text_destroyed",

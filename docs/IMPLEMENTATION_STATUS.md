@@ -132,6 +132,44 @@ impossible:
 
 Each has a test asserting the guarantee.
 
+## Standing, after interrogation (v0.3.0)
+
+`swizzle standing` was run across the corpus against ghost_tools 1.7.2.
+Nothing reads `fixed`:
+
+| case | standing |
+|---|---|
+| `link_out_of_the_repository` | current structure supports resolved |
+| `prose_inside_the_maintained_block` | current structure supports resolved |
+| `uninvited_section_in_a_readme` | current structure supports resolved |
+| `alias_and_prose_together` | unreproduced, unprobed (no siblings to ask) |
+| `block_in_a_document_about_a_moment` | **unreproduced, but a probe defeated it** |
+| `claim_rewritten_while_the_suite_runs` | **unreproduced, but a probe defeated it** |
+| `document_reached_through_an_alias` | reproduces (LOW over-caution) |
+| five controls | never reproduced |
+
+Two things came out of that run that would not have come out of re-running
+the cases.
+
+**A CRITICAL that 1.7.1 reported fixed was still open.** The variant probe
+built the same world with a count block in it and walked back out of the
+repository: 1.7.1 had guarded two writers and left the third, and the case
+that found the original hole had no block in it, so the fix was verified
+against a world that could not exercise the writer it left open. Fixed in
+1.7.2, where the test now runs every writer over one world.
+
+**Two classes are still open**, each found by a variant one dimension from a
+case that had been declared fixed:
+
+- a README whose kind is `generated` -- carrying `<!-- generated: do not edit
+  by hand -->` -- has its claim rewritten anyway. The writability gate is by
+  filename and has no notion of a document declaring itself not
+  hand-editable. Verified by hand: CRITICAL, `protected_text_destroyed`.
+- a variant of the during-tests case reproduces `unauthorised_mutation` at
+  HIGH.
+
+Both genomes are archived inside the resolutions and are reproducible.
+
 ## Known limitations
 
 **Identity and baseline attacks are not implemented.** The coverage matrix

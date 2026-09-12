@@ -16,7 +16,9 @@ import tempfile
 from pathlib import Path
 from typing import List, Optional, Sequence
 
-from . import catalogue, coverage, metrics, minimize, reporting, search
+from . import (catalogue, coverage, metrics, minimize, probes, reporting,
+               search)
+from . import standing as standing_model
 from .adapter import TargetUnavailable
 from .adapters import GhostToolsAdapter
 from .attack import run as run_case
@@ -126,6 +128,24 @@ def add_parsers(sub) -> None:
     report.add_argument("--corpus-path", type=Path, default=DEFAULT_CORPUS)
     report.add_argument("--json", action="store_true")
     report.add_argument("--ghost-tools", type=Path, default=None, metavar="PATH")
+
+    standing = sub.add_parser(
+        "standing",
+        help="what the evidence currently supports about a case, and what it "
+             "does not establish")
+    standing.add_argument("case", nargs="?", default="",
+                          help="one case; omit for every archived case")
+    standing.add_argument("--probe", action="append", default=[], metavar="NAME",
+                          help="ask only these (concealment, recurrence, scope, "
+                               "adjacency, variant); repeatable")
+    standing.add_argument("--budget", type=int, default=6, metavar="N",
+                          help="variants to build and run (default 6)")
+    standing.add_argument("--corpus-path", type=Path, default=DEFAULT_CORPUS)
+    standing.add_argument("--record", action="store_true",
+                          help="write the resolution back into the corpus entry")
+    standing.add_argument("--json", action="store_true")
+    standing.add_argument("--ghost-tools", type=Path, default=None, metavar="PATH")
+    standing.add_argument("--timeout", type=float, default=900.0, metavar="SECONDS")
 
     tidy = sub.add_parser("sandboxes", help="list or delete stray sandboxes")
     tidy.add_argument("--purge", action="store_true")
@@ -542,6 +562,89 @@ def _report(args) -> int:
     print(metrics.render(card))
     print(coverage.render(coverage.matrix(results)))
     return 0
+
+
+@_register("standing")
+def _standing(args) -> int:
+    try:
+        adapter = _adapter(args)
+    except TargetUnavailable as exc:
+        print("swizzle: %s" % exc, file=sys.stderr)
+        return 2
+
+    store = Corpus(args.corpus_path)
+    if args.case:
+        entries = [e for e in store.entries() if e.name == args.case]
+        if not entries:
+            genome = _find_genome(args.case, args.corpus_path)
+            if genome is None:
+                print("swizzle: no case called %r" % args.case, file=sys.stderr)
+                return 2
+            entries = [None]
+            targets = [(args.case, genome, None, None)]
+        else:
+            targets = [(e.name, e.genome, e.original_genome, e.observation)
+                       for e in _newest(entries)]
+    else:
+        targets = [(e.name, e.genome, e.original_genome, e.observation)
+                   for e in _newest(store.entries())]
+
+    payload, defeated = [], 0
+    for name, genome, original, before in targets:
+        siblings = [g for g in catalogue.CATALOGUE
+                    if g.category is genome.category and g.name != genome.name]
+        context = probes.ProbeContext(
+            genome=genome, adapter=adapter, original=original,
+            siblings=siblings,
+            when_it_reproduced=before if before and before.reproduced else None,
+            resolved_classes=tuple(before.classes) if before else (),
+            resolved_severity=before.top_severity if before else "NONE",
+            budget=args.budget, timeout=args.timeout, seed=genome.seed)
+        observed, results = probes.interrogate(context, only=args.probe)
+        resolution = standing_model.Resolution(
+            observation=observed, probes=results,
+            previously_reproduced=before if before and before.reproduced else None)
+        if resolution.defeated_by:
+            defeated += 1
+        payload.append(resolution)
+        if args.record:
+            entry = store.get(name)
+            if entry is not None:
+                record = dict(entry.record)
+                record["resolution"] = resolution.to_dict()
+                record["standing"] = resolution.standing.value
+                entry.path.write_text(
+                    json.dumps(record, indent=2, sort_keys=True) + "\n",
+                    encoding="utf-8")
+        if not args.json:
+            print(resolution.render())
+
+    if args.json:
+        print(json.dumps([r.to_dict() for r in payload], indent=2, sort_keys=True))
+        return 0
+
+    print("=" * 66)
+    for resolution in payload:
+        print("  %-40s %s" % (resolution.observation.case,
+                              resolution.standing.value))
+    print()
+    print("Nothing above is `fixed`. The strongest standing available is that "
+          "the")
+    print("current structure supports the conclusion, and it is defeasible by "
+          "every")
+    print("probe listed beside it.")
+    return 1 if defeated else 0
+
+
+def _newest(entries):
+    """One entry per case, preferring the most interrogated bucket."""
+    order = {"regression": 0, "minimized": 1, "discovered": 2, "rejected": 3}
+    best = {}
+    for entry in entries:
+        current = best.get(entry.name)
+        if current is None or order.get(entry.bucket, 9) < order.get(current.bucket, 9):
+            best[entry.name] = entry
+    return [best[name] for name in sorted(best)]
 
 
 @_register("sandboxes")

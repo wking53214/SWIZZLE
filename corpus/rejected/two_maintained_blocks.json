@@ -176,6 +176,130 @@
   "note": "",
   "recorded_at": "2026-09-12T10:54:24Z",
   "reproduce": "swizzle reproduce two_maintained_blocks",
+  "resolution": {
+    "defeated_by": [],
+    "interpretation": "the current structure supports the conclusion that this has been resolved",
+    "previously_reproduced": null,
+    "probes": [
+      {
+        "account": "no record of the run that saw it; there is nothing to compare the current oracle set against",
+        "defeated": false,
+        "evidence": {},
+        "held": false,
+        "probe": "concealment"
+      },
+      {
+        "account": "it does not reproduce at b5dda3cfc1, and that is a statement about that commit and no other",
+        "defeated": false,
+        "evidence": {
+          "observed_at": "2026-09-12T12:38:08Z",
+          "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108"
+        },
+        "held": true,
+        "probe": "recurrence"
+      },
+      {
+        "account": "a world grown around it does not reproduce anything either",
+        "defeated": false,
+        "evidence": {
+          "digest": "a536fe4f7a784f34",
+          "grown": true,
+          "other_findings": []
+        },
+        "held": true,
+        "probe": "scope"
+      },
+      {
+        "account": "no record of which failure was resolved, so a sibling reproducing something cannot be compared against it",
+        "defeated": false,
+        "evidence": {},
+        "held": false,
+        "probe": "adjacency"
+      },
+      {
+        "account": "no record of which failure was resolved, so a variant reproducing something cannot be compared against it",
+        "defeated": false,
+        "evidence": {},
+        "held": false,
+        "probe": "variant"
+      }
+    ],
+    "source": {
+      "broken": "",
+      "case": "two_maintained_blocks",
+      "classes": [],
+      "genome_digest": "b82a0468b70d0128",
+      "observed_at": "2026-09-12T12:38:08Z",
+      "oracles_inconclusive": [],
+      "oracles_ran": [
+        "expectation",
+        "ledger",
+        "scope",
+        "semantic",
+        "structural",
+        "temporal"
+      ],
+      "reproduced": false,
+      "target_revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108",
+      "top_severity": "NONE"
+    },
+    "standing": "never reproduced",
+    "unestablished": [
+      {
+        "emphasis": "THIS case",
+        "probe": "variant",
+        "status": "not asked",
+        "unestablished": "a variant of this case may still reproduce; the case is not the class"
+      },
+      {
+        "emphasis": "this CASE",
+        "probe": "concealment",
+        "status": "not asked",
+        "unestablished": "the case is the observable, not the defect: the observable is gone and nothing here says the defect is"
+      },
+      {
+        "emphasis": "NO LONGER",
+        "probe": "recurrence",
+        "status": "held",
+        "unestablished": "at this moment only; it reproduced before and the world moves"
+      },
+      {
+        "emphasis": "REPRODUCES",
+        "probe": "concealment",
+        "status": "not asked",
+        "unestablished": "the oracles saw nothing, which is bounded by what they can see"
+      },
+      {
+        "emphasis": "THIS revision",
+        "probe": "recurrence",
+        "status": "held",
+        "unestablished": "one commit, and no statement about any other"
+      },
+      {
+        "emphasis": "THESE oracles",
+        "probe": "concealment",
+        "status": "not asked",
+        "unestablished": "the ones that ran; an inconclusive oracle declined to say rather than agreeing"
+      },
+      {
+        "emphasis": "THIS world",
+        "probe": "scope",
+        "status": "held",
+        "unestablished": "the minimised genome; a larger world may behave differently, and minimisation is what made it smaller"
+      },
+      {
+        "emphasis": "the surface",
+        "probe": "adjacency",
+        "status": "not asked",
+        "unestablished": "sibling cases on the same surface were not re-examined; a local fix can close one case and leave the mechanism open"
+      }
+    ],
+    "unprobed": [
+      "adjacency",
+      "concealment",
+      "variant"
+    ]
+  },
   "seconds": 1.42,
   "signals": [
     {
@@ -291,6 +415,7 @@
   "signature": [
     "NONE"
   ],
+  "standing": "never reproduced",
   "swizzle": {
     "commit": "ec9c7c740b9fb27f9c08bb5bce0ea0c6f5135900",
     "version": "0.1.0"
