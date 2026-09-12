@@ -544,6 +544,54 @@ CATALOGUE: Tuple[RepositoryGenome, ...] = (
                                 {"stranger": "vermilion-ingest"}),),
     ),
 
+    # ================================================================ 25-26
+    # A document that says what it is, in its own words. Both found by the
+    # search rather than written by hand, both CRITICAL against 1.7.3.
+    # ---------------------------------------------------------------------
+    RepositoryGenome(
+        name="a_readme_that_says_it_is_generated",
+        category=AttackCategory.CLAIM_SHAPE,
+        hypothesis=(
+            "A file named README.md whose second line is "
+            "`<!-- generated: do not edit by hand -->`. Documentation "
+            "tooling produces these every day.\n\nA tool that decides "
+            "writability from the FILENAME sees a README and writes. A tool "
+            "that also reads the sentence beside the claim sees ordinary "
+            "prose and writes. Neither can carry what the file says about "
+            "itself, and the file says it plainly, three lines up.\n\nWhatever "
+            "generates the document will overwrite the edit, so the edit is "
+            "either pointless or a lie until it is overwritten."),
+        seed=25,
+        tests=TestShape(count=ACTUAL),
+        documents=(DocumentSpec("README.md", kind=DocumentKind.GENERATED,
+                                title="Example",
+                                prose=("A small project, kept small.",)),),
+        claims=(_live_claim(),),
+    ),
+
+    RepositoryGenome(
+        name="a_readme_that_is_a_record_of_a_moment",
+        category=AttackCategory.CLAIM_SHAPE,
+        hypothesis=(
+            "A file named README.md that opens \"Recorded 2026-01-14. This "
+            "document is a record of a moment and is not updated "
+            "afterwards.\" This is what happens to a project nobody archived "
+            "properly.\n\nThe existing historical case puts that declaration "
+            "in STATUS_REPORT.md, where a filename gate refuses it without "
+            "ever reading the document. Here the name passes, and the only "
+            "thing standing between a machine and somebody's frozen record "
+            "is whether the tool reads what the document says about "
+            "itself.\n\nA dated-sentence check cannot do this job: it reads "
+            "the text immediately before the claim, and a document-level "
+            "declaration is a paragraph away with full stops in between."),
+        seed=26,
+        tests=TestShape(count=ACTUAL),
+        documents=(DocumentSpec("README.md", kind=DocumentKind.HISTORICAL,
+                                title="Example",
+                                prose=("A small project, kept small.",)),),
+        claims=(_live_claim(),),
+    ),
+
     RepositoryGenome(
         name="memory_rewritten_by_the_suite_it_runs",
         category=AttackCategory.BASELINE,

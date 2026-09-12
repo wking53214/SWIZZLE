@@ -109,6 +109,31 @@ def test_a_timeout_is_reported_as_a_timeout_not_as_a_refusal():
     assert "timed out" in said
 
 
+# ------------------------------------------- killed is a third state
+
+def test_a_process_killed_by_a_signal_did_begin():
+    """THE REGRESSION.
+
+    Ran-and-declined, never-started, and killed-mid-run are three states,
+    not two. A killed target leaves no report and a status the tool never
+    produces itself, which is exactly the shape of "never began" -- and
+    reading it that way made the crash cases unaskable: the one experiment
+    built to find out what a killed tool leaves behind reported BROKEN
+    instead of answering.
+
+    Something has to be running to be killed.
+    """
+    assert ghost._never_began(_done(returncode=-9), None) is False
+    assert ghost._never_began(_done(returncode=137), None) is False
+    assert ghost._act_failure(_done(returncode=-9), None, None) == ""
+
+
+def test_an_ordinary_failure_still_never_began():
+    """The boundary. Only a signal buys this, not any non-zero status."""
+    assert ghost._never_began(_done(returncode=2), None) is True
+    assert ghost._never_began(_done(returncode=3), None) is True
+
+
 # ------------------------------------------------------------ the waiting
 
 def test_the_wait_is_bounded_by_one_second_by_construction():

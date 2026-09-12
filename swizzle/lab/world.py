@@ -95,7 +95,28 @@ def _render_document(draft: WorldDraft, doc: DocumentSpec,
 
     claim_lines: List[Tuple[int, ClaimSpec]] = []
     for claim in claims:
-        if claim.heading:
+        # A CHANGELOG SAYS SO IN THE FILE, OR IT IS NOT ONE (v0.7.1)
+        #
+        # `CHANGELOG` used to render exactly like `CURRENT_STATE`: a title,
+        # some prose, a `## Tests` heading, a live claim. Ground truth
+        # protected the claim on the grounds that a changelog entry is about
+        # the past by definition -- and nothing in the file said it was a
+        # changelog. Not a marker, not a heading, not a date. The target had
+        # no way to know, rewrote a live claim in a file named README.md,
+        # which is correct, and was reported CRITICAL for destroying
+        # protected text.
+        #
+        # Eight of those in one search, all filed. Found by reading the
+        # world rather than by any oracle, because no oracle here can see
+        # a ground truth that is wrong.
+        #
+        # The version heading replaces the generic one and sits directly
+        # above the claim, so the case asks "does the tool understand a
+        # changelog entry" rather than "is the marker inside the analyser's
+        # lookback window", which is a different case and has its own.
+        if doc.kind is DocumentKind.CHANGELOG:
+            lines += ["## 1.4.0 - 2026-01-14", ""]
+        elif claim.heading:
             lines += [claim.heading, ""]
         lines.append(_claim_sentence(claim))
         claim_lines.append((len(lines), claim))

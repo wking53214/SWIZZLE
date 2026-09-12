@@ -293,7 +293,24 @@ def _never_began(done: Completed, table) -> bool:
     No report and a status the tool does not use for ordinary outcomes means
     it never started -- which is not the same as "it ran and changed
     nothing", and must never be read as one.
+
+    A THIRD STATE, WHICH THE FIRST VERSION OF THIS SWALLOWED
+
+    Ran and chose not to act. Never started. And: started, and was killed.
+
+    The crash cases kill the target from inside the suite it is running, on
+    purpose, at a point the target chose. That leaves no report and a status
+    the tool never produces itself -- which is exactly the shape of "never
+    began", and the first version of this function said so. The case that
+    exists to ask what a killed tool leaves behind stopped being askable,
+    and reported BROKEN instead.
+
+    A signal is evidence of the opposite: something has to be running to be
+    killed. Negative returncodes are how Python reports a signal; 128+N is
+    how a shell does.
     """
+    if done.returncode < 0 or done.returncode >= 128:
+        return False                      # killed, so it began
     return table is None and done.returncode not in (0, 1)
 
 

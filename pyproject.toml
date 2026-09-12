@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "swizzle"
-version = "0.7.0"
+version = "0.7.1"
 description = "An adaptive adversarial evaluator for repository-level autonomous modification systems: builds reproducible repository states in which a target is likely to make an incorrect epistemic, diagnostic or mutational decision, and proves independently whether it did"
 readme = "README.md"
 requires-python = ">=3.11"

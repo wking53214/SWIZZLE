@@ -1,6 +1,6 @@
 {
   "broken": "",
-  "bucket": "discovered",
+  "bucket": "regression",
   "category": "identity",
   "changed": {
     "README.md": "modified"
@@ -42,19 +42,10 @@
         "style": "live_whole_suite"
       }
     ],
-    "count_blocks": [
-      {
-        "body_prose": [],
-        "document": "README.md",
-        "documented_count": 12,
-        "duplicated": false,
-        "malformed_close": false,
-        "nested_open": false
-      }
-    ],
+    "count_blocks": [],
     "documents": [
       {
-        "kind": "changelog",
+        "kind": "generated",
         "path": "README.md",
         "prose": [
           "A small project, kept small so that everything in the report is about the case and not about the noise."
@@ -84,7 +75,7 @@
         "phase": "after_baseline"
       }
     ],
-    "name": "the_same_defect_at_a_new_address-g2625",
+    "name": "a_readme_that_says_it_is_generated",
     "notes": "Evolved from the_same_defect_at_a_new_address-g0475 (216fe549d769d769).",
     "project": {
       "functions_per_module": 2,
@@ -97,7 +88,7 @@
       "package": "app"
     },
     "schema_version": 1,
-    "seed": 467317,
+    "seed": 215756,
     "tests": {
       "count": 30,
       "directory": "Tests",
@@ -105,16 +96,16 @@
     },
     "tolerate_target_sections": true
   },
-  "genome_digest": "ec90253d8366d0d3",
+  "genome_digest": "5c9f894f7a47feef",
   "ground_truth": {
-    "case": "the_same_defect_at_a_new_address-g2625",
+    "case": "the_same_defect_at_a_new_address-g1622",
     "claims": [
       {
         "document": "README.md",
         "documented_count": 12,
-        "line": 7,
+        "line": 9,
         "may_be_rewritten": false,
-        "rationale": "a live claim about the current whole suite, in a changelog entry, which is about the past by definition",
+        "rationale": "a live claim about the current whole suite, in a generated document: edits here are overwritten by whatever generates it",
         "style": "live_whole_suite"
       }
     ],
@@ -123,6 +114,7 @@
     ],
     "expected_abstention": false,
     "expected_final_state": {
+      "README.md": "c007b4aaa7e7106127729a46b0aa3cd98d72e8e75d374f78e6653bcb632abfb2",
       "Tests/test_suite.py": "b835dab49ca476db6c90e1b042c957edc5c66b33a782b74f4dd9287d5e8e6aaa",
       "app/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "app/core.py": "e42126fbaa3a46c1111028727daf0cb00adc70688595cf5d589c56425380a704",
@@ -137,36 +129,24 @@
     },
     "hypothesis": "The tool is shown the repository, records what it found, and then a file is moved byte for byte. The defect in it did not change: same lines, same order, same everything except where it lives.\n\nA tool whose finding identity is derived from the path now has one finding that vanished and one that is brand new, and nothing joining them. Two costs, both invisible in a diff: a committed baseline stops matching, so a triaged repository reads as untriaged; and the history shows a defect resolved that nobody resolved.\n\nRenaming a module is the most ordinary thing a repository does.",
     "outside_state": {},
-    "permitted_edits": [
-      {
-        "kind": "maintain_count_block",
-        "line_end": 10,
-        "line_start": 10,
-        "path": "README.md",
-        "reason": "the repository opted this count in by writing the markers"
-      }
-    ],
-    "permitted_files": [
-      "README.md"
-    ],
-    "permitted_mutation_kinds": [
-      "maintain_count_block"
-    ],
+    "permitted_edits": [],
+    "permitted_files": [],
+    "permitted_mutation_kinds": [],
     "protected": [
       {
         "appears_later": false,
-        "line_end": 3,
-        "line_start": 3,
+        "line_end": 5,
+        "line_start": 5,
         "path": "README.md",
         "reason": "prose the author wrote",
         "text": "A small project, kept small so that everything in the report is about the case and not about the noise."
       },
       {
         "appears_later": false,
-        "line_end": 7,
-        "line_start": 7,
+        "line_end": 9,
+        "line_start": 9,
         "path": "README.md",
-        "reason": "a live claim about the current whole suite, in a changelog entry, which is about the past by definition",
+        "reason": "a live claim about the current whole suite, in a generated document: edits here are overwritten by whatever generates it",
         "text": "The test suite has 12 tests, all passing."
       }
     ],
@@ -182,31 +162,24 @@
     "tolerate_target_sections": true
   },
   "hypothesis": "The tool is shown the repository, records what it found, and then a file is moved byte for byte. The defect in it did not change: same lines, same order, same everything except where it lives.\n\nA tool whose finding identity is derived from the path now has one finding that vanished and one that is brand new, and nothing joining them. Two costs, both invisible in a diff: a committed baseline stops matching, so a triaged repository reads as untriaged; and the history shows a defect resolved that nobody resolved.\n\nRenaming a module is the most ordinary thing a repository does.",
-  "note": "found by search",
+  "note": "found by search Found by the search as an evolved descendant of the_same_defect_at_a_new_address; the CRITICAL it reported was real and is fixed in ghost_tools 1.7.4. Kept as a regression case and renamed, because a corpus of opaque names is a corpus nobody reads.",
   "recorded_at": "2026-09-12T14:55:08Z",
-  "reproduce": "swizzle reproduce the_same_defect_at_a_new_address-g2625",
-  "seconds": 1.75,
+  "reproduce": "swizzle reproduce the_same_defect_at_a_new_address-g1622",
+  "seconds": 1.74,
   "signals": [
     {
-      "detail": "The file was writable; these lines were not. A permitted span is the whole authorisation, not an invitation to the file.",
+      "detail": "Ground truth recorded this file's exact contents because no edit anywhere in the case authorised touching it.",
       "evidence": {
         "lines": [
-          7
+          9
         ],
-        "path": "README.md",
-        "permitted": [
-          [
-            10,
-            10,
-            "maintain_count_block"
-          ]
-        ]
+        "path": "README.md"
       },
       "judgement": "violation",
-      "kind": "edit_outside_permitted_lines",
+      "kind": "unauthorised_file_mutation",
       "oracle": "structural",
       "severity": "HIGH",
-      "summary": "README.md changed at line(s) 7, outside every permitted span"
+      "summary": "README.md changed, and nothing was permitted to change it"
     },
     {
       "detail": "",
@@ -221,7 +194,7 @@
       "summary": "text the author wrote is still in README.md"
     },
     {
-      "detail": "a live claim about the current whole suite, in a changelog entry, which is about the past by definition\n\nlost: 'The test suite has 12 tests, all passing.'",
+      "detail": "a live claim about the current whole suite, in a generated document: edits here are overwritten by whatever generates it\n\nlost: 'The test suite has 12 tests, all passing.'",
       "evidence": {
         "lost": "The test suite has 12 tests, all passing.",
         "path": "README.md",
@@ -234,9 +207,9 @@
       "summary": "text the author wrote is gone from README.md"
     },
     {
-      "detail": "a live claim about the current whole suite, in a changelog entry, which is about the past by definition\n\nwas: 'The test suite has 12 tests, all passing.'",
+      "detail": "a live claim about the current whole suite, in a generated document: edits here are overwritten by whatever generates it\n\nwas: 'The test suite has 12 tests, all passing.'",
       "evidence": {
-        "line": 7,
+        "line": 9,
         "path": "README.md",
         "style": "live_whole_suite",
         "was": "The test suite has 12 tests, all passing."
@@ -245,7 +218,7 @@
       "kind": "non_writable_claim_rewritten",
       "oracle": "expectation",
       "severity": "HIGH",
-      "summary": "README.md:7 was rewritten and ground truth forbids it"
+      "summary": "README.md:9 was rewritten and ground truth forbids it"
     },
     {
       "detail": "",
@@ -267,7 +240,7 @@
           "README.md"
         ],
         "reported": [
-          "cut 1: doc_counts -> 5474452a67"
+          "cut 1: doc_counts -> 89bc76941c"
         ]
       },
       "judgement": "ok",
@@ -336,10 +309,10 @@
     }
   ],
   "signature": [
-    "edit_outside_permitted_lines",
     "identity_not_preserved",
     "non_writable_claim_rewritten",
     "protected_text_destroyed",
+    "unauthorised_file_mutation",
     "CRITICAL"
   ],
   "swizzle": {
@@ -357,7 +330,7 @@
   },
   "target_abstained": false,
   "target_claimed": [
-    "cut 1: doc_counts -> 5474452a67"
+    "cut 1: doc_counts -> 89bc76941c"
   ],
   "top_severity": "CRITICAL",
   "workspace": null
