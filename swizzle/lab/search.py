@@ -43,6 +43,7 @@ from dataclasses import dataclass, field, replace
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from . import attack as attack_module
+from . import coverage
 from . import mutators as mutator_registry
 from .adapter import TargetAdapter
 from .attack import CaseResult
@@ -92,6 +93,14 @@ class SearchReport:
     #: Combinations that beat every one of their members' best. Structural
     #: findings, not bigger numbers about either member.
     connections: Tuple[str, ...] = ()
+    #: Surfaces of the target that no case had ever landed on when the search
+    #: started, and that a case landed on before it finished. The outcome of
+    #: `UNCOVERED_SHARE`, measured rather than intended: a counter of how
+    #: often the search MEANT to aim somewhere new would be a report about
+    #: this module's own policy, which is not a result.
+    surfaces_opened: Tuple[str, ...] = ()
+    #: Still empty when the budget ran out. The honest other half.
+    surfaces_still_empty: Tuple[str, ...] = ()
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -102,6 +111,8 @@ class SearchReport:
             "first_seen_at_evaluation": dict(sorted(self.first_seen.items())),
             "rediscovered_seed_cases": list(self.rediscovered),
             "connections_found": list(self.connections),
+            "surfaces_opened": list(self.surfaces_opened),
+            "surfaces_still_empty": list(self.surfaces_still_empty),
             "mutator_stats": {
                 name: {"offered": s.offered, "improved": s.improved,
                        "critical": s.critical, "hit_rate": round(s.hit_rate, 3)}
@@ -190,10 +201,28 @@ _SENTENCES = (
 #: a bet, and leaves the weights to describe only what was measured.
 EXPLORE_SHARE = 0.35
 
+#: The share of mutator choices spent reaching a SURFACE of the target that
+#: no case in this run has landed on yet.
+#:
+#: Productivity weighting alone is rich-get-richer. It concentrates the
+#: search exactly where it has already succeeded, which is where new
+#: information is least likely to be, and a search that has found four
+#: writability bugs will keep finding writability bugs while the identity
+#: and baseline rows sit at zero forever. The empty row is the one thing the
+#: coverage table can say that a pass rate cannot, and a search that never
+#: aims at it guarantees the row stays empty.
+#:
+#: Taken FIRST, ahead of the zero-base share, and the order is a claim:
+#: never having tested a mechanism of the target is ignorance about the
+#: SUBJECT, while a mutator with no record is ignorance about the
+#: INSTRUMENT. The first is the more expensive one to keep.
+UNCOVERED_SHARE = 0.25
+
 
 def offspring(parent: RepositoryGenome, rng: random.Random,
               stats: Mapping[str, MutatorStats],
-              knowledge=None, revision: str = "") -> Optional[RepositoryGenome]:
+              knowledge=None, revision: str = "",
+              uncovered: Sequence[str] = ()) -> Optional[RepositoryGenome]:
     """One child of `parent`, or None if no legal change was available."""
     moves: List[Callable[[], Optional[RepositoryGenome]]] = []
 
@@ -201,7 +230,8 @@ def offspring(parent: RepositoryGenome, rng: random.Random,
                  if _satisfied(parent, name)]
     if available:
         def add() -> RepositoryGenome:
-            name = _choose(available, rng, stats, knowledge, revision)
+            name = _choose(available, rng, stats, knowledge, revision,
+                           uncovered)
             spec = MutationSpec(
                 name=name, params=_params_for(name, parent, rng),
                 phase=mutator_registry.get(name).phase)
@@ -260,18 +290,32 @@ def offspring(parent: RepositoryGenome, rng: random.Random,
         notes="Evolved from %s (%s)." % (parent.name, parent.digest()))
 
 
-def _choose(available, rng, stats, knowledge, revision) -> str:
+def _choose(available, rng, stats, knowledge, revision,
+            uncovered: Sequence[str] = ()) -> str:
     """Which mutator to add, and on what grounds.
 
-    Without a knowledge store this is the old in-run weighting, which is
-    fine for a single run: everything starts at zero together and the floor
-    is doing no epistemic work because nothing has a history yet.
+    Three grounds, taken in order, and the order is the design:
 
-    With one, the three acquisition states are handled differently on
-    purpose. A zero base has no weight at all -- `Knowledge.weight()`
-    returns None rather than a small number -- so it cannot be sampled by
-    weight, and is reached through the reserved exploration share instead.
+        the target has a mechanism nothing has ever attacked
+        this mutator has never been offered against this revision
+        the evidence says it pays
+
+    The first two are reserved shares, not weights. A floor on a weight
+    invents a number and then consumes it as evidence; a reserved share says
+    plainly that part of the budget is being spent on the unknown BECAUSE it
+    is unknown. See `UNCOVERED_SHARE` for why ignorance about the subject is
+    taken ahead of ignorance about the instrument.
+
+    Without a knowledge store the last ground is the old in-run weighting,
+    which is fine for a single run: everything starts at zero together and
+    the floor is doing no epistemic work because nothing has a history yet.
     """
+    if uncovered:
+        reaching = [n for n in available
+                    if set(coverage.surfaces_of(n)) & set(uncovered)]
+        if reaching and rng.random() < UNCOVERED_SHARE:
+            return rng.choice(reaching)
+
     if knowledge is None:
         weights = [stats.get(n, MutatorStats()).weight() for n in available]
         return rng.choices(available, weights=weights, k=1)[0]
@@ -356,10 +400,20 @@ def evolve(seeds: Sequence[RepositoryGenome], adapter: TargetAdapter, *,
         if len(evaluated) >= budget:
             break
 
+    def _live() -> List[CaseResult]:
+        return [r for r in evaluated.values() if r is not None]
+
+    #: Measured once, before the search has had a chance to change it.
+    empty_at_the_start = coverage.unexercised(coverage.matrix(_live()))
+
     generations = 0
     elite_size = max(1, elite)
     while len(evaluated) < budget and current:
         generations += 1
+        # Recomputed every generation: a surface stops being uncovered the
+        # moment a case lands on it, and continuing to aim there would be
+        # spending the reserved share on something no longer unknown.
+        uncovered = coverage.unexercised(coverage.matrix(_live()))
         current.sort(key=lambda pair: pair[1].key(), reverse=True)
         keep = current[:elite_size]
         children: List[Tuple[RepositoryGenome, Fitness]] = list(keep)
@@ -367,7 +421,8 @@ def evolve(seeds: Sequence[RepositoryGenome], adapter: TargetAdapter, *,
         while len(children) < population and len(evaluated) < budget:
             parent, parent_fitness = keep[rng.randrange(len(keep))] if rng.random() < 0.7 \
                 else current[rng.randrange(len(current))]
-            child = offspring(parent, rng, stats, knowledge, revision)
+            child = offspring(parent, rng, stats, knowledge, revision,
+                              uncovered)
             if child is None:
                 continue
             added = [m.name for m in child.mutations
@@ -413,6 +468,7 @@ def evolve(seeds: Sequence[RepositoryGenome], adapter: TargetAdapter, *,
     if knowledge is not None:
         knowledge.save()
 
+    empty_at_the_end = coverage.unexercised(coverage.matrix(_live()))
     ranked = sorted((r for r in evaluated.values() if r is not None and not r.broken),
                     key=lambda r: r.fitness.key(), reverse=True)
     return SearchReport(
@@ -421,7 +477,10 @@ def evolve(seeds: Sequence[RepositoryGenome], adapter: TargetAdapter, *,
         seconds=time.perf_counter() - started,
         best=[r for r in ranked if r.fitness.interesting][:10],
         stats=stats, first_seen=first_seen, seen=len(evaluated),
-        rediscovered=rediscovered, connections=tuple(dict.fromkeys(connections)))
+        rediscovered=rediscovered, connections=tuple(dict.fromkeys(connections)),
+        surfaces_opened=tuple(s for s in empty_at_the_start
+                              if s not in empty_at_the_end),
+        surfaces_still_empty=tuple(empty_at_the_end))
 
 
 def _rank_of(scalar: int) -> int:

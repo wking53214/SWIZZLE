@@ -61,6 +61,26 @@ _FAILURE_SURFACES: Dict[str, str] = {
 }
 
 
+def surfaces_of(mutator_name: str) -> Tuple[str, ...]:
+    """Which of the target's mechanisms this mutator can reach."""
+    mutator = registry().get(mutator_name)
+    if mutator is None:
+        return ()
+    return _CATEGORY_SURFACES.get(mutator.category.value, ())
+
+
+def unexercised(table: Mapping[str, Mapping[str, Any]]) -> Tuple[str, ...]:
+    """Surfaces no case has landed on.
+
+    Not "surfaces that scored badly". A surface with no cases has no
+    measurement at all, which is the same kind of ignorance `knowledge.py`
+    labels ZERO_BASE and must be reached the same way -- by spending budget
+    on it BECAUSE it is unknown, not by giving it an invented weight.
+    """
+    return tuple(surface for surface, row in table.items()
+                 if not row.get("cases"))
+
+
 def matrix(results: Sequence[CaseResult] = ()) -> Dict[str, Dict[str, Any]]:
     """Surface -> mutators aimed at it, cases run, attacks found."""
     out: Dict[str, Dict[str, Any]] = {

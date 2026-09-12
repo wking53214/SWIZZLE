@@ -154,6 +154,16 @@ def add_parsers(sub) -> None:
     standing.add_argument("--ghost-tools", type=Path, default=None, metavar="PATH")
     standing.add_argument("--timeout", type=float, default=900.0, metavar="SECONDS")
 
+    hist = sub.add_parser(
+        "history",
+        help="what has happened to each case across revisions of the target")
+    hist.add_argument("case", nargs="?", default="",
+                      help="one case; omit for all")
+    hist.add_argument("--returned", action="store_true",
+                      help="only cases that went quiet and came back")
+    hist.add_argument("--corpus-path", type=Path, default=DEFAULT_CORPUS)
+    hist.add_argument("--json", action="store_true")
+
     know = sub.add_parser(
         "knowledge",
         help="what the laboratory has learned, and how it came to know it")
@@ -433,6 +443,17 @@ def _evolve(args) -> int:
               "members' best:")
         for pair in report.connections:
             print("  %s" % pair)
+    if report.surfaces_opened:
+        print()
+        print("surfaces opened -- nothing had ever landed on these before "
+              "this run:")
+        for surface in report.surfaces_opened:
+            print("  %s" % surface)
+    if report.surfaces_still_empty:
+        print()
+        print("still never exercised: %s"
+              % ", ".join(report.surfaces_still_empty))
+        print("An empty row is the one thing a pass rate cannot tell you.")
     print()
     print("mutator      offered  improved  critical  hit rate")
     for name, stats in sorted(report.stats.items()):
@@ -647,6 +668,11 @@ def _standing(args) -> int:
         return 2
 
     store = Corpus(args.corpus_path)
+    ledger = None
+    if args.record:
+        from .history import History
+        ledger = History(args.corpus_path / "standings.json")
+    revision = str(dict(adapter.version()).get("commit", ""))
     if args.case:
         entries = [e for e in store.entries() if e.name == args.case]
         if not entries:
@@ -655,16 +681,20 @@ def _standing(args) -> int:
                 print("swizzle: no case called %r" % args.case, file=sys.stderr)
                 return 2
             entries = [None]
-            targets = [(args.case, genome, None, None)]
+            targets = [(args.case, genome, None, None, None)]
         else:
-            targets = [(e.name, e.genome, e.original_genome, e.observation)
+            targets = [(e.name, e.genome, e.original_genome, e.observation, e)
                        for e in _newest(entries)]
     else:
-        targets = [(e.name, e.genome, e.original_genome, e.observation)
+        targets = [(e.name, e.genome, e.original_genome, e.observation, e)
                    for e in _newest(store.entries())]
 
+    if ledger is not None:
+        for _, _, _, before, entry in targets:
+            _seed_ledger(ledger, entry, before)
+
     payload, defeated = [], 0
-    for name, genome, original, before in targets:
+    for name, genome, original, before, entry in targets:
         siblings = [g for g in catalogue.CATALOGUE
                     if g.category is genome.category and g.name != genome.name]
         context = probes.ProbeContext(
@@ -690,6 +720,11 @@ def _standing(args) -> int:
                 entry.path.write_text(
                     json.dumps(record, indent=2, sort_keys=True) + "\n",
                     encoding="utf-8")
+            # The entry holds the LATEST resolution; the ledger holds every
+            # one of them. Overwriting is what makes a regression invisible,
+            # so the append happens whether or not the case is in the corpus.
+            if ledger is not None:
+                ledger.record(resolution, revision, digest=genome.digest())
         if not args.json:
             print(resolution.render())
 
@@ -697,17 +732,54 @@ def _standing(args) -> int:
         print(json.dumps([r.to_dict() for r in payload], indent=2, sort_keys=True))
         return 0
 
+    if ledger is not None:
+        ledger.save()
     print("=" * 66)
     for resolution in payload:
-        print("  %-40s %s" % (resolution.observation.case,
-                              resolution.standing.value))
+        line = "  %-40s %s" % (resolution.observation.case,
+                               resolution.standing.value)
+        if ledger is not None:
+            arc = ledger.of(resolution.observation.case).arc
+            line += "   [%s]" % arc.value
+        print(line)
     print()
+    if ledger is not None:
+        came_back = ledger.returned()
+        if came_back:
+            print("%d case(s) went quiet and came back. `swizzle history "
+                  "--returned`." % len(came_back))
+            print()
     print("Nothing above is `fixed`. The strongest standing available is that "
           "the")
     print("current structure supports the conclusion, and it is defeasible by "
           "every")
     print("probe listed beside it.")
     return 1 if defeated else 0
+
+
+def _seed_ledger(ledger, entry, before) -> None:
+    """Put the corpus entry's own archival episode into the ledger first.
+
+    The entry records what the case did at the revision it was archived
+    against, which for most cases is the ONLY episode that exists. Starting
+    the ledger empty would mean no case could show an arc until it had been
+    interrogated twice more -- not caution, just discarding evidence already
+    in hand. Skipped when the ledger already has that revision, so repeated
+    runs do not stack duplicates of one archival fact.
+    """
+    from .history import Episode
+    if entry is None or before is None:
+        return
+    revision = str((entry.record.get("target") or {}).get("commit", ""))
+    if not revision or ledger.knows(entry.name, revision):
+        return
+    ledger.note(Episode(
+        case=entry.name, revision=revision,
+        standing=(standing_model.Standing.REPRODUCES.value if before.reproduced
+                  else standing_model.Standing.NEVER_REPRODUCED.value),
+        at=str(entry.record.get("recorded_at", "")),
+        classes=tuple(before.classes), severity=before.top_severity,
+        digest=str(entry.record.get("genome_digest", ""))))
 
 
 def _newest(entries):
@@ -719,6 +791,28 @@ def _newest(entries):
         if current is None or order.get(entry.bucket, 9) < order.get(current.bucket, 9):
             best[entry.name] = entry
     return [best[name] for name in sorted(best)]
+
+
+@_register("history")
+def _history(args) -> int:
+    from .history import History, render
+    ledger = History(args.corpus_path / "standings.json")
+    if args.returned:
+        histories = ledger.returned()
+    elif args.case:
+        histories = [ledger.of(args.case)]
+    else:
+        histories = ledger.all()
+    if args.json:
+        print(json.dumps([h.to_dict() for h in histories],
+                         indent=2, sort_keys=True))
+        return 0
+    if not histories:
+        print("No standing has been recorded yet. `swizzle standing --record` "
+              "writes them.")
+        return 0
+    print(render(histories))
+    return 1 if any(h.arc.wants_attention for h in histories) else 0
 
 
 @_register("knowledge")

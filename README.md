@@ -213,6 +213,47 @@ as one.
 Carried evidence is subordinate structurally, not by a discount. A phase 3
 result is not a post-market observation.
 
+## Recording that a case was fixed, without saying it was fixed
+
+`swizzle standing --record` appends an **episode** — one per case per revision
+of the target, append-only, never merged across revisions. `swizzle history`
+reads the arc:
+
+| arc | means |
+|---|---|
+| `never established` | it has never produced its failure anywhere |
+| `open` | reproduces at the newest revision, never been quiet |
+| `held` | reproduced, stopped, and every episode since agrees |
+| `returned` | reproduced, stopped, and reproduced again. **The finding** |
+| `contested` | went quiet, and a probe against that quiet defeated it |
+| `unknown` | one episode. An arc needs a sequence |
+
+None of the six contains the string `fix`, and a test asserts it. `held` is a
+statement about the *record*, not about the defect — the whole point of writing
+down that a case stopped reproducing is to make it possible to find out later
+that it did not stay stopped.
+
+The first version of the file listed the stored standing spellings by hand
+beside the enum that produces them and got two wrong. Nothing raised: every arc
+came back `unknown`, and a ledger whose purpose is to notice a case coming back
+would have said `unknown` forever without failing a test. Silence is the
+failure mode of a lookup table. `docs/CASE_HISTORY.md`.
+
+## Aiming at what has never been tested
+
+Weighting mutators by what has paid is rich-get-richer: it concentrates the
+search where it has already succeeded, which is where new information is least
+likely to be. A quarter of mutator choices are reserved for reaching a
+**surface of the target no case has landed on** — reserved, not weighted, for
+the same reason a zero-base key gets no prior.
+
+Three grounds, in order, and the order is a claim: ignorance about the
+*subject* outranks ignorance about the *instrument*, which outranks the
+evidence about what pays. The search reports which surfaces **opened**, and
+which are still empty — not how often it chose on uncovered grounds, because
+that would be a report about its own policy rather than a result.
+`docs/UNCOVERED_SURFACES.md`.
+
 ## Severity, and the one rule that cannot be tuned
 
 A case where the target destroyed a paragraph outranks any number of cases
