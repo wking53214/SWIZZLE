@@ -1,4 +1,4 @@
-# SWIZZLE -- v0.3.0
+# SWIZZLE -- v0.4.0
 
 An adaptive adversarial evaluator for repository-level autonomous
 modification systems.
