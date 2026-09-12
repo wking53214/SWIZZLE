@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "swizzle"
+version = "0.1.0"
+description = "A reality warper with a defeat condition: builds repositories with proven defects, declares the finding that would banish each one, and reports which ones a scanner named"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "William King" }]
+keywords = ["adversarial-testing", "static-analysis", "false-negatives",
+            "blind-spots", "code-quality", "red-team"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Software Development :: Testing",
+]
+# Nothing. The warps are stdlib-only on purpose: a fixture that needs a
+# package installed is a fixture that fails for a reason the report cannot
+# explain.
+dependencies = []
+
+[project.scripts]
+swizzle = "swizzle.cli:main"
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[tool.setuptools]
+packages = ["swizzle", "swizzle.warps"]
+
+[tool.pytest.ini_options]
+testpaths = ["Tests"]
+
+[tool.ruff]
+line-length = 100
