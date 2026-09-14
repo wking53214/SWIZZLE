@@ -1,5 +1,12 @@
 # SWIZZLE -- v0.4.0
 
+SWIZZLE is the complete autonomous-improvement evaluation framework. It
+contains Ghost Tools integration and the WIZZLE independent verification
+subsystem (`swizzle.wizzle`). WIZZLE observes target artifacts and evaluates
+what those observations warrant; physical co-location never grants the target
+or SWIZZLE's hidden ground truth epistemic authority. See
+`docs/WIZZLE_INTEGRATION.md`.
+
 An adaptive adversarial evaluator for repository-level autonomous
 modification systems.
 

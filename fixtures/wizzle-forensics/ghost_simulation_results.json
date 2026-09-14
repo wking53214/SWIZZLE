@@ -1,0 +1,230 @@
+[
+  {
+    "scenario": "phantom_intentional_refactor",
+    "member": "PHANTOM",
+    "ground_truth_intent": "INTENTIONAL_REFACTOR",
+    "ghost_finding": {
+      "category": "REMOVED_FROM_LIBRARY",
+      "severity": "MAJOR",
+      "confidence": 0.7,
+      "message": "Member PHANTOM was removed from production code but remains in test files (confidence: 70.0%)"
+    },
+    "oracle_inferred_intent": "INTENTIONAL_REFACTOR",
+    "verdict": {
+      "semantic_correctness": "UNDERCLAIMED",
+      "factual_correctness": "INCORRECT",
+      "overclaimed": false,
+      "underclaimed": true
+    },
+    "would_catch_overclaim": false
+  },
+  {
+    "scenario": "phantom_accidental_removal",
+    "member": "PHANTOM",
+    "ground_truth_intent": "ACCIDENTAL_REMOVAL",
+    "ghost_finding": {
+      "category": "REGRESSION",
+      "severity": "MAJOR",
+      "confidence": 0.85,
+      "message": "Member PHANTOM was removed from production code but remains in test files (confidence: 85.0%)"
+    },
+    "oracle_inferred_intent": "SECURITY_FIX",
+    "verdict": {
+      "semantic_correctness": "UNDERCLAIMED",
+      "factual_correctness": "UNASKABLE",
+      "overclaimed": false,
+      "underclaimed": true
+    },
+    "would_catch_overclaim": false
+  },
+  {
+    "scenario": "medium_priority_intentional_removal",
+    "member": "PHANTOM",
+    "ground_truth_intent": "INTENTIONAL_REFACTOR",
+    "ghost_finding": {
+      "category": "REMOVED_FROM_LIBRARY",
+      "severity": "MAJOR",
+      "confidence": 0.7,
+      "message": "Member PHANTOM was removed from production code but remains in test files (confidence: 70.0%)"
+    },
+    "oracle_inferred_intent": "INTENTIONAL_REFACTOR",
+    "verdict": {
+      "semantic_correctness": "UNDERCLAIMED",
+      "factual_correctness": "CORRECT",
+      "overclaimed": false,
+      "underclaimed": true
+    },
+    "would_catch_overclaim": false
+  },
+  {
+    "scenario": "security_fix_removal",
+    "member": "PHANTOM",
+    "ground_truth_intent": "SECURITY_FIX",
+    "ghost_finding": {
+      "category": "SECURITY_REGRESSION",
+      "severity": "CRITICAL",
+      "confidence": 0.9,
+      "message": "Member PHANTOM was removed from production code but remains in test files (confidence: 90.0%)"
+    },
+    "oracle_inferred_intent": "SECURITY_FIX",
+    "verdict": {
+      "semantic_correctness": "UNDERCLAIMED",
+      "factual_correctness": "UNASKABLE",
+      "overclaimed": false,
+      "underclaimed": true
+    },
+    "would_catch_overclaim": false
+  },
+  {
+    "scenario": "dead_code_cleanup",
+    "member": "PHANTOM",
+    "ground_truth_intent": "DEAD_CODE_CLEANUP",
+    "ghost_finding": {
+      "category": "DEAD_CODE_CLEANUP",
+      "severity": "MINOR",
+      "confidence": 0.6,
+      "message": "Member PHANTOM was removed from production code but remains in test files (confidence: 60.0%)"
+    },
+    "oracle_inferred_intent": "UNKNOWN_INTENT",
+    "verdict": {
+      "semantic_correctness": "UNDERCLAIMED",
+      "factual_correctness": "UNASKABLE",
+      "overclaimed": false,
+      "underclaimed": true
+    },
+    "would_catch_overclaim": false
+  },
+  {
+    "scenario": "api_deprecation",
+    "member": "PHANTOM",
+    "ground_truth_intent": "INTENTIONAL_REFACTOR",
+    "ghost_finding": {
+      "category": "REMOVED_FROM_LIBRARY",
+      "severity": "MAJOR",
+      "confidence": 0.7,
+      "message": "Member PHANTOM was removed from production code but remains in test files (confidence: 70.0%)"
+    },
+    "oracle_inferred_intent": "UNKNOWN_INTENT",
+    "verdict": {
+      "semantic_correctness": "OVERCLAIMED",
+      "factual_correctness": "CORRECT",
+      "overclaimed": true,
+      "underclaimed": false
+    },
+    "would_catch_overclaim": true
+  },
+  {
+    "scenario": "revert_removal",
+    "member": "PHANTOM",
+    "ground_truth_intent": "REVERT",
+    "ghost_finding": {
+      "category": "REMOVED_FROM_LIBRARY",
+      "severity": "UNKNOWN",
+      "confidence": 0.3,
+      "message": "Member PHANTOM was removed from production code but remains in test files (confidence: 30.0%)"
+    },
+    "oracle_inferred_intent": "UNKNOWN_INTENT",
+    "verdict": {
+      "semantic_correctness": "JUSTIFIED",
+      "factual_correctness": "CORRECT",
+      "overclaimed": false,
+      "underclaimed": false
+    },
+    "would_catch_overclaim": false
+  },
+  {
+    "scenario": "branch_divergence",
+    "member": "PHANTOM",
+    "ground_truth_intent": "INTENTIONAL_REFACTOR",
+    "ghost_finding": {
+      "category": "REMOVED_FROM_LIBRARY",
+      "severity": "MAJOR",
+      "confidence": 0.7,
+      "message": "Member PHANTOM was removed from production code but remains in test files (confidence: 70.0%)"
+    },
+    "oracle_inferred_intent": "SECURITY_FIX",
+    "verdict": {
+      "semantic_correctness": "OVERCLAIMED",
+      "factual_correctness": "CORRECT",
+      "overclaimed": true,
+      "underclaimed": false
+    },
+    "would_catch_overclaim": true
+  },
+  {
+    "scenario": "test_only_migration",
+    "member": "PHANTOM",
+    "ground_truth_intent": "TEST_ONLY_MIGRATION",
+    "ghost_finding": {
+      "category": "TEST_ONLY_MIGRATION",
+      "severity": "INFORMATIONAL",
+      "confidence": 0.65,
+      "message": "Member PHANTOM was removed from production code but remains in test files (confidence: 65.0%)"
+    },
+    "oracle_inferred_intent": "INTENTIONAL_REFACTOR",
+    "verdict": {
+      "semantic_correctness": "UNDERCLAIMED",
+      "factual_correctness": "UNASKABLE",
+      "overclaimed": false,
+      "underclaimed": true
+    },
+    "would_catch_overclaim": false
+  },
+  {
+    "scenario": "partial_replacement",
+    "member": "PHANTOM",
+    "ground_truth_intent": "INTENTIONAL_REFACTOR",
+    "ghost_finding": {
+      "category": "REMOVED_FROM_LIBRARY",
+      "severity": "MAJOR",
+      "confidence": 0.7,
+      "message": "Member PHANTOM was removed from production code but remains in test files (confidence: 70.0%)"
+    },
+    "oracle_inferred_intent": "INTENTIONAL_REFACTOR",
+    "verdict": {
+      "semantic_correctness": "OVERCLAIMED",
+      "factual_correctness": "CORRECT",
+      "overclaimed": true,
+      "underclaimed": false
+    },
+    "would_catch_overclaim": true
+  },
+  {
+    "scenario": "cherry_pick_removal",
+    "member": "PHANTOM",
+    "ground_truth_intent": "INTENTIONAL_REFACTOR",
+    "ghost_finding": {
+      "category": "REMOVED_FROM_LIBRARY",
+      "severity": "MAJOR",
+      "confidence": 0.7,
+      "message": "Member PHANTOM was removed from production code but remains in test files (confidence: 70.0%)"
+    },
+    "oracle_inferred_intent": "UNKNOWN_INTENT",
+    "verdict": {
+      "semantic_correctness": "OVERCLAIMED",
+      "factual_correctness": "CORRECT",
+      "overclaimed": true,
+      "underclaimed": false
+    },
+    "would_catch_overclaim": true
+  },
+  {
+    "scenario": "multiple_removal",
+    "member": "PHANTOM",
+    "ground_truth_intent": "INTENTIONAL_REFACTOR",
+    "ghost_finding": {
+      "category": "REMOVED_FROM_LIBRARY",
+      "severity": "MAJOR",
+      "confidence": 0.7,
+      "message": "Member PHANTOM was removed from production code but remains in test files (confidence: 70.0%)"
+    },
+    "oracle_inferred_intent": "INTENTIONAL_REFACTOR",
+    "verdict": {
+      "semantic_correctness": "UNDERCLAIMED",
+      "factual_correctness": "CORRECT",
+      "overclaimed": false,
+      "underclaimed": true
+    },
+    "would_catch_overclaim": false
+  }
+]

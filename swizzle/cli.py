@@ -73,6 +73,14 @@ def main(argv: Sequence[str] | None = None) -> int:
                               "was flagged (for CI; the default exit code "
                               "reports only SWIZZLE's own failures)")
 
+    verifying = sub.add_parser(
+        "verify", help="independently evaluate a target claim with WIZZLE")
+    verifying.add_argument("repository", type=Path)
+    verifying.add_argument("--member", required=True)
+    verifying.add_argument("--provenance", required=True)
+    verifying.add_argument("--severity", required=True)
+    verifying.add_argument("--evidence", action="append", default=[])
+
     summoning = sub.add_parser("summon", help="write one warp to disk")
     summoning.add_argument("warp")
     summoning.add_argument("--into", type=Path, default=Path.cwd(), metavar="DIR")
@@ -87,7 +95,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command is None:
         parser.print_help()
         return 0
-    handlers = {"list": _list, "prove": _prove, "run": _run, "summon": _summon}
+    handlers = {
+        "list": _list,
+        "prove": _prove,
+        "run": _run,
+        "summon": _summon,
+        "verify": _verify,
+    }
     if args.command in handlers:
         handler = handlers[args.command]
     else:
@@ -180,6 +194,26 @@ def _summon(args) -> int:
         return 2
     root = summon(warp, args.into)
     print(root)
+    return 0
+
+
+def _verify(args) -> int:
+    from .wizzle.integration import VerificationArtifact, verify_artifact
+
+    result, oracle_results = verify_artifact(
+        VerificationArtifact(repository=args.repository, target="ghost"),
+        member_name=args.member,
+        provenance_class=args.provenance,
+        severity=args.severity,
+        evidence_cited=args.evidence,
+    )
+    print(json.dumps({
+        "semantic_correctness": result.semantic_correctness.name,
+        "factual_correctness": result.factual_correctness.name,
+        "overclaim": result.overclaim,
+        "underclaim": result.underclaim,
+        "oracle_results": oracle_results,
+    }, indent=2, default=str, sort_keys=True))
     return 0
 
 

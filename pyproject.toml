@@ -34,10 +34,17 @@ swizzle = "swizzle.cli:main"
 dev = ["pytest>=8"]
 
 [tool.setuptools]
-packages = ["swizzle", "swizzle.warps", "swizzle.lab", "swizzle.lab.oracles", "swizzle.lab.adapters"]
+packages = [
+    "swizzle",
+    "swizzle.warps",
+    "swizzle.lab",
+    "swizzle.lab.oracles",
+    "swizzle.lab.adapters",
+    "swizzle.wizzle",
+]
 
 [tool.pytest.ini_options]
-testpaths = ["Tests"]
+testpaths = ["Tests", "swizzle/wizzle"]
 
 [tool.ruff]
 line-length = 100

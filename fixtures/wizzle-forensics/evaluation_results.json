@@ -1,0 +1,147 @@
+{
+  "medium_priority_intentional_removal": {
+    "current_state": {
+      "oracle": "CurrentStateOracle",
+      "files": [
+        "library.py",
+        "enums.py",
+        "test_priority.py"
+      ],
+      "members_in_production": [
+        "LOW",
+        "MEDIUM",
+        "HIGH"
+      ],
+      "members_in_tests": [],
+      "members_in_both": []
+    },
+    "history": {
+      "oracle": "HistoryOracle",
+      "observations": [
+        {
+          "type": "commit_messages",
+          "value": [
+            "init: Priority enum with HIGH, MEDIUM, LOW",
+            "feature: use Priority.MEDIUM in library.get_default_priority",
+            "refactor: simplify API to only HIGH priority",
+            "cleanup: remove MEDIUM from Priority enum",
+            "test: add tests for Priority including MEDIUM",
+            "feature: re-add MEDIUM to Priority enum for test compatibility"
+          ],
+          "provenance": "OBSERVED"
+        }
+      ],
+      "inferred_intent": "INTENTIONAL_REFACTOR",
+      "confidence": 0.3333333333333333,
+      "evidence": {
+        "message_analysis": {
+          "refactor_commits": 2,
+          "fix_commits": 0,
+          "total_commits": 6
+        }
+      }
+    },
+    "semantic_assessment": {
+      "status": "PENDING",
+      "factual_correctness": "PENDING",
+      "semantic_correctness": "PENDING",
+      "notes": "Ghost comparison not yet integrated"
+    }
+  },
+  "phantom_accidental_removal": {
+    "current_state": {
+      "oracle": "CurrentStateOracle",
+      "files": [
+        "library.py",
+        "enums.py"
+      ],
+      "members_in_production": [
+        "PHANTOM",
+        "ACTIVE",
+        "INACTIVE"
+      ],
+      "members_in_tests": [],
+      "members_in_both": []
+    },
+    "history": {
+      "oracle": "HistoryOracle",
+      "observations": [
+        {
+          "type": "commit_messages",
+          "value": [
+            "init: Status enum with ACTIVE, INACTIVE",
+            "feature: add PHANTOM to Status enum",
+            "feature: use Status.PHANTOM in library",
+            "fix: remove Status.PHANTOM (leftover debug code)"
+          ],
+          "provenance": "OBSERVED"
+        }
+      ],
+      "inferred_intent": "SECURITY_FIX",
+      "confidence": 0.25,
+      "evidence": {
+        "message_analysis": {
+          "refactor_commits": 0,
+          "fix_commits": 1,
+          "total_commits": 4
+        }
+      }
+    },
+    "semantic_assessment": {
+      "status": "PENDING",
+      "factual_correctness": "PENDING",
+      "semantic_correctness": "PENDING",
+      "notes": "Ghost comparison not yet integrated"
+    }
+  },
+  "phantom_intentional_refactor": {
+    "current_state": {
+      "oracle": "CurrentStateOracle",
+      "files": [
+        "test_status.py",
+        "library.py",
+        "enums.py"
+      ],
+      "members_in_production": [
+        "PHANTOM",
+        "ACTIVE",
+        "INACTIVE"
+      ],
+      "members_in_tests": [],
+      "members_in_both": []
+    },
+    "history": {
+      "oracle": "HistoryOracle",
+      "observations": [
+        {
+          "type": "commit_messages",
+          "value": [
+            "init: Status enum with ACTIVE, INACTIVE",
+            "feature: add PHANTOM to Status enum",
+            "feature: use Status.PHANTOM in library",
+            "refactor: remove Status.PHANTOM usage from library",
+            "cleanup: remove PHANTOM from Status enum",
+            "test: add tests for Status enum including PHANTOM",
+            "feature: re-add PHANTOM to Status enum for test compatibility"
+          ],
+          "provenance": "OBSERVED"
+        }
+      ],
+      "inferred_intent": "INTENTIONAL_REFACTOR",
+      "confidence": 0.2857142857142857,
+      "evidence": {
+        "message_analysis": {
+          "refactor_commits": 2,
+          "fix_commits": 0,
+          "total_commits": 7
+        }
+      }
+    },
+    "semantic_assessment": {
+      "status": "PENDING",
+      "factual_correctness": "PENDING",
+      "semantic_correctness": "PENDING",
+      "notes": "Ghost comparison not yet integrated"
+    }
+  }
+}
