@@ -1,6 +1,7 @@
 """Integration orchestrator for Swizzle and Ghost Tools.
 
 Coordinates data flow between the two tools using the shared models.
+Now with event-driven streaming via the event bus for real-time feedback.
 """
 
 from pathlib import Path
@@ -14,14 +15,23 @@ from .mutation_transfer import DEFAULT_MUTATION_CATALOG
 from .performance_contract import DEFAULT_PERFORMANCE_REPORT
 from .architecture_audit import SWIZZLE_AUDIT, GHOST_AUDIT
 from .feedback_loop import DEFAULT_FEEDBACK_REPORT
+from .event_system import get_event_bus, Event, EventType
+from .event_handlers import setup_event_handlers
+from .hooks import HookManager
 
 
 class IntegrationOrchestrator:
-    """Coordinates all integration bridges between Swizzle and Ghost Tools."""
+    """Coordinates all integration bridges between Swizzle and Ghost Tools.
 
-    def __init__(self, workspace_dir: Path):
+    Supports both batch and streaming modes:
+    - Batch: export_all() generates static bundles for import
+    - Streaming: event bus publishes real-time events as changes occur
+    """
+
+    def __init__(self, workspace_dir: Path, repo_path: Optional[Path] = None):
         self.workspace = workspace_dir
         self.workspace.mkdir(parents=True, exist_ok=True)
+        self.repo_path = repo_path
 
         # Load or initialize all shared models
         self.invariants = DEFAULT_INVARIANTS
@@ -31,6 +41,16 @@ class IntegrationOrchestrator:
         self.ghost_architecture = GHOST_AUDIT
         self.feedback = DEFAULT_FEEDBACK_REPORT
         self.triage_ledger: Optional[TriageLedger] = None
+
+        # Event bus for streaming mode
+        self.event_bus = get_event_bus()
+        setup_event_handlers()
+
+        # Hook manager for post-commit events
+        self.hook_manager: Optional[HookManager] = None
+        if repo_path:
+            self.hook_manager = HookManager(repo_path)
+            self.install_hooks()
 
     def export_all(self) -> None:
         """Export all integration data to disk."""
@@ -93,6 +113,27 @@ class IntegrationOrchestrator:
         for filename, content in bundle.items():
             (target_dir / filename).write_text(content)
 
+    def install_hooks(self) -> None:
+        """Install git hooks for real-time event triggering."""
+        if self.hook_manager:
+            self.hook_manager.install_hooks()
+
+    def publish_event(self, event: Event) -> None:
+        """Publish an event to the event bus."""
+        self.event_bus.publish(event)
+
+    def get_unprocessed_events(self, event_type: Optional[EventType] = None) -> List[Event]:
+        """Get events that haven't been processed yet."""
+        return self.event_bus.get_unprocessed(event_type)
+
+    def save_event_log(self) -> None:
+        """Persist event log to disk."""
+        self.event_bus.save_log(self.workspace / "event-log.json")
+
+    def load_event_log(self) -> None:
+        """Load event log from disk."""
+        self.event_bus.load_log(self.workspace / "event-log.json")
+
     def generate_integration_report(self) -> str:
         """Generate a report of all integration capabilities."""
         report = {
@@ -128,6 +169,12 @@ class IntegrationOrchestrator:
                     "patterns": len(self.feedback.false_positive_patterns),
                     "training_datapoints": len(self.feedback.oracle_training_data),
                 },
+                "event_system": {
+                    "description": "Real-time event streaming",
+                    "events_published": len(self.event_bus.event_log),
+                    "events_processed": len([e for e in self.event_bus.event_log if e.processed]),
+                    "hooks_installed": self.hook_manager is not None,
+                },
             },
             "files_generated": [
                 "invariants.json",
@@ -136,6 +183,7 @@ class IntegrationOrchestrator:
                 "swizzle-architecture.json",
                 "ghost-architecture.json",
                 "feedback.json",
+                "event-log.json",
                 "triage-ledger.json" if self.triage_ledger else None,
             ],
         }

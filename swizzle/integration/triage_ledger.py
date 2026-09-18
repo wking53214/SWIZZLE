@@ -175,3 +175,7 @@ def import_ghost_casefile(casefile_path: Path) -> TriageLedger:
         ledger.add_entry(entry)
 
     return ledger
+
+
+# Default ledger instance for event handlers
+DEFAULT_LEDGER = TriageLedger(version="1.0", source_tool="integrated")
