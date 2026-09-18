@@ -265,14 +265,14 @@ class OutputFormatOracle(OracleLogic):
 
         if self.require_stdout and not stdout:
             out.append(violation(
-                self.name, Severity.MAJOR, "missing_output",
+                self.name, Severity.MEDIUM, "missing_output",
                 "process produced no stdout"
             ))
 
         for forbidden in self.forbidden_strings:
             if forbidden in stdout:
                 out.append(violation(
-                    self.name, Severity.MAJOR, "forbidden_output",
+                    self.name, Severity.MEDIUM, "forbidden_output",
                     f"output contains forbidden string: {forbidden}"
                 ))
 
@@ -282,7 +282,7 @@ class OutputFormatOracle(OracleLogic):
                 json.loads(stdout)
             except (json.JSONDecodeError, ValueError):
                 out.append(violation(
-                    self.name, Severity.MAJOR, "invalid_json",
+                    self.name, Severity.MEDIUM, "invalid_json",
                     "stdout is not valid JSON"
                 ))
 
@@ -318,7 +318,7 @@ class SideEffectOracle(OracleLogic):
             for f in created:
                 if f not in self.allowed_files:
                     out.append(violation(
-                        self.name, Severity.MAJOR, "unexpected_file",
+                        self.name, Severity.MEDIUM, "unexpected_file",
                         f"unexpected file created: {f}"
                     ))
 
@@ -328,7 +328,7 @@ class SideEffectOracle(OracleLogic):
             for p in spawned:
                 if p not in self.allowed_processes:
                     out.append(violation(
-                        self.name, Severity.MAJOR, "unexpected_process",
+                        self.name, Severity.MEDIUM, "unexpected_process",
                         f"unexpected process spawned: {p}"
                     ))
 
@@ -368,7 +368,7 @@ class ExecutionTimeOracle(OracleLogic):
         elapsed = evidence.metadata("elapsed_seconds", 0.0)
         if elapsed > self.max_seconds:
             return [violation(
-                self.name, Severity.MAJOR, "slow_execution",
+                self.name, Severity.MEDIUM, "slow_execution",
                 f"operation took {elapsed:.1f}s, budget is {self.max_seconds}s"
             )]
 
@@ -399,7 +399,7 @@ class MemoryUsageOracle(OracleLogic):
 
         if peak_mb > self.max_mb:
             return [violation(
-                self.name, Severity.MAJOR, "memory_exceeded",
+                self.name, Severity.MEDIUM, "memory_exceeded",
                 f"peak memory {peak_mb:.1f}MB exceeds limit {self.max_mb}MB"
             )]
 
@@ -656,7 +656,7 @@ class AuditTrailOracle(OracleLogic):
 
         if len(audit_entries) < changed_count:
             return [violation(
-                self.name, Severity.MAJOR, "incomplete_audit",
+                self.name, Severity.MEDIUM, "incomplete_audit",
                 f"only {len(audit_entries)} of {changed_count} changes logged"
             )]
 
