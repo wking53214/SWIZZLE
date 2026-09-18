@@ -18,6 +18,9 @@ from .feedback_loop import DEFAULT_FEEDBACK_REPORT
 from .event_system import get_event_bus, Event, EventType
 from .event_handlers import setup_event_handlers
 from .hooks import HookManager
+from .decision_engine import get_decision_engine
+from .decision_handlers import setup_decision_handlers
+from .event_evaluator import setup_event_evaluation, get_event_evaluator
 
 
 class IntegrationOrchestrator:
@@ -45,6 +48,14 @@ class IntegrationOrchestrator:
         # Event bus for streaming mode
         self.event_bus = get_event_bus()
         setup_event_handlers()
+
+        # Decision engine for autonomous decisions
+        self.decision_engine = get_decision_engine()
+        setup_decision_handlers()
+        setup_event_evaluation()
+
+        # Event evaluator for stats
+        self.event_evaluator = get_event_evaluator()
 
         # Hook manager for post-commit events
         self.hook_manager: Optional[HookManager] = None
@@ -134,6 +145,18 @@ class IntegrationOrchestrator:
         """Load event log from disk."""
         self.event_bus.load_log(self.workspace / "event-log.json")
 
+    def get_pending_decisions(self):
+        """Get decisions pending human review."""
+        return self.decision_engine.pending_review()
+
+    def approve_decision(self, decision_id: str, approved_by: str, reason: Optional[str] = None) -> bool:
+        """Approve a pending decision."""
+        return self.decision_engine.approve_decision(decision_id, approved_by, reason)
+
+    def reject_decision(self, decision_id: str, rejected_by: str, reason: str) -> bool:
+        """Reject a pending decision."""
+        return self.decision_engine.reject_decision(decision_id, rejected_by, reason)
+
     def generate_integration_report(self) -> str:
         """Generate a report of all integration capabilities."""
         report = {
@@ -174,6 +197,11 @@ class IntegrationOrchestrator:
                     "events_published": len(self.event_bus.event_log),
                     "events_processed": len([e for e in self.event_bus.event_log if e.processed]),
                     "hooks_installed": self.hook_manager is not None,
+                },
+                "decision_engine": {
+                    "description": "Autonomous decision-making",
+                    "status": "active",
+                    **self.decision_engine.get_execution_report(),
                 },
             },
             "files_generated": [
