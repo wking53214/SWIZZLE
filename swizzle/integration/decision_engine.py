@@ -16,6 +16,8 @@ from datetime import datetime
 import uuid
 
 from swizzle.integration.event_system import Event, EventType
+from swizzle.integration.ml_predictor import MLPredictor, PredictionCache
+from swizzle.integration.unified_index import get_unified_index
 
 
 class DecisionType(str, Enum):
@@ -138,6 +140,38 @@ class DecisionEngine:
         self.decision_log: List[AutomatedDecision] = []
         self.handlers: Dict[DecisionType, Callable[[AutomatedDecision], None]] = {}
 
+        # ML predictor for confidence enhancement
+        index = get_unified_index()
+        self.ml_predictor = MLPredictor(index)
+        self.prediction_cache = PredictionCache(self.ml_predictor)
+
+    def _enhance_confidence_with_ml(
+        self,
+        decision_type: DecisionType,
+        risk_level: RiskLevel,
+        base_confidence: float,
+        action_similarity: float = 0.8,
+    ) -> float:
+        """Enhance confidence using ML predictor based on historical patterns."""
+        ml_prediction = self.prediction_cache.get_prediction(
+            decision_type.value,
+            risk_level.value,
+            action_similarity=action_similarity,
+        )
+
+        # Check if ML model has sufficient training data
+        key = (decision_type.value, risk_level.value)
+        model = self.ml_predictor.models.get(key)
+
+        # Only blend with ML if model has sufficient samples (3+)
+        if model and model.sample_count >= 3:
+            # Blend base confidence with ML prediction when we have historical data
+            enhanced = (base_confidence * 0.7) + (ml_prediction * 0.3)
+            return min(1.0, max(0.0, enhanced))
+
+        # Return base confidence if insufficient training data
+        return base_confidence
+
     def evaluate_event(self, event: Event) -> Optional[AutomatedDecision]:
         """Evaluate an event and potentially create a decision."""
         if event.type == EventType.FALSE_POSITIVE_CONFIRMED:
@@ -155,17 +189,30 @@ class DecisionEngine:
 
     def _evaluate_false_positive(self, event: Event) -> AutomatedDecision:
         """Evaluate false positive pattern confirmation."""
-        confidence = ConfidenceScore(
-            value=event.data.get("confidence", 0.8),
-            source=ConfidenceSource.PATTERN_MATCH,
-            evidence=[
-                f"Pattern confirmed by {event.source_tool}",
-                f"Confidence from event: {event.data.get('confidence', 'N/A')}",
-            ],
-        )
+        base_confidence = event.data.get("confidence", 0.8)
 
         # High confidence FP patterns are low-risk to add to filters
-        risk = RiskLevel.LOW if confidence.value >= 0.90 else RiskLevel.MEDIUM
+        risk = RiskLevel.LOW if base_confidence >= 0.90 else RiskLevel.MEDIUM
+
+        # Enhance confidence using ML predictor based on historical patterns
+        finding_type = event.data.get("finding_type", "unknown")
+        ml_enhanced_confidence = self._enhance_confidence_with_ml(
+            DecisionType.APPLY_FILTER_PATTERN,
+            risk,
+            base_confidence,
+            action_similarity=0.85,  # High similarity for same finding type
+        )
+
+        confidence = ConfidenceScore(
+            value=ml_enhanced_confidence,
+            source=ConfidenceSource.ML_MODEL,
+            evidence=[
+                f"Pattern confirmed by {event.source_tool}",
+                f"Base confidence: {base_confidence:.2f}",
+                f"ML-enhanced confidence: {ml_enhanced_confidence:.2f}",
+                f"Finding type: {finding_type}",
+            ],
+        )
 
         decision = AutomatedDecision(
             id=str(uuid.uuid4()),
@@ -175,7 +222,7 @@ class DecisionEngine:
             triggered_by=event,
             action_data={
                 "false_positive_id": event.data.get("false_positive_id"),
-                "finding_type": event.data.get("finding_type"),
+                "finding_type": finding_type,
                 "indicators": event.data.get("indicators", []),
             },
         )
@@ -287,14 +334,24 @@ class DecisionEngine:
     def _evaluate_oracle_improvement(self, event: Event) -> AutomatedDecision:
         """Evaluate oracle training improvement."""
         improvement = event.data.get("improvement_percent", 0)
-        confidence_val = min(0.95, 0.70 + improvement / 100)  # Scale confidence by improvement
+        base_confidence = min(0.95, 0.70 + improvement / 100)
+
+        # Enhance with ML prediction for oracle training decisions
+        ml_enhanced_confidence = self._enhance_confidence_with_ml(
+            DecisionType.UPDATE_ORACLE_TRAINING,
+            RiskLevel.LOW,
+            base_confidence,
+            action_similarity=0.9,  # High similarity for oracle training
+        )
 
         confidence = ConfidenceScore(
-            value=confidence_val,
+            value=ml_enhanced_confidence,
             source=ConfidenceSource.ML_MODEL,
             evidence=[
                 f"Oracle improvement: {improvement:.1f}%",
                 f"New accuracy: {event.data.get('accuracy', 0):.2%}",
+                f"Base confidence: {base_confidence:.2f}",
+                f"ML-enhanced confidence: {ml_enhanced_confidence:.2f}",
             ],
         )
 
@@ -429,6 +486,16 @@ class DecisionEngine:
             },
             "generated": datetime.now().isoformat(),
         }
+
+    def refresh_ml_models(self) -> None:
+        """Refresh ML models from updated unified index."""
+        index = get_unified_index()
+        self.ml_predictor = MLPredictor(index)
+        self.prediction_cache.clear_cache()
+
+    def get_ml_model_stats(self) -> Dict[str, Any]:
+        """Get statistics for trained ML models."""
+        return self.ml_predictor.get_model_stats()
 
 
 # Global decision engine instance
