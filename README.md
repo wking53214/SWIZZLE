@@ -7,6 +7,11 @@ what those observations warrant; physical co-location never grants the target
 or SWIZZLE's hidden ground truth epistemic authority. See
 `docs/WIZZLE_INTEGRATION.md`.
 
+SWIZZLE and Ghost Tools form a **continuous improvement ecosystem** through the
+**Arbiter** validation system and **Loop Orchestrator**. Together they iteratively
+improve each other through metrics-based feedback loops with convergence detection.
+See `docs/CONTINUOUS_IMPROVEMENT.md` and `INTEGRATION_BRANCH_README.md`.
+
 An adaptive adversarial evaluator for repository-level autonomous
 modification systems.
 
