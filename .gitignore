@@ -5,3 +5,8 @@ build/
 dist/
 .pytest_cache/
 .ruff_cache/
+
+# ghost_buster artifacts
+.ghost_casefile.json
+.ghost_ledger.json
+.ghost_baseline.json
