@@ -1,32 +1,30 @@
-"""Pydantic v2 Auto-Migration, as the laboratory sees it.
+"""Pydantic v2 Auto-Migration Adapter for adversarial testing.
 
 THE FOUR THINGS SPECIFIC TO PYDANTIC V2 MIGRATIONS
 
-1. Pydantic v2 migration is an AST transformation, not a search/replace tool.
-   It requires parsing and regenerating Python code to safely transform:
-   - Model definitions (BaseModel → ConfigDict, nested changes)
+1. Pydantic v2 migration is AST transformation, not text replacement.
+   Requires parsing and regenerating Python code to safely transform:
+   - Model definitions and inheritance
    - Validator decorators (@validator → @field_validator)
    - Field definitions (Field() signature changes)
    - Config classes (Config inner class → model_config dict)
+   Incomplete transformations leave working code broken.
 
-   Incomplete or unsafe transformations leave working code broken.
-
-2. The migrator DOES modify files in-place. Unlike Ghost Tools, which commits
-   to a branch and returns the tree unchanged, the Pydantic migrator modifies
-   the working tree directly. The test harness must snapshot before and after.
+2. The migrator DOES modify files in-place. Unlike Ghost Tools (which commits
+   to a branch and returns the tree unchanged), the Pydantic migrator modifies
+   the working tree directly. The test harness must snapshot before/after.
 
 3. The migrator writes a ledger (.pydantic_migration.json) to track:
    - Which files were transformed
    - What patterns were found and transformed
    - Which imports were added
-   - Warnings for manual review (untransformable patterns)
-
-   This is the tool's bookkeeping, not patient content, so it goes in memory_files.
+   - Warnings for manual review
+   This is bookkeeping, not patient content, so it goes in memory_files.
 
 4. Pydantic migrations are idempotent in theory but not in practice. Applying
-   the migrator twice can result in double-transformed code. The lab must
-   distinguish between "already migrated" and "newly migrated" to catch this.
-   We track via markers and the ledger.
+   the migrator twice can result in double-transformed code. The adapter
+   tracks via markers and ledger to distinguish "already migrated" from
+   "newly migrated" and catch idempotency failures.
 """
 
 from __future__ import annotations
@@ -39,8 +37,7 @@ from typing import Any, Dict, Mapping, Optional, Sequence
 
 from ..adapter import Observation, TargetAdapter, TargetUnavailable
 from ..draft import TargetDialect
-from ..sandbox import Completed, Sandbox
-
+from ..sandbox import Sandbox
 
 # Pydantic v2 migration markers
 V2_MARKER_OPEN = "# pydantic:v2-migrated:begin"
@@ -114,8 +111,12 @@ class PydanticV2MigratorAdapter(TargetAdapter):
         try:
             import pydantic
             pydantic_version = pydantic.VERSION
-        except ImportError:
-            pydantic_version = "not_installed"
+        except (ImportError, AttributeError):
+            try:
+                import pydantic
+                pydantic_version = getattr(pydantic, "__version__", "unknown")
+            except ImportError:
+                pydantic_version = "not_installed"
 
         try:
             import libcst
@@ -317,7 +318,6 @@ def _apply_pydantic_v2_migrations(root: Path) -> list:
 
 def _transform_config_class(content: str) -> str:
     """Transform inner Config class to model_config dict."""
-    # Simple regex-based transformation (production would use libcst)
     # Find Config inner class and convert to model_config
     pattern = r'class\s+Config\s*:\s+(.*?)(?=\n    [a-zA-Z_]|\nclass\s|\Z)'
 
