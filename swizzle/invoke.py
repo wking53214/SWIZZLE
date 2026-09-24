@@ -50,7 +50,10 @@ def locate_ghost_tools(explicit: Optional[Path] = None) -> Optional[Path]:
             continue
         path = Path(candidate)
         if (path / "ghost_buster" / "cli.py").is_file():
-            return path
+            # Absolute, because it goes on the PYTHONPATH of a scan that runs
+            # inside the warp: a relative one is read against the warp and
+            # finds nothing. CI's GHOST_TOOLS=../ghost_tools did exactly that.
+            return path.absolute()
     return None
 
 
