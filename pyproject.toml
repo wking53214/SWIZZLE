@@ -31,7 +31,9 @@ dependencies = []
 swizzle = "swizzle.cli:main"
 
 [project.optional-dependencies]
-dev = ["pytest>=8"]
+# pytest-benchmark provides the `benchmark` fixture that
+# Tests/test_integration_end_to_end.py::TestIntegrationPerformance uses.
+dev = ["pytest>=8", "pytest-benchmark"]
 
 [tool.setuptools]
 packages = [

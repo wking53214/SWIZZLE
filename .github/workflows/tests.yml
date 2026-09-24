@@ -17,6 +17,9 @@ jobs:
   pytest:
     runs-on: ubuntu-latest
     strategy:
+      # One version failing must not cancel the other: a cancelled job
+      # reports nothing about its own version.
+      fail-fast: false
       matrix:
         python-version: ["3.11", "3.12"]
     steps:
@@ -46,6 +49,9 @@ jobs:
         working-directory: swizzle
         # Never gated on the score: escapes are the finding, not the error,
         # and `swizzle run` exits non-zero only on SWIZZLE's own failures.
+        # It runs even when Test fails: a red suite used to skip this step,
+        # so the pairing went unexercised for as long as the suite was red.
+        if: ${{ !cancelled() }}
         run: |
           if [ -d ../ghost_tools/ghost_buster ]; then
             GHOST_TOOLS=../ghost_tools python -m swizzle run
