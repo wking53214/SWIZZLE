@@ -153,7 +153,7 @@ def run(genome: RepositoryGenome, adapter: TargetAdapter, *,
             elif primed.failed:
                 broken = "the priming run failed: %s" % primed.failure
             else:
-                _apply_after_baseline(draft, root, sandbox)
+                broken = _apply_after_baseline(draft, root, sandbox)
 
         before = read_tree(root)
         outside_before = _outside(sandbox)
@@ -210,7 +210,7 @@ def run(genome: RepositoryGenome, adapter: TargetAdapter, *,
         sandbox.dispose()
 
 
-def _apply_after_baseline(draft, root: Path, sandbox: Sandbox) -> None:
+def _apply_after_baseline(draft, root: Path, sandbox: Sandbox) -> Optional[str]:
     """Carry out the deferred edits on the materialised tree, and commit them.
 
     Declared at build time, applied here, so the genome is still a complete
@@ -230,7 +230,7 @@ def _apply_after_baseline(draft, root: Path, sandbox: Sandbox) -> None:
     thing under test.
     """
     if not draft.after_baseline:
-        return
+        return None
     for path, text in draft.after_baseline:
         target = root / path
         if text is None:
@@ -258,8 +258,19 @@ def _apply_after_baseline(draft, root: Path, sandbox: Sandbox) -> None:
                         cwd=root, timeout=120)
         else:
             sandbox.run(("git", "add", "--", path), cwd=root, timeout=120)
-    sandbox.run(("git", "commit", "-q", "-m",
-                 "the change the tool has no memory of"), cwd=root, timeout=120)
+    # Its own identity, as world.py's commit has: a machine with no git user
+    # configured (every hosted CI runner) otherwise refuses the commit, and
+    # the edits are left staged. A target that refuses a dirty tree then
+    # refuses, and both sides of a diff read as unmeasured. A commit that
+    # still fails is SWIZZLE's broken run, named as such, never the target's.
+    done = sandbox.run(("git", "-c", "user.email=swizzle@invalid",
+                        "-c", "user.name=SWIZZLE", "commit", "-q", "-m",
+                        "the change the tool has no memory of"),
+                       cwd=root, timeout=120)
+    if not done.ok:
+        return ("SWIZZLE could not commit its own after-baseline edits: %s"
+                % (done.stderr.strip() or "exit %d" % done.returncode))
+    return None
 
 
 def _outside(sandbox: Sandbox) -> Dict[str, str]:

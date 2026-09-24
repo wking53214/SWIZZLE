@@ -126,6 +126,10 @@ def add_parsers(sub) -> None:
                       help="use the seed catalogue instead of the corpus")
     diff.add_argument("--corpus-path", type=Path, default=DEFAULT_CORPUS)
     diff.add_argument("--json", action="store_true")
+    diff.add_argument("--fail-on-unmeasured", action="store_true",
+                      help="exit 1 when a case could not be measured on either "
+                           "side (for a CI gate: a target that cannot be run "
+                           "must not pass as unchanged)")
 
     report = sub.add_parser("report", help="scorecard and coverage")
     report.add_argument("--from-json", type=Path, default=None, metavar="FILE",
@@ -623,7 +627,9 @@ def _diff(args) -> int:
         return 0
     print(result.render())
     counts = result.counts()
-    return 1 if counts.get("regressed") or counts.get("worsened") else 0
+    if counts.get("regressed") or counts.get("worsened"):
+        return 1
+    return 1 if args.fail_on_unmeasured and counts.get("not_measured") else 0
 
 
 def _adapter_for(what: str, scratch: List[Path]) -> GhostToolsAdapter:
