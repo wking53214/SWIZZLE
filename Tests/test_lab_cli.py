@@ -96,6 +96,25 @@ def test_diff_needs_two_targets(capsys):
     assert main(["diff", "--ghost", "one"]) == 2
 
 
+def test_diff_can_refuse_to_pass_what_it_could_not_measure(monkeypatch, capsys):
+    """A candidate that cannot be run leaves every case unmeasured. Without
+    the flag that is still exit 0; a CI gate needs it to be a failure."""
+    from swizzle.lab import cli as lab_cli
+
+    class _Result:
+        def render(self):
+            return "not_measured 26"
+
+        def counts(self):
+            return {"not_measured": 26}
+
+    monkeypatch.setattr(lab_cli, "_adapter_for", lambda what, scratch: object())
+    monkeypatch.setattr(lab_cli, "compare", lambda genomes, base, cand: _Result())
+    argv = ["diff", "--ghost", "base", "--ghost", "candidate", "--seeds"]
+    assert main(argv) == 0
+    assert main(argv + ["--fail-on-unmeasured"]) == 1
+
+
 def test_sandboxes_lists_without_deleting(capsys):
     code, out = run(["sandboxes"], capsys)
     assert code == 0

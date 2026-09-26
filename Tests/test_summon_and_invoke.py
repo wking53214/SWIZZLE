@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import subprocess
+from pathlib import Path
 
 import pytest
 
@@ -65,3 +66,25 @@ def test_locating_ghost_tools_requires_the_cli_module(tmp_path):
     (tmp_path / "ghost_buster" / "cli.py").write_text("")
     assert locate_ghost_tools(tmp_path) == tmp_path
     assert locate_ghost_tools(tmp_path / "nowhere") != tmp_path / "nowhere"
+
+
+def test_a_relative_location_comes_back_absolute(tmp_path, monkeypatch):
+    """The path goes on the PYTHONPATH of a scan run inside the warp.
+
+    Relative, it is read against the warp's directory. CI sets
+    GHOST_TOOLS=../ghost_tools, and every warp came back unsummoned with
+    "No module named 'ghost_buster'".
+    """
+    (tmp_path / "ghost_tools" / "ghost_buster").mkdir(parents=True)
+    (tmp_path / "ghost_tools" / "ghost_buster" / "cli.py").write_text("")
+    (tmp_path / "swizzle").mkdir()
+    monkeypatch.chdir(tmp_path / "swizzle")
+    for found in (locate_ghost_tools(Path("../ghost_tools")),
+                  _from_environment(monkeypatch, "../ghost_tools")):
+        assert found.is_absolute()
+        assert (found / "ghost_buster" / "cli.py").is_file()
+
+
+def _from_environment(monkeypatch, value):
+    monkeypatch.setenv("GHOST_TOOLS", value)
+    return locate_ghost_tools()

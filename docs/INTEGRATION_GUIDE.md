@@ -255,6 +255,9 @@ print(orch.generate_integration_report())
 
 ### For Ghost Tools
 
+This consumer was removed from ghost_tools in 28685aa, recoverable from ghost_tools 0073c49.
+Nothing in ghost_tools reads the bundle now.
+
 ```python
 from ghost_tools_integration.consumer import SwizzleIntegrationConsumer, IntegrationConfig
 

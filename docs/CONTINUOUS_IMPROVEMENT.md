@@ -311,7 +311,7 @@ Analyze B ──→ IMPROVEMENT_PROPOSED ─→ validate() ─→ VERDICT_RECORD
 ### Loop Parameters
 
 ```python
-from ghost_tools.integration.loop_orchestrator import LoopOrchestrator
+from swizzle.integration.loop_orchestrator import LoopOrchestrator
 
 orchestrator = LoopOrchestrator(workspace=Path("./loop_workspace"))
 
@@ -332,7 +332,7 @@ orchestrator.resume_loop()
 ### Arbiter Parameters
 
 ```python
-from ghost_tools.integration.arbiter import Arbiter
+from swizzle.integration.arbiter import Arbiter
 
 arbiter = Arbiter(repo_name="ghost_tools")
 

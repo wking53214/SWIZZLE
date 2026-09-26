@@ -66,7 +66,9 @@ Now:
   - Bundle generation for each tool
   - Integration reporting and monitoring
 
-- **Ghost Integration Consumer** (`ghost_tools_integration/consumer.py`): Ghost's side
+- **Ghost Integration Consumer** (`ghost_tools_integration/consumer.py`): Ghost's side.
+  Since removed from ghost_tools in 28685aa, recoverable from ghost_tools 0073c49;
+  nothing reads the Ghost bundle now.
   - Loads Swizzle integration bundles
   - Applies false positive patterns to findings
   - Validates against invariants and contracts
@@ -96,7 +98,7 @@ docs/
 └── INTEGRATION_GUIDE.md
 ```
 
-**Ghost Tools**:
+**Ghost Tools** (removed from ghost_tools in 28685aa, recoverable from ghost_tools 0073c49):
 ```
 ghost_tools_integration/
 ├── __init__.py
@@ -182,6 +184,9 @@ orch.publish_swizzle_integration_bundle(Path(".ghost-for-swizzle"))
 ```
 
 ### Ghost Side
+
+The consumer below was removed from ghost_tools in 28685aa, recoverable from ghost_tools 0073c49.
+
 ```python
 from ghost_tools_integration.consumer import SwizzleIntegrationConsumer, IntegrationConfig
 
@@ -264,7 +269,7 @@ See `swizzle/integration/` for data structure tests. Key invariants:
 When adding new integration bridges:
 1. Add new model file in `swizzle/integration/`
 2. Update `orchestrator.py` to manage new model
-3. Update `ghost_tools_integration/consumer.py` for Ghost consumption
+3. Add a Ghost-side reader in ghost_tools first: it has none since 28685aa
 4. Update `docs/INTEGRATION_GUIDE.md` with bridge explanation
 5. Add example seed data to new model
 6. Document data flow and version compatibility
