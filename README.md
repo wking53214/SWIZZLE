@@ -48,4 +48,4 @@ TOUCHSTONE specimens ⊂ SWIZZLE worlds ⊂ attacks on ghost_tools
 observe-perceive / sentinel_os  ✗ not imported
 ```
 
-Apache-2.0. See `docs/WIZZLE_INTEGRATION.md`, `docs/CONTINUOUS_IMPROVEMENT.md`.
+Proprietary. Copyright (c) 2026 William King. All rights reserved. See LICENSE. See `docs/WIZZLE_INTEGRATION.md`, `docs/CONTINUOUS_IMPROVEMENT.md`.
