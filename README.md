@@ -23,6 +23,15 @@ Optimizes for: *the smallest reproducible repository state in which an autonomou
 
 ~155 py files, 338 classes, 790 funcs. Arbiter + loop orchestrator live in `swizzle/integration/` (not copied into ghost_tools).
 
+## 2b. Optional CNS adapter
+
+`swizzle.cns_adapter` maps `Verdict` → `cns.gate` outcomes when the private
+`CNS` package is installed. It is **optional**: SWIZZLE imports and runs
+without CNS. When CNS is absent the adapter returns an advisory translation
+(`authority=advisory_only`) with no `subject_digest`. When CNS is present,
+`subject_digest` comes only from `cns.gate.subject_digest`. CNS is never
+modified by this package.
+
 ## 3. What It Does NOT Do / Non-Goals
 
 - Does not patch production apps.
