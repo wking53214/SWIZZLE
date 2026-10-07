@@ -8,6 +8,7 @@ version = "0.7.1"
 description = "An adaptive adversarial evaluator for repository-level autonomous modification systems: builds reproducible repository states in which a target is likely to make an incorrect epistemic, diagnostic or mutational decision, and proves independently whether it did"
 readme = "README.md"
 requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
 authors = [{ name = "William N. King" }]
 keywords = ["adversarial-testing", "adversarial-evaluation", "fuzzing",
             "minimization", "oracles", "static-analysis", "blind-spots",
