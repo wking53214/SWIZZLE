@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import List, Sequence
 
 from . import __version__
-from .invoke import git_available, locate_ghost_tools
+from .invoke import InvocationFailed, git_available, locate_ghost_tools
 from .report import as_dicts, render
 from .run import prove, run_all
 from .schema import Verdict, Warp
@@ -85,6 +85,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     summoning.add_argument("warp")
     summoning.add_argument("--into", type=Path, default=Path.cwd(), metavar="DIR")
 
+    touching = sub.add_parser(
+        "touchstone", help="score ghost_buster against TOUCHSTONE's answer key")
+    touching.add_argument("--touchstone", type=Path, default=None, metavar="PATH",
+                          help="TOUCHSTONE checkout (default: $TOUCHSTONE, then a sibling)")
+    touching.add_argument("--ghost-tools", type=Path, default=None, metavar="PATH")
+    touching.add_argument("--ghost", action="append", default=[], metavar="PATH_OR_REV",
+                          help="give twice, baseline first, to compare two revisions; "
+                               "exits 1 if any specimen's outcome got worse")
+    touching.add_argument("--json", action="store_true")
+
     # The laboratory's commands. The four above are the original SWIZZLE and
     # keep their behaviour exactly; everything the adversarial laboratory adds
     # registers itself here.
@@ -100,6 +110,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "prove": _prove,
         "run": _run,
         "summon": _summon,
+        "touchstone": _touchstone,
         "verify": _verify,
     }
     if args.command in handlers:
@@ -181,6 +192,57 @@ def _run(args) -> int:
         return 2
     if args.fail_on_escape and any(
             o.verdict in (Verdict.ESCAPED, Verdict.CONJURED) for o in outcomes):
+        return 1
+    return 0
+
+
+def _touchstone(args) -> int:
+    """TOUCHSTONE specimens against ghost_buster, scored by the MANIFEST.
+
+    Exit 0: scored. Exit 1: compared two revisions and one got worse.
+    Exit 2: could not score at all (no TOUCHSTONE, unproven answer key, an
+    unmapped failure mode, or ghost_buster would not run) -- never a pass.
+    """
+    from . import touchstone as ts
+    root = ts.locate_touchstone(args.touchstone)
+    if root is None:
+        print("swizzle: no TOUCHSTONE checkout with a published registry. Pass "
+              "--touchstone PATH or set TOUCHSTONE.", file=sys.stderr)
+        return 2
+    if len(args.ghost) not in (0, 2):
+        print("swizzle: give --ghost twice, baseline first", file=sys.stderr)
+        return 2
+    try:
+        if args.ghost:
+            import shutil
+            from .lab.cli import _adapter_for
+            scratch: List[Path] = []
+            try:
+                cards = [ts.run(root, _adapter_for(g, scratch).checkout) for g in args.ghost]
+            finally:
+                for path in scratch:
+                    shutil.rmtree(path, ignore_errors=True)
+            result = ts.Comparison(*cards)
+        else:
+            ghost_tools = args.ghost_tools or locate_ghost_tools()
+            result = ts.run(root, ghost_tools)
+            cards = [result]
+    except (ts.TouchstoneUnavailable, InvocationFailed, RuntimeError) as exc:
+        print("swizzle: %s" % exc, file=sys.stderr)
+        return 2
+    if args.json:
+        payload = (result.to_dict() if isinstance(result, ts.Scorecard)
+                   else {"baseline": cards[0].to_dict(), "candidate": cards[1].to_dict(),
+                         "changes": [list(c) for c in result.changes()]})
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        print(result.render())
+    stuck = [s for card in cards for s in ts.blocked(card)]
+    if stuck:
+        print("\nswizzle: cannot score %d specimen(s): %s" % (len(stuck), ", ".join(stuck[:5])),
+              file=sys.stderr)
+        return 2
+    if isinstance(result, ts.Comparison) and result.regressed():
         return 1
     return 0
 

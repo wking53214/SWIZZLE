@@ -33,6 +33,14 @@ jobs:
           repository: wking53214/ghost_tools
           path: ghost_tools
 
+      # TOUCHSTONE's answer key makes Tests/test_touchstone.py's live tests
+      # run, and feeds the TOUCHSTONE report below.
+      - uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          repository: wking53214/TOUCHSTONE
+          path: TOUCHSTONE
+
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
@@ -57,4 +65,17 @@ jobs:
             GHOST_TOOLS=../ghost_tools python -m swizzle run
           else
             echo "no ghost_tools checkout; skipping the report"
+          fi
+
+      - name: Report against TOUCHSTONE
+        working-directory: swizzle
+        # Not gated on the score, like the report above. It does fail when
+        # the TOUCHSTONE pairing itself cannot run (exit 2): an answer key
+        # that cannot be proven, or a failure mode with no true name.
+        if: ${{ !cancelled() }}
+        run: |
+          if [ -d ../ghost_tools/ghost_buster ] && [ -d ../TOUCHSTONE ]; then
+            GHOST_TOOLS=../ghost_tools python -m swizzle touchstone --touchstone ../TOUCHSTONE
+          else
+            echo "::warning::ghost_tools or TOUCHSTONE checkout missing; TOUCHSTONE report did not run"
           fi
