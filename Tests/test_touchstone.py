@@ -131,3 +131,25 @@ def test_live_scorecard_runs_and_is_trustworthy():
     assert "claims hold" in card["proof"]
     outcomes = {j["outcome"] for j in card["judgements"]}
     assert not outcomes & {ts.UNMAPPED, ts.UNSUMMONED}
+
+
+def test_a_relation_mention_does_not_catch_a_property(tmp_path):
+    """A finding about another file that merely lists the specimen as related
+    must not count as naming the silent pass."""
+    s = _staged(tmp_path)
+    key = _key(fm_3_1_silent_pass=dict(specimen_class="FAILURE_MODE", path="specimens/a.py",
+                                       expected_verdict="REFUSE"))
+    elsewhere = [_finding(s, "specimens/b.py", "name_disagreement", related=["specimens/a.py"])]
+    assert ts.judge(key, elsewhere, s)[0].outcome == ts.ESCAPED
+
+
+def test_bare_filename_never_matches(tmp_path):
+    assert not ts._touches(["", "a.py"], "specimens/a.py")
+    assert ts._touches(["", "pairs/a.py"], "specimens/pairs/a.py")
+
+
+def test_malformed_registry_is_unavailable_not_a_crash(tmp_path):
+    (tmp_path / "touchstone_production").mkdir()
+    (tmp_path / "touchstone_production" / "registry.json").write_text("{not json", encoding="utf-8")
+    with pytest.raises(ts.TouchstoneUnavailable):
+        ts.load_answer_key(tmp_path)

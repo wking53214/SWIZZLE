@@ -148,7 +148,10 @@ def load_answer_key(root: Path) -> Dict[str, dict]:
         raise TouchstoneUnavailable(
             "%s has no %s; TOUCHSTONE publishes it with "
             "`python3 -m touchstone_production.manifest_registry --write`" % (root, REGISTRY))
-    data = json.loads(path.read_text(encoding="utf-8"))
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise TouchstoneUnavailable("%s could not be read: %s" % (path, exc)) from exc
     if not isinstance(data, dict) or not data:
         raise TouchstoneUnavailable("%s is empty or malformed" % path)
     return data
@@ -159,8 +162,11 @@ def prove_answer_key(root: Path) -> Tuple[bool, str]:
     script = Path(root) / "verify_manifest.py"
     if not script.is_file():
         return False, "verify_manifest.py is missing"
-    done = subprocess.run((sys.executable, str(script)), cwd=str(root),
-                          capture_output=True, text=True, timeout=300)
+    try:
+        done = subprocess.run((sys.executable, str(script)), cwd=str(root),
+                              capture_output=True, text=True, timeout=300)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return False, "verify_manifest.py could not run: %s" % exc
     tail = (done.stdout.strip().splitlines() or [""])[-1]
     summary = next((ln for ln in done.stdout.splitlines() if "claims hold" in ln), tail)
     return done.returncode == 0, summary.strip()
@@ -184,15 +190,20 @@ def stage(root: Path, into: Path) -> Path:
 # ----------------------------------------------------------------- judging
 
 def _files_of(finding: dict, staged: Path) -> List[str]:
-    """Every file a finding touches, relative to the staged root."""
+    """Every file a finding touches, relative to the staged root.
+
+    Index 0 is always the finding's own file ("" when it has none inside the
+    staged tree); the rest are the files it relates that one to.
+    """
     evidence = finding.get("evidence") or {}
-    out = []
+    own = ""
     absolute = evidence.get("absolute_file")
     if absolute:
         try:
-            out.append(Path(absolute).resolve().relative_to(staged.resolve()).as_posix())
+            own = Path(absolute).resolve().relative_to(staged.resolve()).as_posix()
         except ValueError:
             pass
+    out = [own]
     # related_files are reported relative to whatever ghost_buster took as its
     # root; match them by suffix against the specimen paths instead.
     for rel in evidence.get("related_files") or []:
@@ -201,7 +212,24 @@ def _files_of(finding: dict, staged: Path) -> List[str]:
 
 
 def _touches(finding_files: Sequence[str], path: str) -> bool:
-    return any(path == f or path.endswith("/" + f) or f.endswith(path) for f in finding_files)
+    """Exact match, or a path reported relative to a deeper root.
+
+    A bare filename never matches: `artifact_1.py` exists in two specimen
+    directories and guessing which one was meant would credit the scanner
+    with a finding it did not make.
+    """
+    for f in finding_files:
+        f = f[2:] if f.startswith("./") else f
+        if not f:
+            continue
+        if f == path or ("/" in f and path.endswith("/" + f)):
+            return True
+    return False
+
+
+def _owns(finding_files: Sequence[str], path: str) -> bool:
+    """The finding is ABOUT this file: it is the finding's own file, not a relation."""
+    return bool(finding_files) and _touches(finding_files[:1], path)  # index 0 = own file
 
 
 def _anchor_line(staged: Path, path: str, pattern: str) -> Optional[int]:
@@ -218,6 +246,7 @@ def judge(answer_key: Dict[str, dict], findings: List[dict], staged: Path) -> Li
         path = entry.get("path", "")
         companions = list((entry.get("metadata") or {}).get("companions") or [])
         on_primary = [(f, fs) for f, fs in indexed if _touches(fs, path)]
+        owned = [(f, fs) for f, fs in on_primary if _owns(fs, path)]
         said = [(f["detector"], f.get("severity", "")) for f, _ in on_primary]
         j = Judgement(sid, cls, entry.get("expected_verdict", "UNKNOWN"), OUT_OF_SCOPE, said)
 
@@ -227,9 +256,13 @@ def judge(answer_key: Dict[str, dict], findings: List[dict], staged: Path) -> Li
                 j.outcome = UNMAPPED
                 j.account = "TOUCHSTONE records this failure mode; SWIZZLE has no true name for it"
             else:
-                j.outcome, j.account = _judge_failure(name, on_primary, companions, staged, path)
+                # A relation (duplicate) may be reported from either side; a
+                # property of one file must be reported about that file.
+                pool = on_primary if name.relation else owned
+                j.outcome, j.account = _judge_failure(name, pool, companions, staged, path)
         elif cls == "REFERENCE":
-            refused = [d for d, sev in said if d in REFUSALS or sev == "critical"]
+            refused = [f["detector"] for f, _ in owned
+                       if f["detector"] in REFUSALS or f.get("severity") == "critical"]
             j.outcome = CONJURED if refused else DISMISSED
             j.account = ("refused a working implementation: %s" % ", ".join(refused)
                          if refused else "accepted")
