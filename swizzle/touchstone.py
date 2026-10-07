@@ -66,7 +66,8 @@ UNSUMMONED = "unsummoned"   # the answer key could not be proven
 #: Higher is better, per specimen, for comparing two revisions of the target.
 RANK = {ESCAPED: 0, MISNAMED: 1, BANISHED: 2, CONJURED: 0, DISMISSED: 2}
 
-DUPLICATE_FAMILY = ("duplicate_file", "drifted_copy", "near_duplicate_function")
+DUPLICATE_FAMILY = ("duplicate_file", "drifted_copy", "near_duplicate_function",
+                    "flattened_copy")
 
 #: Detectors whose firing on a must-accept specimen counts as refusing it.
 #: Style findings (a long function, a placeholder name) are not refusals.
@@ -88,6 +89,11 @@ class TrueName:
     anchor: Optional[str] = None
     slack: int = 3
     why: str = ""
+    #: Set when naming this needs a kind of analysis a syntax-tree scanner
+    #: does not do (value ranges, semantics). It never changes the outcome:
+    #: an escape is still an escape. It tells the reader which escapes are a
+    #: missing detector and which are a missing kind of reasoning.
+    beyond_syntax: str = ""
 
 
 TRUE_NAMES: Dict[str, TrueName] = {
@@ -107,11 +113,17 @@ TRUE_NAMES: Dict[str, TrueName] = {
         detectors=("unreachable_declared_state", "dead_code"),
         anchor=r"verdict\s*=\s*EvaluationVerdict\.CRITICAL",
         why="EvaluationVerdict.CRITICAL cannot be reached; the finding has "
-            "to point at the branch that assigns it."),
+            "to point at the branch that assigns it.",
+        beyond_syntax="unreachable only because of how two computed scores relate "
+                      "numerically (proved in TOUCHSTONE by 100k samples); the "
+                      "branch is syntactically reachable"),
     "fm_3_5_reskinned_duplicate": TrueName(
         detectors=DUPLICATE_FAMILY, relation=True,
         why="One formula under two class names in two files. Duplicate "
-            "detection has to see past the names."),
+            "detection has to see past the names.",
+        beyond_syntax="the two implementations no longer share a shape (one uses "
+                      "numpy arrays, the other delegates to the extracted kernel); "
+                      "the sameness is the formula and its thresholds, not the code"),
 }
 
 
@@ -273,8 +285,9 @@ def judge(answer_key: Dict[str, dict], findings: List[dict], staged: Path) -> Li
 
 
 def _judge_failure(name: TrueName, on_primary, companions, staged, path) -> Tuple[str, str]:
+    reach = (" [beyond syntax: %s]" % name.beyond_syntax) if name.beyond_syntax else ""
     if not on_primary:
-        return ESCAPED, "silent: " + name.why
+        return ESCAPED, "silent: " + name.why + reach
     candidates = [(f, fs) for f, fs in on_primary
                   if not name.detectors or f["detector"] in name.detectors]
     if name.relation:
@@ -290,8 +303,9 @@ def _judge_failure(name: TrueName, on_primary, companions, staged, path) -> Tupl
     if candidates:
         f = candidates[0][0]
         return BANISHED, "%s: %s" % (f["detector"], f.get("summary", "")[:160])
-    return MISNAMED, ("spoke about the file (%s) but not in the terms that name it: %s"
-                      % (", ".join(sorted({f["detector"] for f, _ in on_primary})), name.why))
+    return MISNAMED, ("spoke about the file (%s) but not in the terms that name it: %s%s"
+                      % (", ".join(sorted({f["detector"] for f, _ in on_primary})), name.why,
+                         reach))
 
 
 # ----------------------------------------------------------------- running
