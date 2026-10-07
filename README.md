@@ -53,7 +53,9 @@ Typed serialisable `RepositoryGenome` + hypothesis. Reports, minimized cases, re
 ## 7. Stack Integration Topology
 
 ```text
-TOUCHSTONE specimens ⊂ SWIZZLE worlds ⊂ attacks on ghost_tools
+TOUCHSTONE registry.json → swizzle touchstone → ghost_tools scored against the MANIFEST answer key
+SWIZZLE warps + lab worlds → attacks on ghost_tools
+Elegant → swizzle prove (its own proofs must hold before Elegant ACCEPTs)
 observe-perceive / sentinel_os  ✗ not imported
 ```
 
