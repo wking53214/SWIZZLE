@@ -4,7 +4,7 @@ Adversarial **evaluation framework** for autonomous repository-modification syst
 
 ## 1. Pipeline Position & Role
 
-**ASSURANCE ADVERSARY**, off the live path. Together with ghost_tools + TOUCHSTONE: the assurance loop.
+**ASSURANCE ADVERSARY**, off the live path. Together with ghost_tools + ASSAY: the assurance loop.
 
 ```
 RepositoryGenome → world.build() → Sandbox → TargetAdapter
@@ -55,9 +55,9 @@ Typed serialisable `RepositoryGenome` + hypothesis. Reports, minimized cases, re
 ## 7. Stack Integration Topology
 
 ```text
-TOUCHSTONE registry.json → swizzle touchstone → ghost_tools scored against the MANIFEST answer key
+ASSAY registry.json → swizzle assay → ghost_tools scored against the MANIFEST answer key
 SWIZZLE warps + lab worlds → attacks on ghost_tools
-Elegant → swizzle prove (its own proofs must hold before Elegant ACCEPTs)
+Warden → swizzle prove (its own proofs must hold before Warden ACCEPTs)
 observe-perceive / sentinel_os  ✗ not imported
 ```
 

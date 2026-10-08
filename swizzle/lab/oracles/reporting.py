@@ -9,7 +9,7 @@ rewrite it. A detector is judged on three things:
              detector does not look for yet, which is what the laboratory
              exists to surface
   too eager  a claim a machine must NOT rewrite was reported as rewritable.
-             The worst outcome: the Proposer acts on that flag
+             The worst outcome: the Drafter acts on that flag
 
 Reporting a protected claim as "not rewritable" is correct, and so is not
 reporting it at all.

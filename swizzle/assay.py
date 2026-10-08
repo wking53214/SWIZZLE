@@ -1,16 +1,16 @@
-"""TOUCHSTONE: scoring ghost_buster against damage nobody planted.
+"""ASSAY: scoring ghost_buster against damage nobody planted.
 
 Every warp in the catalogue was written by SWIZZLE, so every warp carries
-SWIZZLE's idea of what a defect looks like. TOUCHSTONE is the other half:
+SWIZZLE's idea of what a defect looks like. ASSAY is the other half:
 real code, damaged by real accidents, with the correct answer written down
 by a person in MANIFEST.md and published as data in
-`touchstone_production/registry.json`. This module reads that answer key,
+`assay_production/registry.json`. This module reads that answer key,
 runs ghost_buster over the specimens, and reports how the scanner did in
 the four numbers MANIFEST.md asks for.
 
 WHAT SWIZZLE ADDS AND WHAT IT DOES NOT
 
-TOUCHSTONE says what is wrong with each specimen ("REFUSE", "SAME_CONTENT",
+ASSAY says what is wrong with each specimen ("REFUSE", "SAME_CONTENT",
 "UNREACHABLE"). It does not say which ghost_buster detector ought to say
 so; that is a claim about the target, and claims about the target are
 SWIZZLE's job. `TRUE_NAMES` below is that claim, one entry per failure
@@ -18,7 +18,7 @@ mode, and it is the only thing in this module a reviewer has to trust.
 
 THE TWO HONESTY RULES, AGAIN
 
-1. The answer key is proven before it is used. TOUCHSTONE's own
+1. The answer key is proven before it is used. ASSAY's own
    `verify_manifest.py` asserts every recorded defect by execution. If it
    fails, every verdict is UNSUMMONED: the corpus has drifted and nothing
    scored against it means anything.
@@ -26,7 +26,7 @@ THE TWO HONESTY RULES, AGAIN
    detector for (is this reconstruction faithful? is this the best
    implementation?) is reported as OUT_OF_SCOPE, with whatever the scanner
    did say, and counted as an abstention exactly as MANIFEST.md requires.
-   A failure mode TOUCHSTONE adds that SWIZZLE has no true name for is
+   A failure mode ASSAY adds that SWIZZLE has no true name for is
    UNMAPPED and makes the run exit non-zero.
 """
 
@@ -45,11 +45,11 @@ from typing import Dict, List, Optional, Sequence, Tuple
 
 from .invoke import InvocationFailed, scan
 
-REGISTRY = Path("touchstone_production") / "registry.json"
+REGISTRY = Path("assay_production") / "registry.json"
 
 
-class TouchstoneUnavailable(RuntimeError):
-    """The TOUCHSTONE checkout or its answer key could not be used."""
+class AssayUnavailable(RuntimeError):
+    """The ASSAY checkout or its answer key could not be used."""
 
 
 # Outcome names reuse the warp verdict vocabulary where the meaning is the
@@ -60,7 +60,7 @@ ESCAPED = "escaped"         # silence over a recorded defect
 DISMISSED = "dismissed"     # a must-accept specimen, accepted
 CONJURED = "conjured"       # a must-accept specimen, refused
 OUT_OF_SCOPE = "out_of_scope"  # ghost_buster has no detector for this question
-UNMAPPED = "unmapped"       # TOUCHSTONE knows a failure mode SWIZZLE does not
+UNMAPPED = "unmapped"       # ASSAY knows a failure mode SWIZZLE does not
 UNSUMMONED = "unsummoned"   # the answer key could not be proven
 
 #: Higher is better, per specimen, for comparing two revisions of the target.
@@ -76,7 +76,7 @@ REFUSALS = ("unassessable_file",)
 
 @dataclass(frozen=True)
 class TrueName:
-    """What ghost_buster should say about one TOUCHSTONE failure mode."""
+    """What ghost_buster should say about one ASSAY failure mode."""
     #: Detectors that count as naming it. Empty means any finding on the
     #: primary file does: the defect is "this file is not what it claims"
     #: and ghost_buster has no narrower word for that yet.
@@ -115,7 +115,7 @@ TRUE_NAMES: Dict[str, TrueName] = {
         why="EvaluationVerdict.CRITICAL cannot be reached; the finding has "
             "to point at the branch that assigns it.",
         beyond_syntax="unreachable only because of how two computed scores relate "
-                      "numerically (proved in TOUCHSTONE by 100k samples); the "
+                      "numerically (proved in ASSAY by 100k samples); the "
                       "branch is syntactically reachable"),
     "fm_3_5_reskinned_duplicate": TrueName(
         detectors=DUPLICATE_FAMILY, relation=True,
@@ -144,11 +144,11 @@ class Judgement:
 
 # ------------------------------------------------------------------ inputs
 
-def locate_touchstone(explicit: Optional[Path] = None) -> Optional[Path]:
-    """Where TOUCHSTONE lives: argument, then TOUCHSTONE env, then a sibling."""
+def locate_assay(explicit: Optional[Path] = None) -> Optional[Path]:
+    """Where ASSAY lives: argument, then ASSAY env, then a sibling."""
     here = Path(__file__).resolve().parents[2]
-    for candidate in (explicit, os.environ.get("TOUCHSTONE"),
-                      here / "TOUCHSTONE", here / "touchstone"):
+    for candidate in (explicit, os.environ.get("ASSAY"),
+                      here / "ASSAY", here / "assay"):
         if candidate and (Path(candidate) / REGISTRY).is_file():
             return Path(candidate).absolute()
     return None
@@ -157,20 +157,20 @@ def locate_touchstone(explicit: Optional[Path] = None) -> Optional[Path]:
 def load_answer_key(root: Path) -> Dict[str, dict]:
     path = Path(root) / REGISTRY
     if not path.is_file():
-        raise TouchstoneUnavailable(
-            "%s has no %s; TOUCHSTONE publishes it with "
-            "`python3 -m touchstone_production.manifest_registry --write`" % (root, REGISTRY))
+        raise AssayUnavailable(
+            "%s has no %s; ASSAY publishes it with "
+            "`python3 -m assay_production.manifest_registry --write`" % (root, REGISTRY))
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
-        raise TouchstoneUnavailable("%s could not be read: %s" % (path, exc)) from exc
+        raise AssayUnavailable("%s could not be read: %s" % (path, exc)) from exc
     if not isinstance(data, dict) or not data:
-        raise TouchstoneUnavailable("%s is empty or malformed" % path)
+        raise AssayUnavailable("%s is empty or malformed" % path)
     return data
 
 
 def prove_answer_key(root: Path) -> Tuple[bool, str]:
-    """Run TOUCHSTONE's own verifier. The corpus asserts its damage by execution."""
+    """Run ASSAY's own verifier. The corpus asserts its damage by execution."""
     script = Path(root) / "verify_manifest.py"
     if not script.is_file():
         return False, "verify_manifest.py is missing"
@@ -187,11 +187,11 @@ def prove_answer_key(root: Path) -> Tuple[bool, str]:
 def stage(root: Path, into: Path) -> Path:
     """A clean copy of the specimens, as a fresh repository.
 
-    Only `specimens/` is copied: TOUCHSTONE's accepted-findings baseline and
+    Only `specimens/` is copied: ASSAY's accepted-findings baseline and
     archive marker would otherwise tell ghost_buster which findings to hide,
     and the score would measure the baseline instead of the scanner.
     """
-    target = into / "touchstone"
+    target = into / "assay"
     shutil.copytree(Path(root) / "specimens", target / "specimens",
                     ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
     subprocess.run(("git", "init", "--quiet"), cwd=str(target), check=False,
@@ -266,7 +266,7 @@ def judge(answer_key: Dict[str, dict], findings: List[dict], staged: Path) -> Li
             name = TRUE_NAMES.get(sid)
             if name is None:
                 j.outcome = UNMAPPED
-                j.account = "TOUCHSTONE records this failure mode; SWIZZLE has no true name for it"
+                j.account = "ASSAY records this failure mode; SWIZZLE has no true name for it"
             else:
                 # A relation (duplicate) may be reported from either side; a
                 # property of one file must be reported about that file.
@@ -312,7 +312,7 @@ def _judge_failure(name: TrueName, on_primary, companions, staged, path) -> Tupl
 
 @dataclass
 class Scorecard:
-    touchstone: str
+    assay: str
     proof: str
     judgements: List[Judgement]
 
@@ -326,7 +326,7 @@ class Scorecard:
         return sum(1 for j in self.judgements if j.outcome == outcome)
 
     def to_dict(self) -> dict:
-        return {"touchstone": self.touchstone, "proof": self.proof,
+        return {"assay": self.assay, "proof": self.proof,
                 "numbers": self.numbers(),
                 "judgements": [j.to_dict() for j in self.judgements]}
 
@@ -343,8 +343,8 @@ class Scorecard:
         }
 
     def render(self) -> str:
-        lines = ["SWIZZLE x TOUCHSTONE -- ghost_buster against the MANIFEST answer key",
-                 "answer key: %s (%s)" % (self.touchstone, self.proof), ""]
+        lines = ["SWIZZLE x ASSAY -- ghost_buster against the MANIFEST answer key",
+                 "answer key: %s (%s)" % (self.assay, self.proof), ""]
         for label, value in self.numbers().items():
             lines.append("  %-26s %s" % (label.replace("_", " "), value))
         lines.append("")
@@ -359,19 +359,19 @@ class Scorecard:
         return "\n".join(lines)
 
 
-def run(touchstone: Path, ghost_tools: Optional[Path]) -> Scorecard:
-    answer_key = load_answer_key(touchstone)
-    proven, summary = prove_answer_key(touchstone)
+def run(assay: Path, ghost_tools: Optional[Path]) -> Scorecard:
+    answer_key = load_answer_key(assay)
+    proven, summary = prove_answer_key(assay)
     if not proven:
-        return Scorecard(str(touchstone), "NOT PROVEN: " + summary, [
+        return Scorecard(str(assay), "NOT PROVEN: " + summary, [
             Judgement(sid, e.get("specimen_class", "UNKNOWN"), e.get("expected_verdict", ""),
                       UNSUMMONED, account="verify_manifest.py failed: " + summary)
             for sid, e in sorted(answer_key.items())])
-    with tempfile.TemporaryDirectory(prefix="swizzle-touchstone-") as scratch:
-        staged = stage(touchstone, Path(scratch))
+    with tempfile.TemporaryDirectory(prefix="swizzle-assay-") as scratch:
+        staged = stage(assay, Path(scratch))
         findings = scan(staged, ghost_tools)
         judgements = judge(answer_key, findings, staged)
-    return Scorecard(str(touchstone), summary, judgements)
+    return Scorecard(str(assay), summary, judgements)
 
 
 @dataclass
@@ -397,7 +397,7 @@ class Comparison:
         return any(kind == "regressed" for kind, *_ in self.changes())
 
     def render(self) -> str:
-        lines = ["SWIZZLE x TOUCHSTONE -- baseline vs candidate"]
+        lines = ["SWIZZLE x ASSAY -- baseline vs candidate"]
         changes = self.changes()
         if not changes:
             lines.append("  no specimen changed outcome")
