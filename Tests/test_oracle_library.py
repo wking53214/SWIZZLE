@@ -405,6 +405,12 @@ class TestSignalGeneration(unittest.TestCase):
         evidence = MockEvidence()
         all_signals = judge_all(evidence)
         self.assertTrue(all_signals, "no signals means no field was checked")
+        # Asking for one oracle must give that oracle's signals and no others.
+        for name in ("semantic", "structural"):
+            only_one = judge_all(evidence, only=[name])
+            self.assertTrue(only_one)
+            self.assertEqual({s.oracle for s in only_one}, {name})
+        all_signals = all_signals + only_one
 
         for signal in all_signals:
             self.assertIsNotNone(signal.oracle)

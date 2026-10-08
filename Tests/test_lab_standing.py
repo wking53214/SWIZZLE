@@ -246,6 +246,9 @@ def test_a_probe_that_raised_is_not_a_probe_that_held():
     seen = Observation(case="c", genome_digest="d", target_revision="x",
                        observed_at="now", reproduced=False)
     _, results = probes.interrogate(context, now=seen)
+    # One result per probe, in order. Nothing is silently added or dropped.
+    assert [r.probe for r in results] == ["concealment", "recurrence", "scope",
+                                          "adjacency", "variant"]
     by_name = {r.probe: r for r in results}
     # The three that invoke the target. `recurrence` is excluded on purpose:
     # it interrogates the observation it was handed rather than running
