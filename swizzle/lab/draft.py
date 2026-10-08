@@ -65,6 +65,11 @@ class TargetDialect:
     #: something it may report and must not touch, and any change to a
     #: document is the target acting where abstention was correct.
     rewrites_documents: bool = True
+    #: Whether the target has a mode that changes the repository at all. A
+    #: target that only reports has no output state to adopt and no acting
+    #: run to judge: it is judged on what it says, and on leaving the tree
+    #: exactly as it found it.
+    acts: bool = True
 
 
 @dataclass

@@ -170,12 +170,12 @@ def run(genome: RepositoryGenome, adapter: TargetAdapter, *,
         planted = [name for name in dialect.memory_files if name in draft.files]
         isolated = (any(m.phase is Phase.DURING_TESTS for m in genome.mutations)
                     or bool(planted))
-        if not isolated and not broken:
+        if (not isolated or not dialect.acts) and not broken:
             scan = adapter.scan(root, sandbox, timeout=timeout)
             if scan.failed:
                 broken = "the read-only scan failed: %s" % scan.failure
 
-        if not broken:
+        if not broken and dialect.acts:
             act = adapter.act(root, sandbox, timeout=timeout)
             if act.failed:
                 broken = "the acting run failed: %s" % act.failure
