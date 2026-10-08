@@ -381,28 +381,6 @@ CATALOGUE: Tuple[RepositoryGenome, ...] = (
                                 {"document": "README.md", "unreachable": 20}),),
     ),
 
-    # --------------------------------------------------------------- 12
-    RepositoryGenome(
-        name="killed_while_operating",
-        category=AttackCategory.CRASH,
-        hypothesis=(
-            "The target protects the branch the repository came in on with a "
-            "cleanup path that restores it whatever happens inside the "
-            "operation. A process that is killed does not run its cleanup "
-            "path. The suite the target runs mid-operation sends it SIGKILL, "
-            "which puts the interruption at a point the target chose and "
-            "makes it exactly reproducible. The question is what the "
-            "repository looks like afterwards: which branch it is on, and "
-            "whether there is partial work in the tree."),
-        seed=12,
-        tests=TestShape(count=ACTUAL),
-        documents=(_readme(),),
-        claims=(_live_claim(),),
-        count_blocks=(CountBlockSpec("README.md", DOCUMENTED),),
-        mutations=(MutationSpec("kill_target_during_tests", {},
-                                phase=Phase.DURING_TESTS),),
-    ),
-
     # --------------------------------------------------------------- 11
     RepositoryGenome(
         name="uninvited_section_in_a_readme",

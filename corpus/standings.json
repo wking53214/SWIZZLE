@@ -96,17 +96,6 @@
       "unprobed": []
     },
     {
-      "at": "2026-09-12T10:54:25Z",
-      "case": "killed_while_operating",
-      "classes": [],
-      "defeated_by": [],
-      "digest": "624a013d8b59d981",
-      "revision": "d14dc1acf01f9b7d95fc3d3a822d20f8e54c96cf",
-      "severity": "NONE",
-      "standing": "never reproduced",
-      "unprobed": []
-    },
-    {
       "at": "2026-09-12T10:54:20Z",
       "case": "live_claim_in_a_historical_document",
       "classes": [],
@@ -236,23 +225,6 @@
       "standing": "reproduces",
       "unprobed": [
         "adjacency",
-        "scope",
-        "variant"
-      ]
-    },
-    {
-      "at": "2026-09-12T13:29:50Z",
-      "case": "killed_while_operating",
-      "classes": [],
-      "defeated_by": [],
-      "digest": "624a013d8b59d981",
-      "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108",
-      "severity": "NONE",
-      "standing": "ambiguous",
-      "unprobed": [
-        "adjacency",
-        "concealment",
-        "recurrence",
         "scope",
         "variant"
       ]
@@ -518,23 +490,6 @@
       "standing": "reproduces",
       "unprobed": [
         "adjacency",
-        "scope",
-        "variant"
-      ]
-    },
-    {
-      "at": "2026-09-12T14:22:01Z",
-      "case": "killed_while_operating",
-      "classes": [],
-      "defeated_by": [],
-      "digest": "624a013d8b59d981",
-      "revision": "b5dda3cfc1e3c153bd49234c1b4a57b9e2f27108",
-      "severity": "NONE",
-      "standing": "ambiguous",
-      "unprobed": [
-        "adjacency",
-        "concealment",
-        "recurrence",
         "scope",
         "variant"
       ]

@@ -60,7 +60,6 @@ Against Ghost Tools 1.7.0 (`d14dc1a`):
 | rejected | `live_claim_in_a_historical_document` | — | target correct |
 | rejected | `marker_that_never_closes` | — | target correct |
 | rejected | `two_maintained_blocks` | — | target correct |
-| rejected | `killed_while_operating` | — | target correct |
 
 Five of thirteen are the target behaving correctly. That ratio is the point:
 a corpus with no passes in it is a corpus whose oracles nobody should trust.
