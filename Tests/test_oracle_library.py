@@ -176,6 +176,12 @@ class TestOracleInfrastructure(unittest.TestCase):
         evidence = MockEvidence()
         result = judge_all(evidence)
         self.assertIsInstance(result, tuple)
+        self.assertTrue(result, "an empty result would read as 'nothing wrong'")
+        # Unfiltered, every oracle that has something to say is heard; the mock
+        # gives the semantic and structural oracles something to say.
+        self.assertEqual({s.oracle for s in result}, {"semantic", "structural"})
+        # A name that is not an oracle selects nothing, rather than everything.
+        self.assertEqual(judge_all(evidence, only=["no_such_oracle"]), ())
 
     def test_judge_all_filters_by_oracle_name(self):
         """judge_all should respect the 'only' parameter."""
@@ -398,6 +404,7 @@ class TestSignalGeneration(unittest.TestCase):
         """All oracle signals should have required fields."""
         evidence = MockEvidence()
         all_signals = judge_all(evidence)
+        self.assertTrue(all_signals, "no signals means no field was checked")
 
         for signal in all_signals:
             self.assertIsNotNone(signal.oracle)
@@ -477,6 +484,7 @@ class TestOracleEdgeCases(unittest.TestCase):
         evidence.changed = Mock(return_value={})
         signals = judge_all(evidence)
         self.assertIsInstance(signals, tuple)
+        self.assertEqual({s.oracle for s in signals}, {"semantic", "structural"})
 
     def test_broken_evidence_flag(self):
         """Oracles should handle evidence marked as broken."""

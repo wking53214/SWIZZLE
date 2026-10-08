@@ -257,7 +257,9 @@ def test_a_probe_that_raised_is_not_a_probe_that_held():
     resolution = Resolution(observation=seen, probes=results,
                             previously_reproduced=_seen(True))
     assert resolution.standing is Standing.UNREPRODUCED_UNPROBED
-    assert set(resolution.unprobed) >= {"scope", "adjacency", "variant"}
+    # Exactly these: the three that crashed, and `concealment`, which has no prior
+    # record to compare against. `recurrence` ran and held, so it is not here.
+    assert set(resolution.unprobed) == {"scope", "adjacency", "variant", "concealment"}
 
 
 def test_a_variant_reproducing_something_lesser_is_not_a_defeat():
