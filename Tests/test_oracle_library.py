@@ -87,6 +87,8 @@ class MockTargetDialect:
         self.writable_document_names = ()
         self.memory_files = ()
         self.annotation_markers = ()
+        self.rewrites_documents = True
+        self.acts = True
 
 
 class MockGenome:
@@ -160,7 +162,7 @@ class TestOracleInfrastructure(unittest.TestCase):
     def test_oracles_registry_populated(self):
         """Oracle registry should contain all expected oracles."""
         expected = {
-            "structural", "expectation", "scope",
+            "structural", "expectation", "reporting", "scope",
             "temporal", "ledger", "identity", "semantic"
         }
         self.assertEqual(set(ORACLES.keys()), expected)

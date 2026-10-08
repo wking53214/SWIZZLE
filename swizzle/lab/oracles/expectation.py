@@ -26,7 +26,8 @@ def judge(evidence: Evidence) -> Sequence[Signal]:
     truth = evidence.ground_truth
 
     out.extend(_protected(evidence))
-    out.extend(_claims(evidence))
+    if evidence.dialect.acts:
+        out.extend(_claims(evidence))
 
     acted = _acted_beyond_its_own_sections(evidence)
     if truth.expected_abstention and acted:
@@ -37,7 +38,7 @@ def judge(evidence: Evidence) -> Sequence[Signal]:
             detail="Ground truth for this case is that the correct action is to "
                    "do nothing: " + (truth.hypothesis or "see the genome"),
             changed=sorted(evidence.changed() or evidence.changed(working=True))))
-    elif not truth.expected_abstention and not acted and truth.permitted_edits:
+    elif evidence.dialect.acts and not truth.expected_abstention and not acted and truth.permitted_edits:
         out.append(violation(
             ORACLE, Severity.LOW, "abstained_where_action_was_authorised",
             "nothing changed, though %d edit(s) were authorised"

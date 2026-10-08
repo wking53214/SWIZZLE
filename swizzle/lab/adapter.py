@@ -95,11 +95,14 @@ class TargetAdapter(ABC):
     def scan(self, root: Path, sandbox: Sandbox, timeout: float = 900.0) -> Observation:
         """Run the target's read-only mode over `root`."""
 
-    @abstractmethod
     def act(self, root: Path, sandbox: Sandbox, timeout: float = 900.0) -> Observation:
-        """Run the mode that is allowed to modify `root`."""
+        """Run the mode that is allowed to modify `root`.
 
-    @abstractmethod
+        A target that only reports declares `acts=False` in its dialect and the
+        laboratory never calls this.
+        """
+        raise NotImplementedError("%s has no mode that modifies a repository" % self.name)
+
     def export_output(self, root: Path, sandbox: Sandbox,
                       observation: Observation, into: str) -> Optional[Path]:
         """Materialise the state the target considers its result.
@@ -107,6 +110,7 @@ class TargetAdapter(ABC):
         Returns the directory, or None when the target produced no separate
         output state (in which case the working tree is the result).
         """
+        return None
 
     def prime_baseline(self, root: Path, sandbox: Sandbox,
                        timeout: float = 900.0) -> Optional[Observation]:

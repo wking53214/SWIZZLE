@@ -176,7 +176,9 @@ def iterate(genome: RepositoryGenome, adapter: TargetAdapter, *,
         root = world.materialise(draft, sandbox)
         seen: Dict[str, int] = {_digest(read_tree(root), dialect): 0}
 
-        for index in range(1, rounds + 1):
+        if not dialect.acts:
+            note = "the target only reports; there is no output to adopt, so it cannot fail to settle"
+        for index in range(1, (rounds if dialect.acts else 0) + 1):
             try:
                 observed = adapter.act(root, sandbox, timeout=timeout)
             except Exception as exc:
