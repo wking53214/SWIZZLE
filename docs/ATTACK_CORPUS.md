@@ -65,6 +65,21 @@ Against Ghost Tools 1.7.0 (`d14dc1a`):
 Five of thirteen are the target behaving correctly. That ratio is the point:
 a corpus with no passes in it is a corpus whose oracles nobody should trust.
 
+## After Ghost stopped writing READMEs
+
+The table above describes defects in README writers that existed at `d14dc1a`.
+Ghost has since lost those writers: it no longer rewrites a stale test count,
+no longer maintains a marked count block, and no longer writes a
+name-disagreement table into a README. Only Streamline writes READMEs.
+
+The cases are kept, because they are the record of why those writers were
+dangerous and they still run. What changed is the expectation. The Ghost
+adapter declares `rewrites_documents=False`, so a world built for Ghost
+authorises no document edit, and any change to a README or other document is
+reported as acting where abstention was correct. Run against the old Ghost,
+`prose_inside_the_maintained_block` is a violation; run against the new one it
+is clean. A regression back to rewriting READMEs would fail the gate.
+
 ## After the fixes
 
 The table above is the state at `d14dc1a`, and the entries are kept as

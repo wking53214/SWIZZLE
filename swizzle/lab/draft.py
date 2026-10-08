@@ -31,6 +31,11 @@ from .genome import RepositoryGenome
 from .witness import Witness
 
 
+#: Authorised edits that rewrite prose in a document. A target whose dialect
+#: says it does not rewrite documents is never authorised to make these.
+DOCUMENT_REWRITE_KINDS = frozenset({"rewrite_count_digits", "maintain_count_block"})
+
+
 @dataclass(frozen=True)
 class TargetDialect:
     """The target-specific spellings a world needs to be concrete.
@@ -55,6 +60,11 @@ class TargetDialect:
     memory_files: Tuple[str, ...] = ()
     #: Marker pairs the target may insert on its own initiative, if any.
     annotation_markers: Tuple[str, ...] = ()
+    #: Whether the target ever rewrites prose in a document. A target that
+    #: does not has no edit to be authorised: a live count in a README is
+    #: something it may report and must not touch, and any change to a
+    #: document is the target acting where abstention was correct.
+    rewrites_documents: bool = True
 
 
 @dataclass
@@ -184,6 +194,8 @@ class WorldDraft:
 
     def permit(self, path: str, line_start: int, line_end: int, kind: str,
                reason: str = "") -> None:
+        if kind in DOCUMENT_REWRITE_KINDS and not self.dialect.rewrites_documents:
+            return
         self.permitted.append(PermittedEdit(path, line_start, line_end, kind, reason))
 
     def note(self, what: str) -> None:

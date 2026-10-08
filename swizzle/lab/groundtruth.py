@@ -144,7 +144,11 @@ def of(draft: WorldDraft) -> GroundTruth:
         permitted_edits=tuple(draft.permitted),
         permitted_mutation_kinds=frozenset(e.kind for e in draft.permitted),
         protected=tuple(draft.protected),
-        expected_abstention=draft.expect_abstention,
+        # A target that never rewrites documents has nothing to be authorised
+        # to do in a world whose only edits would have been document edits.
+        expected_abstention=(draft.expect_abstention
+                             or (not draft.dialect.rewrites_documents
+                                 and not draft.permitted)),
         tolerate_target_sections=draft.genome.tolerate_target_sections,
         self_edits=tuple(draft.self_edits),
         expected_final_state={path: sha256(text)
