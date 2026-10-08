@@ -46,21 +46,22 @@ from ..adapter import Observation, TargetAdapter, TargetUnavailable
 from ..draft import TargetDialect
 from ..sandbox import Completed, Sandbox
 
-#: Ghost's opt-in marker pair for a count it maintains.
+#: The marker pair Ghost once maintained a count inside. Ghost no longer
+#: writes into any document, so worlds that carry the pair now test that it
+#: is left alone: the spelling is kept so those worlds still read as the old
+#: ones did, and so a regression back to rewriting is caught.
 COUNT_BLOCK_OPEN = "<!-- ghost_buster:test-count -->"
 COUNT_BLOCK_CLOSE = "<!-- /ghost_buster:test-count -->"
-
-#: The section Ghost writes into a README when it records name disagreements.
-ANNOTATION_BEGIN = "<!-- ghost_buster:name-disagreements:begin -->"
-ANNOTATION_END = "<!-- ghost_buster:name-disagreements:end -->"
 
 #: Ghost's own bookkeeping, which it writes into the tree it examines and
 #: excludes from its own commits.
 MEMORY_FILES = (".ghost_ledger.json", ".ghost_baseline.json", ".ghost_casefile.json")
 
-#: Documents Ghost's `why_not_writable` is willing to rewrite prose in.
-#: Recorded here as a FACT ABOUT GHOST for building worlds on the boundary.
-#: Ground truth does not consult it.
+#: Documents Ghost's `why_not_writable` would judge writable. Ghost no longer
+#: rewrites any document; the judgement survives as detection (it decides
+#: whether a claim is reported as a live contradiction). Recorded as a FACT
+#: ABOUT GHOST for building worlds on the boundary. Ground truth does not
+#: consult it.
 WRITABLE_DOCUMENT_NAMES = ("readme.md", "contributing.md", "index.md")
 
 _COMMON = ("--single-repo", "--no-secrets", "--no-branches", "--no-structure")
@@ -95,7 +96,7 @@ class GhostToolsAdapter(TargetAdapter):
             count_block_close=COUNT_BLOCK_CLOSE,
             writable_document_names=WRITABLE_DOCUMENT_NAMES,
             memory_files=MEMORY_FILES,
-            annotation_markers=(ANNOTATION_BEGIN, ANNOTATION_END),
+            rewrites_documents=False,
         )
 
     # ------------------------------------------------------------ version
