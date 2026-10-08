@@ -90,8 +90,10 @@ class TestTrendAnalyzer:
 
     def test_anomaly_detection(self):
         """Verify anomaly detection."""
+        stale = get_unified_index()
         reset_unified_index()
         index = get_unified_index()
+        assert index is not stale, "reset must give a fresh index"
 
         for i in range(5):
             decision = IndexedDecision(
@@ -118,8 +120,10 @@ class TestQueryEngine:
 
     def test_engine_creation(self):
         """Verify query engine can be created."""
+        stale = get_unified_index()
         reset_unified_index()
         engine = create_query_engine()
+        assert engine.index is not stale, "reset must give a fresh index"
 
         assert engine is not None
         assert engine.index is not None

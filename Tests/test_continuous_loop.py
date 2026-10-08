@@ -168,6 +168,21 @@ class TestArbiterTests:
         # accuracy improved 5.56%, latency regressed 10%
         # weighted = (5.56*2 + (-10)*1) / 3 = 0.37%
         assert verdict.weighted_score() > 0
+        # The score decides the verdict: a net gain is accepted, with the
+        # percentage it measured in the reason.
+        assert verdict.verdict == ValidationVerdictType.ACCEPT
+        assert "Net improvement" in verdict.reason
+
+    def test_arbiter_rejects_a_net_regression(self):
+        """The other side of the score: a net loss is not accepted."""
+        arbiter = Arbiter("ghost_tools")
+        metrics = [
+            ValidationMetric(name="accuracy", before_value=0.95, after_value=0.90, unit="percent", importance=2.0),
+            ValidationMetric(name="latency", before_value=100.0, after_value=90.0, unit="ms", importance=1.0),
+        ]
+        verdict = arbiter.validate_improvement("swizzle", "imp_002", metrics)
+        assert verdict.weighted_score() < 0
+        assert verdict.verdict == ValidationVerdictType.REJECT
 
     def test_arbiter_acceptance_rate(self):
         """Verify acceptance rate tracking."""

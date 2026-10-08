@@ -246,6 +246,9 @@ def test_a_probe_that_raised_is_not_a_probe_that_held():
     seen = Observation(case="c", genome_digest="d", target_revision="x",
                        observed_at="now", reproduced=False)
     _, results = probes.interrogate(context, now=seen)
+    # One result per probe, in order. Nothing is silently added or dropped.
+    assert [r.probe for r in results] == ["concealment", "recurrence", "scope",
+                                          "adjacency", "variant"]
     by_name = {r.probe: r for r in results}
     # The three that invoke the target. `recurrence` is excluded on purpose:
     # it interrogates the observation it was handed rather than running
@@ -257,7 +260,9 @@ def test_a_probe_that_raised_is_not_a_probe_that_held():
     resolution = Resolution(observation=seen, probes=results,
                             previously_reproduced=_seen(True))
     assert resolution.standing is Standing.UNREPRODUCED_UNPROBED
-    assert set(resolution.unprobed) >= {"scope", "adjacency", "variant"}
+    # Exactly these: the three that crashed, and `concealment`, which has no prior
+    # record to compare against. `recurrence` ran and held, so it is not here.
+    assert set(resolution.unprobed) == {"scope", "adjacency", "variant", "concealment"}
 
 
 def test_a_variant_reproducing_something_lesser_is_not_a_defeat():

@@ -7,8 +7,8 @@ from swizzle.integration.cicd_integration import (
     TestResult, PerformanceMetric, GateDecision, PerformanceThresholdManager,
     CIDDIntegrationEngine, get_cicd_engine, reset_cicd_engine,
 )
-from swizzle.integration.unified_index import reset_unified_index
-from swizzle.integration.decision_engine import reset_decision_engine
+from swizzle.integration.unified_index import get_unified_index, reset_unified_index
+from swizzle.integration.decision_engine import get_decision_engine, reset_decision_engine
 
 
 class TestTestResult:
@@ -135,10 +135,15 @@ class TestCIDDIntegrationEngine:
     """Test CI/CD integration engine."""
 
     def test_engine_creation(self):
-        """Verify engine can be created."""
+        """Verify engine can be created, and that reset really makes a new one."""
+        stale_index, stale_decisions, stale_cicd = (
+            get_unified_index(), get_decision_engine(), get_cicd_engine())
         reset_unified_index()
         reset_decision_engine()
         reset_cicd_engine()
+        assert get_unified_index() is not stale_index
+        assert get_decision_engine() is not stale_decisions
+        assert get_cicd_engine() is not stale_cicd
 
         engine = get_cicd_engine()
         assert engine is not None

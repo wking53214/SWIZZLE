@@ -238,8 +238,10 @@ class TestEventHandlers:
 
     def test_handler_registration(self):
         """Verify handlers are registered."""
+        stale = get_handler_registry()
         reset_handlers()
         registry = get_handler_registry()
+        assert registry is not stale, "reset must give a fresh registry"
 
         assert registry.get(EventType.FINDING_TRIAGED) is not None
         assert registry.get(EventType.VIOLATION_DETECTED) is not None
@@ -269,6 +271,7 @@ class TestEventHandlers:
         """Verify handlers are connected to event bus."""
         reset_event_bus()
         reset_handlers()
+        assert len(get_event_bus().handlers) == 0, "a fresh bus has no handlers"
         setup_event_handlers()
 
         bus = get_event_bus()
@@ -276,15 +279,18 @@ class TestEventHandlers:
 
     def test_triage_event_handler(self):
         """Verify triage event updates ledger."""
+        stale = get_handler_registry()
         reset_handlers()
         registry = get_handler_registry()
+        assert registry is not stale, "reset must give a fresh registry"
 
+        from swizzle.integration.triage_ledger import DEFAULT_LEDGER
+        before = len(DEFAULT_LEDGER.entries)
         event = create_triage_event("f1", "dated_claim", "false", "test reasoning", "MEDIUM")
         registry.handle(event)
 
-        # Handler should have processed event
-        from swizzle.integration.triage_ledger import DEFAULT_LEDGER
-        assert len(DEFAULT_LEDGER.entries) > 0
+        # Handler should have processed this event, adding to the ledger
+        assert len(DEFAULT_LEDGER.entries) > before
 
 
 class TestEventSerialization:
