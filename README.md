@@ -17,7 +17,9 @@ RepositoryGenome → world.build() → Sandbox → TargetAdapter
 
 ## 2. Full System Scope & Architectural Depth
 
-CLI: `audit | seed | attack | evolve | minimize | reproduce | corpus | diff | report` plus original scanner-blind-spot catalogue (`list|prove|run|summon`).
+CLI: `audit | seed | attack | evolve | minimize | reproduce | corpus | handoff | diff | report` plus original scanner-blind-spot catalogue (`list|prove|run|summon`).
+
+Gaps found in Ghost come back as lessons (`handoff propose | list | approve | fixed`). Each lesson has a plain sentence, a severity, the smallest case and a fingerprint, so the same gap is never sent twice, and a fixed gap that returns is reopened. Lessons wait for a human to approve them before the answer key (Assay) can take them as cases.
 
 Optimizes for: *the smallest reproducible repository state in which an autonomous modifier violates an invariant it claims to enforce* — not "make ghost_tools look bad."
 

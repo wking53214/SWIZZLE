@@ -117,6 +117,14 @@ def add_parsers(sub) -> None:
     corpus_cmd.add_argument("--reason", default="", metavar="TEXT")
     corpus_cmd.add_argument("--json", action="store_true")
 
+    hand = sub.add_parser("handoff", help="gaps found in Ghost, as lessons awaiting "
+                                          "a human decision")
+    hand.add_argument("action", choices=("propose", "list", "approve", "fixed"))
+    hand.add_argument("lesson", nargs="?", default="", metavar="ID")
+    hand.add_argument("--corpus-path", type=Path, default=DEFAULT_CORPUS)
+    hand.add_argument("--handoff-path", type=Path, default=Path("handoff"))
+    hand.add_argument("--json", action="store_true")
+
     diff = sub.add_parser("diff", help="compare two revisions of the target")
     diff.add_argument("--ghost", action="append", default=[], metavar="PATH_OR_REV",
                       help="give twice: baseline then candidate")
@@ -594,6 +602,48 @@ def _corpus(args) -> int:
                  ", ".join(entry.corroborated) or "single oracle"))
     print()
     print("%d entr(ies). Promote with: swizzle corpus --promote NAME" % len(entries))
+    return 0
+
+
+# ----------------------------------------------------------------- handoff
+
+@_register("handoff")
+def _handoff(args) -> int:
+    from .handoff import Handoff, lessons_from
+    store = Handoff(args.handoff_path)
+    if args.action == "propose":
+        entries = Corpus(args.corpus_path).entries("discovered") + \
+            Corpus(args.corpus_path).entries("minimized")
+        sent = store.propose(lessons_from(entries))
+        if args.json:
+            print(json.dumps([l.to_dict() for l in sent], indent=2, sort_keys=True))
+        else:
+            for lesson in sent:
+                print("%-12s %-8s %s" % (lesson.id, lesson.severity, lesson.plain))
+            print("%d new lesson(s) waiting for approval." % len(sent))
+        return 0
+    if args.action == "list":
+        rows = store.statuses()
+        if args.json:
+            print(json.dumps(rows, indent=2, sort_keys=True))
+        else:
+            for lesson_id, state in sorted(rows.items()):
+                print("%-12s %s" % (lesson_id, state))
+            if not rows:
+                print("no lessons yet.")
+        return 0
+    if not args.lesson:
+        print("swizzle: give a lesson id", file=sys.stderr)
+        return 2
+    try:
+        if args.action == "approve":
+            print("approved: %s" % store.approve(args.lesson))
+        else:
+            store.mark_fixed(args.lesson)
+            print("marked fixed: %s" % args.lesson)
+    except KeyError as exc:
+        print("swizzle: %s" % exc.args[0], file=sys.stderr)
+        return 2
     return 0
 
 
