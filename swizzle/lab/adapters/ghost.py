@@ -7,7 +7,7 @@ THE THREE THINGS THAT NEEDED LEARNING
 
 1. Ghost only reports. It used to have a mode that committed changes to a
    branch; that mode is gone, because changing a repository belongs to
-   Elegant. The dialect says `acts=False`, so the laboratory never asks Ghost
+   Warden. The dialect says `acts=False`, so the laboratory never asks Ghost
    to act: it judges what Ghost reports, and that the tree is left exactly as
    Ghost found it.
 

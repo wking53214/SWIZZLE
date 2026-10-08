@@ -86,9 +86,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     summoning.add_argument("--into", type=Path, default=Path.cwd(), metavar="DIR")
 
     touching = sub.add_parser(
-        "touchstone", help="score ghost_buster against TOUCHSTONE's answer key")
-    touching.add_argument("--touchstone", type=Path, default=None, metavar="PATH",
-                          help="TOUCHSTONE checkout (default: $TOUCHSTONE, then a sibling)")
+        "assay", help="score ghost_buster against ASSAY's answer key")
+    touching.add_argument("--assay", type=Path, default=None, metavar="PATH",
+                          help="ASSAY checkout (default: $ASSAY, then a sibling)")
     touching.add_argument("--ghost-tools", type=Path, default=None, metavar="PATH")
     touching.add_argument("--ghost", action="append", default=[], metavar="PATH_OR_REV",
                           help="give twice, baseline first, to compare two revisions; "
@@ -110,7 +110,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "prove": _prove,
         "run": _run,
         "summon": _summon,
-        "touchstone": _touchstone,
+        "assay": _assay,
         "verify": _verify,
     }
     if args.command in handlers:
@@ -196,18 +196,18 @@ def _run(args) -> int:
     return 0
 
 
-def _touchstone(args) -> int:
-    """TOUCHSTONE specimens against ghost_buster, scored by the MANIFEST.
+def _assay(args) -> int:
+    """ASSAY specimens against ghost_buster, scored by the MANIFEST.
 
     Exit 0: scored. Exit 1: compared two revisions and one got worse.
-    Exit 2: could not score at all (no TOUCHSTONE, unproven answer key, an
+    Exit 2: could not score at all (no ASSAY, unproven answer key, an
     unmapped failure mode, or ghost_buster would not run) -- never a pass.
     """
-    from . import touchstone as ts
-    root = ts.locate_touchstone(args.touchstone)
+    from . import assay as ts
+    root = ts.locate_assay(args.assay)
     if root is None:
-        print("swizzle: no TOUCHSTONE checkout with a published registry. Pass "
-              "--touchstone PATH or set TOUCHSTONE.", file=sys.stderr)
+        print("swizzle: no ASSAY checkout with a published registry. Pass "
+              "--assay PATH or set ASSAY.", file=sys.stderr)
         return 2
     if len(args.ghost) not in (0, 2):
         print("swizzle: give --ghost twice, baseline first", file=sys.stderr)
@@ -227,7 +227,7 @@ def _touchstone(args) -> int:
             ghost_tools = args.ghost_tools or locate_ghost_tools()
             result = ts.run(root, ghost_tools)
             cards = [result]
-    except (ts.TouchstoneUnavailable, InvocationFailed, RuntimeError) as exc:
+    except (ts.AssayUnavailable, InvocationFailed, RuntimeError) as exc:
         print("swizzle: %s" % exc, file=sys.stderr)
         return 2
     if args.json:

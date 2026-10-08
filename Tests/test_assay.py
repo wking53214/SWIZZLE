@@ -1,4 +1,4 @@
-"""SWIZZLE x TOUCHSTONE: the judging rules, then the live pairing.
+"""SWIZZLE x ASSAY: the judging rules, then the live pairing.
 
 The unit tests feed `judge` hand-written findings so every outcome is
 pinned without ghost_buster in the room. The last two run the real thing
@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from swizzle import touchstone as ts
+from swizzle import assay as ts
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -95,7 +95,7 @@ def test_unknown_failure_mode_is_unmapped_and_blocks(tmp_path):
 
 
 def test_missing_registry_is_loud(tmp_path):
-    with pytest.raises(ts.TouchstoneUnavailable):
+    with pytest.raises(ts.AssayUnavailable):
         ts.load_answer_key(tmp_path)
 
 
@@ -106,15 +106,15 @@ def test_comparison_flags_a_regression():
     assert not ts.Comparison(card(ts.ESCAPED), card(ts.BANISHED)).regressed()
 
 
-LIVE_TS = ts.locate_touchstone()
+LIVE_TS = ts.locate_assay()
 LIVE_GHOST = os.environ.get("GHOST_TOOLS") or (ROOT.parent / "ghost_tools")
 live = pytest.mark.skipif(
     LIVE_TS is None or not (Path(LIVE_GHOST) / "ghost_buster" / "cli.py").is_file(),
-    reason="needs TOUCHSTONE (with registry.json) and ghost_tools checkouts")
+    reason="needs ASSAY (with registry.json) and ghost_tools checkouts")
 
 
 @live
-def test_every_touchstone_failure_mode_has_a_true_name():
+def test_every_assay_failure_mode_has_a_true_name():
     key = ts.load_answer_key(LIVE_TS)
     modes = {sid for sid, e in key.items() if e["specimen_class"] == "FAILURE_MODE"}
     assert modes and modes <= set(ts.TRUE_NAMES)
@@ -123,8 +123,8 @@ def test_every_touchstone_failure_mode_has_a_true_name():
 @live
 def test_live_scorecard_runs_and_is_trustworthy():
     done = subprocess.run(
-        (sys.executable, "-m", "swizzle", "touchstone", "--json",
-         "--touchstone", str(LIVE_TS), "--ghost-tools", str(LIVE_GHOST)),
+        (sys.executable, "-m", "swizzle", "assay", "--json",
+         "--assay", str(LIVE_TS), "--ghost-tools", str(LIVE_GHOST)),
         cwd=str(ROOT), capture_output=True, text=True, timeout=600)
     assert done.returncode == 0, done.stderr[-800:]
     card = json.loads(done.stdout)
@@ -149,7 +149,7 @@ def test_bare_filename_never_matches(tmp_path):
 
 
 def test_malformed_registry_is_unavailable_not_a_crash(tmp_path):
-    (tmp_path / "touchstone_production").mkdir()
-    (tmp_path / "touchstone_production" / "registry.json").write_text("{not json", encoding="utf-8")
-    with pytest.raises(ts.TouchstoneUnavailable):
+    (tmp_path / "assay_production").mkdir()
+    (tmp_path / "assay_production" / "registry.json").write_text("{not json", encoding="utf-8")
+    with pytest.raises(ts.AssayUnavailable):
         ts.load_answer_key(tmp_path)

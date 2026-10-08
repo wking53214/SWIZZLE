@@ -1,7 +1,7 @@
 """A target that never rewrites documents is never authorised to.
 
 Ghost used to rewrite a stale test count and to maintain a marked count block
-inside a README. It no longer does either; only Streamline writes READMEs. The
+inside a README. It no longer does either; only Burnish writes READMEs. The
 laboratory has to say so, or it keeps authorising edits nobody makes and
 reports the silence as over-caution. These tests pin the rule from both sides.
 """
