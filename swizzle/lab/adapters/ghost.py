@@ -147,7 +147,7 @@ class GhostToolsAdapter(TargetAdapter):
             target=self.name, mode="scan", version=self.version(),
             invocations=(done,), findings=findings,
             abstained=True, memory=_memory(root),
-            failed=done.timed_out or (done.returncode not in (0, 1) and not findings),
+            failed=_failed(done, findings),
             failure=_failure(done, findings),
         )
 
@@ -171,7 +171,7 @@ def _run_here(cwd: Path, argv: Sequence[str]) -> str:
 
 
 def _findings(stdout: str) -> Tuple[Mapping[str, Any], ...]:
-    """Ghost's JSON array, out of a stream that opens with progress lines."""
+    """Ghost's findings, out of a stream that opens with progress lines."""
     return tuple(_with_claim(f) for f in _raw_findings(stdout))
 
 
@@ -187,42 +187,48 @@ def _with_claim(finding: Mapping[str, Any]) -> Mapping[str, Any]:
     return {**finding, "swizzle_claim": claim}
 
 
-def _raw_findings(stdout: str) -> Tuple[Mapping[str, Any], ...]:
+def _parsed(stdout: str) -> Any:
+    """Ghost's JSON, an array (older) or an object (current), or None."""
     lines = stdout.splitlines()
     for index, line in enumerate(lines):
-        if line.strip().startswith("["):
+        if line.strip().startswith(("[", "{")):
             try:
-                parsed = json.loads("\n".join(lines[index:]))
+                return json.loads("\n".join(lines[index:]))
             except json.JSONDecodeError:
-                return ()
-            return tuple(parsed) if isinstance(parsed, list) else ()
-    return ()
+                return None
+    return None
 
 
+def _raw_findings(stdout: str) -> Tuple[Mapping[str, Any], ...]:
+    parsed = _parsed(stdout)
+    if isinstance(parsed, dict):
+        parsed = parsed.get("findings")
+    return tuple(parsed) if isinstance(parsed, list) else ()
 
 
+def _crashed(done: Completed) -> bool:
+    """Ghost's own word for "I crashed": exit 3, or status "error" in its JSON."""
+    if done.returncode == 3:
+        return True
+    parsed = _parsed(done.stdout)
+    return isinstance(parsed, dict) and parsed.get("status") == "error"
 
 
-
-
-
-
-
-
-
-
-
+def _failed(done: Completed, findings: Sequence[Mapping[str, Any]]) -> bool:
+    if done.timed_out or _crashed(done):
+        return True
+    return done.returncode not in (0, 1) and not findings
 
 
 def _failure(done: Completed, findings: Sequence[Mapping[str, Any]]) -> str:
     if done.timed_out:
         return "timed out after %.0fs" % done.seconds
+    if _crashed(done):
+        return "ghost_buster crashed (exit %d): %s" % (
+            done.returncode, (done.stderr or "").strip()[-300:])
     if not findings and done.returncode not in (0, 1):
         return "exit %d: %s" % (done.returncode, (done.stderr or "").strip()[-300:])
     return ""
-
-
-
 
 
 def _memory(root: Path) -> Dict[str, str]:
