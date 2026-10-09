@@ -57,13 +57,18 @@ def main(argv: Sequence[str] | None = None) -> int:
     proving = sub.add_parser(
         "prove", help="run every warp's proof and nothing else -- the check "
                       "that SWIZZLE is not claiming defects it does not have")
-    proving.add_argument("--only", default=None, metavar="SUBSTRING")
+    proving.add_argument("--only", default=None, metavar="SUBSTRING",
+                         help="warps whose name or target contains this "
+                              "(comma-separated); a name that matches nothing "
+                              "is an error (exit 2)")
 
     running = sub.add_parser("run", help="build, scan, score")
     running.add_argument("--only", default=None, metavar="SUBSTRING")
     running.add_argument("--ghost-tools", type=Path, default=None, metavar="PATH",
                          help="the ghost_tools checkout (default: importable, "
-                              "then $GHOST_TOOLS, then a sibling directory)")
+                              "then $GHOST_TOOLS, then a sibling directory). A "
+                              "path you give that is not a ghost_tools checkout "
+                              "is an error (exit 2), never replaced by another")
     running.add_argument("--json", action="store_true",
                          help="emit the result as JSON instead of the report")
     running.add_argument("--keep", type=Path, default=None, metavar="DIR",
@@ -88,8 +93,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     touching = sub.add_parser(
         "assay", help="score ghost_buster against ASSAY's answer key")
     touching.add_argument("--assay", type=Path, default=None, metavar="PATH",
-                          help="ASSAY checkout (default: $ASSAY, then a sibling)")
-    touching.add_argument("--ghost-tools", type=Path, default=None, metavar="PATH")
+                          help="ASSAY checkout. If you give it and it is missing "
+                               "or has no published registry, that is an error "
+                               "(exit 2); a sibling checkout is used only when "
+                               "this is not given (default: $ASSAY, then a sibling)")
+    touching.add_argument("--ghost-tools", type=Path, default=None, metavar="PATH",
+                          help="the ghost_tools checkout; a bad path is an error (exit 2)")
+    touching.add_argument("--floor", type=int, default=None, metavar="N",
+                          help="exit 1 when Ghost caught fewer than N known "
+                               "failure modes (default: no floor, and then exit 0 "
+                               "only means the key was scored)")
     touching.add_argument("--ghost", action="append", default=[], metavar="PATH_OR_REV",
                           help="give twice, baseline first, to compare two revisions; "
                                "exits 1 if any specimen's outcome got worse")
@@ -97,10 +110,20 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     governing = sub.add_parser(
         "governor", help="attack a governor (Warden) and report which invariants held")
-    governing.add_argument("--warden", type=Path, required=True, metavar="PATH",
-                           help="a Warden checkout (its package is imported only in a subprocess)")
-    governing.add_argument("--only", default=None, metavar="TEXT")
-    governing.add_argument("--json", action="store_true")
+    governing.add_argument("--warden", type=Path, default=None, metavar="PATH",
+                           help="a Warden checkout (its package is imported only in a "
+                                "subprocess). A relative path is fine.")
+    governing.add_argument("--only", default=None, metavar="NAME[,NAME]",
+                           help="scenarios whose name contains this (comma-separated); "
+                                "a name that matches nothing is an error (exit 2)")
+    governing.add_argument("--list", action="store_true",
+                           help="print the scenarios, and which Warden layers defend each, then stop")
+    governing.add_argument("--json", action="store_true",
+                           help="a JSON list on stdout and nothing else; notes go to stderr")
+    governing.epilog = ("exit codes: 1 if any selected scenario was violated; otherwise 2 if any "
+                        "did not run (Warden crashed, timed out, or gave no usable decision); "
+                        "otherwise 0, which means every selected scenario was held. A scenario "
+                        "is held only when Warden ran to completion and gave a readable decision.")
 
     # The laboratory's commands. The four above are the original SWIZZLE and
     # keep their behaviour exactly; everything the adversarial laboratory adds
@@ -136,12 +159,37 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 
 def _governor(args) -> int:
-    from .governor.run import as_dicts, attack, render
-    findings = attack(args.warden, only=args.only)
-    print(json.dumps(as_dicts(findings), indent=2) if args.json else render(findings))
-    if findings and all(f.status == "not_run" for f in findings):
+    """Exit 1 if any scenario was violated, else 2 if any did not run, else 0."""
+    from .governor.run import (BadSelection, WardenNotFound, as_dicts, attack, exit_code,
+                               render)
+    from .governor.scenarios import SCENARIOS
+    if args.list:
+        for sc in SCENARIOS:
+            print("%-34s [%s] %s\n    defended by: %s" % (sc.name, sc.severity, sc.hypothesis, sc.layers or "not recorded"))
+        return 0
+    if args.warden is None:
+        print("swizzle: governor needs --warden PATH (or --list).", file=sys.stderr)
         return 2
-    return 1 if any(f.status == "violated" for f in findings) else 0
+    try:
+        findings = attack(args.warden, only=args.only)
+    except BadSelection as exc:
+        print("swizzle: %s" % exc, file=sys.stderr)
+        return 2
+    except WardenNotFound as exc:
+        print("swizzle: %s" % exc, file=sys.stderr)
+        return 2
+    code = exit_code(findings)
+    if args.json:
+        print(json.dumps(as_dicts(findings), indent=2))
+        print("swizzle: %s (exit %d)" % (_governor_summary(findings), code), file=sys.stderr)
+    else:
+        print(render(findings))
+    return code
+
+
+def _governor_summary(findings) -> str:
+    from .governor.run import summary
+    return summary(findings)
 
 
 def _list(args) -> int:
@@ -161,9 +209,32 @@ def _list(args) -> int:
     return 0
 
 
+def _unknown_names(only: str | None, warps: List[Warp]) -> str | None:
+    """A message when --only named something that is not in the catalogue."""
+    if not only:
+        return None
+    everything = list(catalogue())
+    for part in [p.strip() for p in only.split(",") if p.strip()]:
+        if not any(part in w.name or part in w.targets for w in everything):
+            return "no warp matches %r. Valid names: %s" % (part, ", ".join(w.name for w in everything))
+    return None if warps else "--only selected no warps. Valid names: %s" % ", ".join(w.name for w in everything)
+
+
 def _prove(args) -> int:
+    """Exit 0: every selected proof holds. 1: one failed. 2: none ran or --only named nothing."""
     import tempfile
-    warps = _selected(args.only)
+    only = args.only
+    parts = [p.strip() for p in only.split(",") if p.strip()] if only else [None]
+    warps: List[Warp] = []
+    for part in parts:
+        warps += [w for w in _selected(part) if w not in warps]
+    bad = _unknown_names(only, warps)
+    if bad:
+        print("swizzle: %s" % bad, file=sys.stderr)
+        return 2
+    if not warps:
+        print("swizzle: no proofs ran, so nothing is shown to hold.", file=sys.stderr)
+        return 2
     failed = 0
     with tempfile.TemporaryDirectory(prefix="swizzle-prove-") as scratch:
         workspace = Path(scratch)
@@ -177,6 +248,9 @@ def _prove(args) -> int:
             print("       %s" % proof.account)
     print()
     print("%d of %d proofs hold." % (len(warps) - failed, len(warps)))
+    print("Each proof shows that a planted defect is a real defect. None of them runs "
+          "Ghost, so this says nothing about whether Ghost finds the defect; "
+          "`swizzle assay` and `swizzle run` measure that.")
     return 1 if failed else 0
 
 
@@ -186,6 +260,9 @@ def _run(args) -> int:
               file=sys.stderr)
         return 2
     ghost_tools = args.ghost_tools
+    if ghost_tools is not None and not _is_ghost_tools(ghost_tools):
+        print(_bad_ghost_tools(ghost_tools), file=sys.stderr)
+        return 2
     if ghost_tools is None:
         try:
             import ghost_buster                      # noqa: F401
@@ -213,22 +290,55 @@ def _run(args) -> int:
     return 0
 
 
+def _is_ghost_tools(path: Path) -> bool:
+    return (Path(path) / "ghost_buster" / "cli.py").is_file()
+
+
+def _bad_ghost_tools(path: Path) -> str:
+    return ("swizzle: --ghost-tools %s is not a ghost_tools checkout (no ghost_buster/cli.py "
+            "inside it). Not falling back to another checkout." % path)
+
+
 def _assay(args) -> int:
     """ASSAY specimens against ghost_buster, scored by the MANIFEST.
 
-    Exit 0: scored. Exit 1: compared two revisions and one got worse.
-    Exit 2: could not score at all (no ASSAY, unproven answer key, an
-    unmapped failure mode, or ghost_buster would not run) -- never a pass.
+    Exit 0: scored (and, with --floor N, at least N failure modes caught).
+    Exit 1: compared two revisions and one got worse, or Ghost caught fewer
+    than --floor. Exit 2: could not score at all (no ASSAY, a path you gave
+    that does not exist, an unproven answer key, an unmapped failure mode,
+    or ghost_buster would not run) -- never a pass.
     """
     from . import assay as ts
-    root = ts.locate_assay(args.assay)
-    if root is None:
-        print("swizzle: no ASSAY checkout with a published registry. Pass "
-              "--assay PATH or set ASSAY.", file=sys.stderr)
+    try:
+        root, assay_how = ts.resolve_assay(args.assay)
+    except ts.AssayUnavailable as exc:
+        print("swizzle: %s" % exc, file=sys.stderr)
         return 2
     if len(args.ghost) not in (0, 2):
         print("swizzle: give --ghost twice, baseline first", file=sys.stderr)
         return 2
+    ghost_tools, ghost_how = None, ""
+    if not args.ghost:
+        if args.ghost_tools is not None:
+            if not _is_ghost_tools(args.ghost_tools):
+                print(_bad_ghost_tools(args.ghost_tools), file=sys.stderr)
+                return 2
+            ghost_tools, ghost_how = Path(args.ghost_tools).absolute(), "--ghost-tools"
+        else:
+            ghost_tools = locate_ghost_tools()
+            if ghost_tools is not None:
+                ghost_how = "$GHOST_TOOLS or sibling checkout (--ghost-tools was not given)"
+            else:
+                try:
+                    import ghost_buster                  # noqa: F401
+                except ImportError:
+                    print("swizzle: ghost_buster is not importable and no ghost_tools checkout "
+                          "was found. Pass --ghost-tools PATH or set GHOST_TOOLS.", file=sys.stderr)
+                    return 2
+                ghost_how = "importable ghost_buster"
+    sources = {"assay": str(root), "assay_found_by": assay_how,
+               "ghost_tools": str(ghost_tools) if ghost_tools else ghost_how,
+               "ghost_tools_found_by": ghost_how}
     try:
         if args.ghost:
             import shutil
@@ -241,24 +351,43 @@ def _assay(args) -> int:
                     shutil.rmtree(path, ignore_errors=True)
             result = ts.Comparison(*cards)
         else:
-            ghost_tools = args.ghost_tools or locate_ghost_tools()
             result = ts.run(root, ghost_tools)
             cards = [result]
     except (ts.AssayUnavailable, InvocationFailed, RuntimeError) as exc:
         print("swizzle: %s" % exc, file=sys.stderr)
         return 2
+    candidate = cards[-1]
+    caught = candidate.count("FAILURE_MODE", ts.BANISHED)
+    modes = candidate.total("FAILURE_MODE")
+    if args.floor is None:
+        floor_note = "no floor set, exit 0 only means the key was scored"
+    elif caught < args.floor:
+        floor_note = "FLOOR NOT MET: Ghost caught %d of %d known failure modes, floor is %d" % (caught, modes, args.floor)
+    else:
+        floor_note = "floor met: Ghost caught %d of %d known failure modes, floor is %d" % (caught, modes, args.floor)
     if args.json:
         payload = (result.to_dict() if isinstance(result, ts.Scorecard)
                    else {"baseline": cards[0].to_dict(), "candidate": cards[1].to_dict(),
                          "changes": [list(c) for c in result.changes()]})
+        payload["sources"] = sources
+        payload["floor"] = args.floor
+        payload["floor_note"] = floor_note
         print(json.dumps(payload, indent=2, sort_keys=True))
     else:
+        print("ASSAY checkout: %s (%s)" % (root, assay_how))
+        if ghost_how:
+            print("ghost_tools:    %s (%s)" % (ghost_tools or "", ghost_how))
         print(result.render())
+        print("\n" + floor_note)
     stuck = [s for card in cards for s in ts.blocked(card)]
-    if stuck:
+    unproven = [c for c in cards if not c.proven]
+    if stuck or unproven:
         print("\nswizzle: cannot score %d specimen(s): %s" % (len(stuck), ", ".join(stuck[:5])),
               file=sys.stderr)
         return 2
+    if args.floor is not None and caught < args.floor:
+        print("swizzle: %s" % floor_note, file=sys.stderr)
+        return 1
     if isinstance(result, ts.Comparison) and result.regressed():
         return 1
     return 0

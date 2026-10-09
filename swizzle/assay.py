@@ -145,13 +145,36 @@ class Judgement:
 # ------------------------------------------------------------------ inputs
 
 def locate_assay(explicit: Optional[Path] = None) -> Optional[Path]:
-    """Where ASSAY lives: argument, then ASSAY env, then a sibling."""
+    """Where ASSAY lives, or None.
+
+    An explicit path is used or refused, never quietly replaced by another
+    checkout: a score against a different answer key than the one asked for
+    is worse than no score. Without one: $ASSAY, then a sibling checkout.
+    """
+    try:
+        return resolve_assay(explicit)[0]
+    except AssayUnavailable:
+        return None
+
+
+def resolve_assay(explicit: Optional[Path] = None) -> Tuple[Path, str]:
+    """(path, how it was found). Raises AssayUnavailable with a plain reason."""
     here = Path(__file__).resolve().parents[2]
-    for candidate in (explicit, os.environ.get("ASSAY"),
-                      here / "ASSAY", here / "assay"):
-        if candidate and (Path(candidate) / REGISTRY).is_file():
-            return Path(candidate).absolute()
-    return None
+    if explicit is not None:
+        if not (Path(explicit) / REGISTRY).is_file():
+            raise AssayUnavailable(
+                "--assay %s has no %s (not an ASSAY checkout, or its registry is not published). "
+                "Not falling back to another checkout." % (explicit, REGISTRY))
+        return Path(explicit).absolute(), "--assay"
+    env = os.environ.get("ASSAY")
+    if env:
+        if not (Path(env) / REGISTRY).is_file():
+            raise AssayUnavailable("$ASSAY=%s has no %s. Not falling back to another checkout." % (env, REGISTRY))
+        return Path(env).absolute(), "$ASSAY"
+    for sibling in (here / "ASSAY", here / "assay"):
+        if (sibling / REGISTRY).is_file():
+            return sibling.absolute(), "sibling checkout (--assay was not given)"
+    raise AssayUnavailable("no ASSAY checkout with a published registry. Pass --assay PATH or set ASSAY.")
 
 
 def load_answer_key(root: Path) -> Dict[str, dict]:
@@ -181,7 +204,19 @@ def prove_answer_key(root: Path) -> Tuple[bool, str]:
         return False, "verify_manifest.py could not run: %s" % exc
     tail = (done.stdout.strip().splitlines() or [""])[-1]
     summary = next((ln for ln in done.stdout.splitlines() if "claims hold" in ln), tail)
-    return done.returncode == 0, summary.strip()
+    if done.returncode != 0:
+        return False, summary.strip() or "verify_manifest.py exited %d" % done.returncode
+    # The verifier's own words must agree with its exit code: "28/29 claims
+    # hold" is not a proven key, whatever the exit status says.
+    for line in done.stdout.splitlines():
+        match = _CLAIMS.search(line)
+        if match and match.group(1) != match.group(2):
+            return False, ("verify_manifest.py exited 0 but says %s/%s claims hold: %s"
+                           % (match.group(1), match.group(2), line.strip()))
+    return True, summary.strip()
+
+
+_CLAIMS = re.compile(r"(\d+)\s*(?:/|of)\s*(\d+)\s+(?:manifest\s+)?claims?\s+hold", re.I)
 
 
 def stage(root: Path, into: Path) -> Path:
@@ -325,8 +360,14 @@ class Scorecard:
     def of(self, outcome: str) -> int:
         return sum(1 for j in self.judgements if j.outcome == outcome)
 
+    @property
+    def proven(self) -> bool:
+        return not self.proof.startswith("NOT PROVEN")
+
     def to_dict(self) -> dict:
         return {"assay": self.assay, "proof": self.proof,
+                "key_proven": self.proven,
+                "numbers_reliable": self.proven,
                 "numbers": self.numbers(),
                 "judgements": [j.to_dict() for j in self.judgements]}
 
@@ -345,6 +386,8 @@ class Scorecard:
     def render(self) -> str:
         lines = ["SWIZZLE x ASSAY -- ghost_buster against the MANIFEST answer key",
                  "answer key: %s (%s)" % (self.assay, self.proof), ""]
+        if not self.proven:
+            lines += ["*** ANSWER KEY NOT PROVEN: the numbers below are unreliable and are NOT a score. ***", ""]
         for label, value in self.numbers().items():
             lines.append("  %-26s %s" % (label.replace("_", " "), value))
         lines.append("")

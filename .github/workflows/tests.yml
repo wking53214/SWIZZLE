@@ -91,7 +91,8 @@ jobs:
         working-directory: swizzle
         # A report, like the ones above. A violated invariant is Warden's finding,
         # not a SWIZZLE failure, so it does not fail this build; failing to run
-        # the attacks at all (exit 2) does.
+        # the attacks at all, or Warden crashing so that a scenario could not be
+        # judged (exit 2), does.
         if: ${{ !cancelled() }}
         run: |
           if [ -d ../WARDEN/warden ]; then
