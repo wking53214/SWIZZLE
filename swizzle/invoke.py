@@ -57,6 +57,26 @@ def locate_ghost_tools(explicit: Optional[Path] = None) -> Optional[Path]:
     return None
 
 
+class Findings(list):
+    """The findings from one scan, as a plain list, plus what it could not see.
+
+    `gaps` holds one plain sentence for each check Ghost says it did not run
+    for a reason SWIZZLE did not ask for (a file it could not parse, a check
+    that broke). Checks switched off by QUIET, and opt-in checks nobody asked
+    for, are not gaps. It is empty for a Ghost that prints a bare list, which
+    has no way to say.
+    """
+
+    def __init__(self, items=(), gaps=()):
+        super().__init__(items)
+        self.gaps: List[str] = list(gaps)
+
+
+#: Ghost's exit code for "I crashed". 0 is clean, 1 is findings, 2 is "did not
+#: start". Older Ghosts never used 3.
+CRASH_EXIT = 3
+
+
 def scan(repo: Path, ghost_tools: Optional[Path] = None,
          timeout: float = 300.0) -> List[dict]:
     """Every finding ghost_buster reports inside `repo`.
@@ -64,6 +84,10 @@ def scan(repo: Path, ghost_tools: Optional[Path] = None,
     Findings come back as the tool's own dictionaries, untouched. SWIZZLE
     reads three keys out of them and stores the rest, so a report can quote
     the tool rather than paraphrase it.
+
+    Both output shapes are read: the bare list older Ghosts print, and the
+    object (status, findings, unmeasured, ...) current ones print. A Ghost
+    crash raises InvocationFailed and is never read as a clean scan.
     """
     command: Sequence[str] = (sys.executable, "-m", "ghost_buster.cli",
                               str(repo)) + QUIET
@@ -78,32 +102,69 @@ def scan(repo: Path, ghost_tools: Optional[Path] = None,
     except (OSError, subprocess.TimeoutExpired) as exc:
         raise InvocationFailed("could not run ghost_buster: %s" % exc) from exc
 
+    stderr_tail = (done.stderr or "").strip()[-400:]
     body = _json_body(done.stdout)
     if body is None:
+        if done.returncode == CRASH_EXIT:
+            raise InvocationFailed("ghost_buster crashed (exit %d) and printed no "
+                                   "result. stderr: %s" % (done.returncode, stderr_tail))
         raise InvocationFailed(
             "no JSON in ghost_buster's output (exit %d). stderr: %s"
-            % (done.returncode, (done.stderr or "").strip()[-400:]))
+            % (done.returncode, stderr_tail))
     try:
-        findings = json.loads(body)
+        parsed = json.loads(body)
     except json.JSONDecodeError as exc:
         raise InvocationFailed("ghost_buster's JSON did not parse: %s" % exc) from exc
+    return _read(parsed, done.returncode, stderr_tail)
+
+
+def _read(parsed, returncode: int, stderr_tail: str) -> Findings:
+    """Findings (and gaps) out of either shape of Ghost's JSON."""
+    if isinstance(parsed, list):
+        if returncode == CRASH_EXIT:
+            raise InvocationFailed("ghost_buster crashed (exit %d). stderr: %s"
+                                   % (returncode, stderr_tail))
+        return Findings(parsed)
+    if not isinstance(parsed, dict):
+        raise InvocationFailed("expected findings from ghost_buster, got %s"
+                               % type(parsed).__name__)
+    if parsed.get("status") == "error" or returncode == CRASH_EXIT:
+        raise InvocationFailed("ghost_buster crashed (exit %d): %s"
+                               % (returncode, _crash_message(parsed) or stderr_tail))
+    findings = parsed.get("findings")
     if not isinstance(findings, list):
-        raise InvocationFailed("expected a list of findings, got %s"
-                               % type(findings).__name__)
-    return findings
+        raise InvocationFailed("ghost_buster's JSON has no list of findings")
+    return Findings(findings, _gaps(parsed))
+
+
+def _crash_message(parsed: dict) -> str:
+    error = parsed.get("error")
+    if isinstance(error, dict):
+        return str(error.get("message") or error.get("kind") or "")
+    return str(error or "")
+
+
+def _gaps(parsed: dict) -> List[str]:
+    """Checks Ghost did not run for a reason nobody asked for."""
+    rows = parsed.get("unmeasured")
+    if not isinstance(rows, list):
+        return []
+    return ["%s: %s" % (row.get("check", "?"), row.get("reason", "did not run"))
+            for row in rows if isinstance(row, dict) and not row.get("by_request")]
 
 
 def _json_body(stdout: str) -> Optional[str]:
-    """The JSON array out of a stream that may open with progress lines.
+    """The JSON (an object or an array) out of a stream that may open with
+    progress lines.
 
-    ghost_buster prints progress to stderr and the array to stdout, so this
+    ghost_buster prints progress to stderr and the JSON to stdout, so this
     is usually the whole string. It is written defensively anyway: a future
     version printing one line to stdout would otherwise turn every warp in
     the catalogue into an UNSUMMONED, which reads like SWIZZLE broke.
     """
     lines = stdout.splitlines()
     for index, line in enumerate(lines):
-        if line.strip().startswith("["):
+        if line.strip().startswith(("[", "{")):
             return "\n".join(lines[index:])
     return None
 

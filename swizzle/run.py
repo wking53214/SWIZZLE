@@ -41,6 +41,10 @@ def run_warp(warp: Warp, workspace: Path,
 
     proof = prove(warp, root)
     outcome = judge(warp, findings, proof)
+    gaps = getattr(findings, "gaps", None)
+    if gaps:
+        outcome = replace(outcome, account="%s [Ghost did not fully look: %s]"
+                          % (outcome.account, "; ".join(gaps)))
 
     attribution = check_control(warp, workspace, ghost_tools)
     if attribution:

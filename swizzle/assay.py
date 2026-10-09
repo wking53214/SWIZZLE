@@ -350,6 +350,9 @@ class Scorecard:
     assay: str
     proof: str
     judgements: List[Judgement]
+    #: Checks Ghost said it could not run during the scan, for reasons SWIZZLE
+    #: did not ask for. The numbers stand; they are scored over what Ghost saw.
+    gaps: List[str] = field(default_factory=list)
 
     def count(self, cls: str, outcome: str) -> int:
         return sum(1 for j in self.judgements if j.specimen_class == cls and j.outcome == outcome)
@@ -369,6 +372,7 @@ class Scorecard:
                 "key_proven": self.proven,
                 "numbers_reliable": self.proven,
                 "numbers": self.numbers(),
+                "scan_gaps": list(self.gaps),
                 "judgements": [j.to_dict() for j in self.judgements]}
 
     def numbers(self) -> dict:
@@ -391,6 +395,10 @@ class Scorecard:
         for label, value in self.numbers().items():
             lines.append("  %-26s %s" % (label.replace("_", " "), value))
         lines.append("")
+        if self.gaps:
+            lines.append("Ghost reported it did not fully look (%d):" % len(self.gaps))
+            lines += ["  %s" % gap for gap in self.gaps]
+            lines.append("")
         for outcome in (ESCAPED, MISNAMED, CONJURED, UNMAPPED, UNSUMMONED, BANISHED, DISMISSED):
             group = [j for j in self.judgements if j.outcome == outcome]
             if not group:
@@ -414,7 +422,7 @@ def run(assay: Path, ghost_tools: Optional[Path]) -> Scorecard:
         staged = stage(assay, Path(scratch))
         findings = scan(staged, ghost_tools)
         judgements = judge(answer_key, findings, staged)
-    return Scorecard(str(assay), summary, judgements)
+    return Scorecard(str(assay), summary, judgements, gaps=list(getattr(findings, "gaps", ())))
 
 
 @dataclass
