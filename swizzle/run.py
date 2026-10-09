@@ -96,7 +96,15 @@ def prove(warp: Warp, root: Path, control: bool = False) -> Proof:
     if control and warp.control is not None and warp.control.prove is not None:
         runner = warp.control.prove
     try:
-        return runner(root)
+        proof = runner(root)
+        if not proof.holds:
+            # The sentence after the numbers in a proof's account describes
+            # what the defect should show. When it did not hold, that
+            # sentence was not demonstrated, and must not read as if it was.
+            proof = replace(proof, account=(
+                "DID NOT HOLD. What was observed (any explanation after the numbers is "
+                "what the defect was meant to show, and was NOT demonstrated): " + proof.account))
+        return proof
     except Exception as exc:                       # the proof is the subject
         return Proof(holds=False, kind="failed",
                      account="%s: %s" % (type(exc).__name__, exc))

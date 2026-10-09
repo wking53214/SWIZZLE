@@ -53,9 +53,11 @@ def _injects(root: Path, dotted: str, call: str) -> Proof:
     return Proof(
         holds=holds,
         kind="executed",
-        account=("id=1 returned %d row(s); id=\"1 OR 1=1\" returned %d. "
-                 "The interpolated text became part of the statement."
-                 % (len(honest), len(injected))),
+        account=("id=1 returned %d row(s); id=\"1 OR 1=1\" returned %d. %s"
+                 % (len(honest), len(injected),
+                    "The interpolated text became part of the statement."
+                    if holds else
+                    "Expected 1 and 2, so the injection was NOT shown.")),
     )
 
 

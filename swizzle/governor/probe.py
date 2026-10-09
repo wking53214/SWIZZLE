@@ -18,7 +18,7 @@ def main(argv) -> int:
     spec = json.loads(Path(argv[1]).read_text(encoding="utf-8"))
     target, behavior, scope, params = Path(spec["target"]), spec["behavior"], spec["scope"], spec["params"]
     out = {"decision": None, "notes": [], "unmeasured": None, "crashed": False, "error": "",
-           "refused": False, "configured": {"ghost": False, "swizzle": False, "suite": True}}
+           "refused": False, "completed": False, "configured": {"ghost": False, "swizzle": False, "suite": True}}
     try:
         from warden import tagteam
         from warden.authorization import Authorization, Unauthorized, grant
@@ -111,10 +111,10 @@ def main(argv) -> int:
             auth = grant("william", "transform", str(target.resolve()), scope, "swizzle attack")
         result = TagTeam(drafter=drafter, finisher=finisher, ghost_tools_root=ghost_root).run(
             target, authorization=auth, findings=findings)
-        out.update(decision=result.decision, notes=list(result.notes),
+        out.update(completed=True, decision=result.decision, notes=list(result.notes),
                    unmeasured=list(getattr(result, "unmeasured", ()) or ()))
     except Unauthorized as err:
-        out.update(refused=True, error=str(err))
+        out.update(completed=True, refused=True, error=str(err))
     except Exception as err:  # noqa: BLE001 - the point is to see what a governor does when it is hit
         out.update(crashed=True, error=f"{type(err).__name__}: {str(err)[:200]}",
                    trace=traceback.format_exc(limit=3))
