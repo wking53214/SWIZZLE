@@ -41,6 +41,13 @@ jobs:
           repository: wking53214/ASSAY
           path: ASSAY
 
+      # The governor under attack. Optional: the attacks run only when it is here.
+      - uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          repository: wking53214/WARDEN
+          path: WARDEN
+
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
@@ -78,4 +85,17 @@ jobs:
             GHOST_TOOLS=../ghost_tools python -m swizzle assay --assay ../ASSAY
           else
             echo "::warning::ghost_tools or ASSAY checkout missing; ASSAY report did not run"
+          fi
+
+      - name: Attack the governor (Warden)
+        working-directory: swizzle
+        # A report, like the ones above. A violated invariant is Warden's finding,
+        # not a SWIZZLE failure, so it does not fail this build; failing to run
+        # the attacks at all (exit 2) does.
+        if: ${{ !cancelled() }}
+        run: |
+          if [ -d ../WARDEN/warden ]; then
+            python -m swizzle governor --warden ../WARDEN || [ $? -eq 1 ]
+          else
+            echo "::warning::WARDEN checkout missing; governor attacks did not run"
           fi

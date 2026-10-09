@@ -95,6 +95,13 @@ def main(argv: Sequence[str] | None = None) -> int:
                                "exits 1 if any specimen's outcome got worse")
     touching.add_argument("--json", action="store_true")
 
+    governing = sub.add_parser(
+        "governor", help="attack a governor (Warden) and report which invariants held")
+    governing.add_argument("--warden", type=Path, required=True, metavar="PATH",
+                           help="a Warden checkout (its package is imported only in a subprocess)")
+    governing.add_argument("--only", default=None, metavar="TEXT")
+    governing.add_argument("--json", action="store_true")
+
     # The laboratory's commands. The four above are the original SWIZZLE and
     # keep their behaviour exactly; everything the adversarial laboratory adds
     # registers itself here.
@@ -112,6 +119,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "summon": _summon,
         "assay": _assay,
         "verify": _verify,
+        "governor": _governor,
     }
     if args.command in handlers:
         handler = handlers[args.command]
@@ -125,6 +133,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         # traceback is not a reasonable thing to get back for it.
         _detach_stdout()
         return 0
+
+
+def _governor(args) -> int:
+    from .governor.run import as_dicts, attack, render
+    findings = attack(args.warden, only=args.only)
+    print(json.dumps(as_dicts(findings), indent=2) if args.json else render(findings))
+    if findings and all(f.status == "not_run" for f in findings):
+        return 2
+    return 1 if any(f.status == "violated" for f in findings) else 0
 
 
 def _list(args) -> int:
