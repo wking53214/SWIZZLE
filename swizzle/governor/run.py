@@ -19,7 +19,8 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence
 
-from .scenarios import SCENARIOS, Scenario, Tree
+from .. import sources
+from .scenarios import NEW_CHECKS_SINCE, SCENARIOS, Scenario, Tree
 
 _SKIP = {".git", "__pycache__", ".pytest_cache", ".venv"}
 
@@ -32,6 +33,10 @@ class Finding:
     status: str          # held | violated | not_run
     detail: str = ""
     decision: str = ""
+    #: "feature_absent" when the scenario was not run because this Warden predates the check it
+    #: tests (that is a skip, not a fault of Warden's); "interrupted" when Ctrl-C stopped the run
+    #: before it; empty otherwise.
+    kind: str = ""
 
 
 def snapshot(base: Path) -> Tree:
@@ -63,8 +68,38 @@ def _cleanup_all() -> None:
 atexit.register(_cleanup_all)
 
 
-def _not_run(scenario: Scenario, why: str) -> Finding:
-    return Finding(scenario.name, scenario.hypothesis, scenario.severity, "not_run", why)
+def _not_run(scenario: Scenario, why: str, kind: str = "") -> Finding:
+    return Finding(scenario.name, scenario.hypothesis, scenario.severity, "not_run", why, kind=kind)
+
+
+def parse_version(text: object):
+    """(major, minor, patch) from a version string, or None. Anything after the numbers is ignored."""
+    import re
+    found = re.match(r"\s*v?(\d+)(?:\.(\d+))?(?:\.(\d+))?", str(text or ""))
+    return tuple(int(x or 0) for x in found.groups()) if found else None
+
+
+def feature_check(scenario: Scenario, caps: Dict[str, object], files_version: Optional[str],
+                  assume: bool = False) -> Optional[str]:
+    """None when Warden is expected to pass this scenario; else a plain reason it is not run.
+
+    Expected means: the caller said to assume every check (`assume`), or Warden itself shows the
+    check (a probed capability), or its version is at least the one that is assumed to bring it.
+    A Warden whose version cannot be read is NOT assumed to have the check.
+    """
+    if not scenario.feature or assume:
+        return None
+    probed = (caps.get("features") or {}).get(scenario.feature)
+    if probed is True:
+        return None
+    version = caps.get("warden_version") or files_version
+    have, need = parse_version(version), parse_version(scenario.since)
+    if have is not None and need is not None and have >= need:
+        return None
+    what = ("Warden %s" % version) if version else "this Warden (its version could not be read)"
+    return ("skipped, not judged: %s does not show the check this tests (%s) and is older than %s, the first "
+            "release assumed to have it. Pass --assume-new-checks to judge it anyway."
+            % (what, scenario.feature, scenario.since))
 
 
 def _first_line(text: object) -> str:
@@ -118,6 +153,8 @@ def judge_outcome(scenario: Scenario, outcome: Optional[Dict[str, object]], stde
         return _not_run(scenario, "Warden refused the grant before running, which this scenario does not expect: %s"
                         % _first_line(outcome.get("error")))
     decision = outcome.get("decision")
+    if scenario.error_is_answer and decision == "ERROR":
+        return None
     if not isinstance(decision, str) or decision in _NO_DECISION:
         notes = outcome.get("notes") or []
         extra = (": " + _first_line(notes[-1])) if notes else ""
@@ -125,21 +162,79 @@ def judge_outcome(scenario: Scenario, outcome: Optional[Dict[str, object]], stde
     return None
 
 
+def _build_case(scenario: Scenario, case: Path) -> Optional[str]:
+    """Write the scenario's files, symlinks and git state. A sentence if that could not be done."""
+    for rel, text in scenario.files.items():
+        (case / rel).parent.mkdir(parents=True, exist_ok=True)
+        (case / rel).write_text(text, encoding="utf-8")
+    for link, target in scenario.symlinks.items():
+        (case / link).parent.mkdir(parents=True, exist_ok=True)
+        try:
+            os.symlink(target, case / link)
+        except OSError as exc:
+            return "this machine could not make the symlink the scenario needs: %s" % exc
+    if scenario.git:
+        if shutil.which("git") is None:
+            return "git is not on PATH, and this scenario needs a repository"
+        env = dict(os.environ, GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_SYSTEM=os.devnull)
+        steps = (("init", "-q"), ("add", "-A"),
+                 ("-c", "user.name=swizzle", "-c", "user.email=swizzle@invalid", "-c", "commit.gpgsign=false",
+                  "commit", "-q", "-m", "base"))
+        for step in steps:
+            done = subprocess.run(("git",) + step, cwd=str(case), env=env, capture_output=True, text=True)
+            if done.returncode != 0:
+                return "git %s failed while building the scenario: %s" % (step[0], _first_line(done.stderr))
+        for rel, text in scenario.dirty.items():
+            (case / rel).parent.mkdir(parents=True, exist_ok=True)
+            (case / rel).write_text(text, encoding="utf-8")
+    return None
+
+
+def _caps(stdout: str) -> Dict[str, object]:
+    """Everything the probe said about what Warden is, merged, last word winning."""
+    merged: Dict[str, object] = {"features": {}}
+    for line in stdout.splitlines():
+        if not line.startswith("SWIZZLE_CAPS "):
+            continue
+        try:
+            value = json.loads(line[len("SWIZZLE_CAPS "):])
+        except ValueError:
+            continue
+        if isinstance(value, dict):
+            if value.get("warden_version"):
+                merged["warden_version"] = value["warden_version"]
+            if isinstance(value.get("features"), dict):
+                merged["features"].update(value["features"])
+    return merged
+
+
+_SIGTERM_DEATHS = (-signal.SIGTERM, 128 + signal.SIGTERM)
+
+
 def run_scenario(scenario: Scenario, warden_root: Path, swizzle_root: Path,
-                 python: str = sys.executable, timeout: float = 600.0) -> Finding:
+                 python: str = sys.executable, timeout: float = 600.0,
+                 assume_new_checks: bool = False) -> Finding:
     warden_root, swizzle_root = Path(warden_root).resolve(), Path(swizzle_root).resolve()
+    files_version = sources.package_version(warden_root)
+    expected = feature_check(scenario, {}, files_version, assume_new_checks) is None
     outer = Path(tempfile.mkdtemp(prefix="swizzle-governor-"))
     _live_dirs.add(outer)
     try:
         base = outer / "work"
         case = base / "case"
-        for rel, text in scenario.files.items():
-            (case / rel).parent.mkdir(parents=True, exist_ok=True)
-            (case / rel).write_text(text, encoding="utf-8")
+        case.mkdir(parents=True)
+        problem = _build_case(scenario, case)
+        if problem:
+            return _not_run(scenario, problem)
         before = snapshot(base)
         spec = outer / "spec.json"
+        params = dict(scenario.params)
+        params["probe_protected"] = [scenario.feature[len("protected:"):]] if scenario.feature.startswith("protected:") else []
+        # Where the check is expected, SIGTERM is sent even to a Warden that has no handler for it:
+        # leaving the tree changed is then the finding. Where it is not expected, it is not sent.
+        params["send_anyway"] = bool(scenario.feature and expected)
         spec.write_text(json.dumps({"target": str(case), "behavior": scenario.behavior,
-                                    "scope": scenario.scope, "params": scenario.params}), encoding="utf-8")
+                                    "scope": scenario.scope, "params": params}), encoding="utf-8")
         env = dict(os.environ, PYTHONPATH=os.pathsep.join([str(warden_root), str(swizzle_root)]))
         try:
             stdout, stderr, code = _launch([python, "-m", "swizzle.governor.probe", str(spec)],
@@ -148,10 +243,17 @@ def run_scenario(scenario: Scenario, warden_root: Path, swizzle_root: Path,
             return _not_run(scenario, "Warden timed out after %ds; the probe was killed" % int(timeout))
         except OSError as exc:
             return _not_run(scenario, "the probe could not be started: %s" % exc)
+        caps = _caps(stdout)
         outcome = _outcome(stdout)
+        if outcome is None and scenario.ends_by_signal and code in _SIGTERM_DEATHS and "SWIZZLE_CAPS" in stdout:
+            # The process was ended by the signal it was sent: the files are the answer.
+            outcome = {"completed": True, "decision": "TERMINATED", "terminated": True, "notes": []}
         bad = judge_outcome(scenario, outcome, stderr, code)
         if bad is not None:
             return bad
+        absent = feature_check(scenario, caps, files_version, assume_new_checks)
+        if absent:
+            return _not_run(scenario, absent, kind="feature_absent")
         after = snapshot(base)
     finally:
         shutil.rmtree(outer, ignore_errors=True)
@@ -214,8 +316,17 @@ def locate_warden(path: Path) -> Path:
     return root
 
 
+class Interrupted(Exception):
+    """Ctrl-C stopped the run. `findings` has every scenario, those not reached marked not_run."""
+
+    def __init__(self, findings: List[Finding]) -> None:
+        super().__init__("interrupted")
+        self.findings = findings
+
+
 def attack(warden_root: Path, swizzle_root: Optional[Path] = None,
-           only: Optional[str] = None, python: str = sys.executable) -> List[Finding]:
+           only: Optional[str] = None, python: str = sys.executable,
+           assume_new_checks: bool = False) -> List[Finding]:
     swizzle_root = Path(swizzle_root or Path(__file__).resolve().parents[2]).resolve()
     warden_root = locate_warden(warden_root)
     chosen = select(only)
@@ -223,8 +334,16 @@ def attack(warden_root: Path, swizzle_root: Optional[Path] = None,
     if threading.current_thread() is threading.main_thread():
         # A kill signal must still run the cleanup in `finally`.
         previous = signal.signal(signal.SIGTERM, lambda *_: sys.exit(143))
+    done: List[Finding] = []
     try:
-        return [run_scenario(s, warden_root, swizzle_root, python) for s in chosen]
+        for scenario in chosen:
+            done.append(run_scenario(scenario, warden_root, swizzle_root, python,
+                                     assume_new_checks=assume_new_checks))
+        return done
+    except KeyboardInterrupt:
+        rest = [_not_run(s, "interrupted by the user (Ctrl-C) before this scenario ran", kind="interrupted")
+                for s in chosen[len(done):]]
+        raise Interrupted(done + rest) from None
     finally:
         if previous is not None:
             signal.signal(signal.SIGTERM, previous)
@@ -249,9 +368,14 @@ def render(findings: Sequence[Finding]) -> str:
     lines = []
     for f in findings:
         mark = {"held": "held    ", "violated": "VIOLATED", "not_run": "not run "}[f.status]
+        if f.kind == "feature_absent":
+            mark = "skipped "
         lines.append(f"{mark} [{f.severity:6}] {f.scenario}" + (f"  -> {f.detail}" if f.detail else ""))
     lines.append(f"\n{summary(findings)}. "
                  "SWIZZLE reports; it does not decide what the governor should do about it.")
+    if any(f.kind == "feature_absent" for f in findings):
+        lines.append("A skipped scenario tests a check this Warden predates; it counts as not run (exit 2), "
+                     "never as held.")
     if any(f.status == "not_run" for f in findings):
         lines.append("A scenario that did not run says nothing about that invariant. "
                      "Exit code: 1 if any violated, else 2 if any did not run, else 0.")

@@ -215,7 +215,8 @@ def test_a_failed_sql_proof_does_not_claim_the_injection_worked(tmp_path):
 def _fake_assay(tmp_path, verifier_output="29/29 manifest claims hold", code=0):
     root = tmp_path / "assay"
     (root / "assay_production").mkdir(parents=True)
-    (root / "assay_production" / "registry.json").write_text('{"x": {"specimen_class": "FAILURE_MODE"}}')
+    (root / "assay_production" / "registry.json").write_text(
+        json.dumps({"m%d" % i: {"specimen_class": "FAILURE_MODE"} for i in range(5)}))
     (root / "verify_manifest.py").write_text("print(%r)\nraise SystemExit(%d)\n" % (verifier_output, code))
     return root
 
@@ -295,7 +296,7 @@ def test_unproven_key_exits_2_even_with_a_floor(tmp_path, monkeypatch):
     (ghost / "ghost_buster").mkdir(parents=True)
     (ghost / "ghost_buster" / "cli.py").write_text("")
     monkeypatch.setattr(ts, "stage", lambda *a, **k: (_ for _ in ()).throw(AssertionError("must not score")))
-    assert cli.main(["assay", "--ghost-tools", str(ghost), "--floor", "0"]) == 2
+    assert cli.main(["assay", "--ghost-tools", str(ghost), "--floor", "1"]) == 2
 
 
 # --------------------------------------------------------------- live (needs a Warden checkout)
