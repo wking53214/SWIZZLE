@@ -59,6 +59,12 @@ modified by this package.
 
 A governor scenario is **held** only when Warden ran to the end and gave a readable decision (or, for the forged-grant scenario, refused in the expected way). If Warden crashed, timed out, printed nothing readable or gave no decision, the scenario is **not run** and says why in plain words. Unchanged files are not evidence: a crashed Warden leaves them unchanged too. The one-line summary counts held, violated and not run separately. `--json` prints only the JSON list on standard output; notes go to standard error.
 
+Beyond "proven": `assay` also prints (and puts in `key_breakdown` in the JSON) how many answer-key entries were verified by execution, by static check, or are unvalidated, read from ASSAY's summary line. If that line is absent it says "breakdown unavailable", and `numbers_reliable` is then false. A key that passes but is mostly unvalidated is reported as such. When the key is not proven, ASSAY's own failure reason is relayed.
+
+A Ghost that did not fully look (a check that failed, an incomplete scan, a baseline that hid findings, an unparsable file) cannot "accept" a reference specimen: that specimen is `unreliable`, and the totals read "accepted (reliable) X, accepted but Ghost did not fully look Y". `--floor N` must be from 1 to the number of known failure modes (else exit 2) and counts only reliable catches: if the shortfall could be explained by Ghost not looking, the floor is undecided and the exit is 2, not 1. The output and the JSON (`sources`) name the ASSAY and ghost_tools folders used, with commit ids when readable. Ctrl-C exits 130 with a plain message, or one JSON object under `--json` (a JSON list for `governor`).
+
+The governor scenarios for newer Warden checks (protected bookkeeping and CI files, a symlink into a protected file, a dirty-folder start, SIGTERM mid-apply) are reported as not run, marked "skipped", against a Warden that predates them (probed in Warden where it can be, otherwise by version, assumed to arrive in 0.9.0); `--assume-new-checks` judges them anyway. A Judge that raises must leave no change standing; a Warden that leaves it is VIOLATED.
+
 `assay` without `--floor` prints "no floor set, exit 0 only means the key was scored". Exit 0 does not mean Ghost did well. Use `--floor N` to make it mean that. An explicit `--assay PATH` or `--ghost-tools PATH` that is wrong is an error; a sibling checkout is used only when you did not give the option, and the output names the checkout it used.
 
 ### Known limits

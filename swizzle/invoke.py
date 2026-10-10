@@ -22,7 +22,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Optional, Sequence
+from typing import List, Optional, Sequence, Tuple
 
 #: Checks that reach outside the file set, and the reasons are in the module
 #: docstring. `--single-repo` stops it asking about a joined repository.
@@ -37,15 +37,16 @@ class InvocationFailed(RuntimeError):
     """ghost_buster could not be run, or said something unreadable."""
 
 
-def locate_ghost_tools(explicit: Optional[Path] = None) -> Optional[Path]:
-    """Where ghost_buster lives, if it is not already importable.
+def resolve_ghost_tools(explicit: Optional[Path] = None) -> Optional[Tuple[Path, str]]:
+    """(path, how it was found) for a ghost_tools checkout, or None.
 
     Order: what the caller said, then GHOST_TOOLS in the environment, then
     the sibling checkout next to this repository, which is how it is
     usually laid out on a machine that has both.
     """
-    for candidate in (explicit, os.environ.get("GHOST_TOOLS"),
-                      Path(__file__).resolve().parents[2] / "ghost_tools"):
+    for candidate, how in ((explicit, "--ghost-tools"), (os.environ.get("GHOST_TOOLS"), "$GHOST_TOOLS"),
+                           (Path(__file__).resolve().parents[2] / "ghost_tools",
+                            "sibling checkout (neither --ghost-tools nor $GHOST_TOOLS was given)")):
         if not candidate:
             continue
         path = Path(candidate)
@@ -53,8 +54,14 @@ def locate_ghost_tools(explicit: Optional[Path] = None) -> Optional[Path]:
             # Absolute, because it goes on the PYTHONPATH of a scan that runs
             # inside the warp: a relative one is read against the warp and
             # finds nothing. CI's GHOST_TOOLS=../ghost_tools did exactly that.
-            return path.absolute()
+            return path.absolute(), how
     return None
+
+
+def locate_ghost_tools(explicit: Optional[Path] = None) -> Optional[Path]:
+    """Where ghost_buster lives, if it is not already importable (see resolve_ghost_tools)."""
+    found = resolve_ghost_tools(explicit)
+    return found[0] if found else None
 
 
 class Findings(list):
@@ -67,9 +74,23 @@ class Findings(list):
     has no way to say.
     """
 
-    def __init__(self, items=(), gaps=()):
+    def __init__(self, items=(), gaps=(), *, status=None, suppressed=0, baseline_path=None,
+                 unparsable=None, blind=()):
         super().__init__(items)
         self.gaps: List[str] = list(gaps)
+        #: Ghost's own word for how the scan ended ("ok", "incomplete", ...), or None
+        #: for a Ghost that prints a bare list.
+        self.status: Optional[str] = status
+        #: Findings a baseline hid from this scan (newer Ghosts report it; older ones
+        #: say nothing, which reads as 0). Anything above 0 means silence is not proof.
+        self.suppressed: int = int(suppressed or 0)
+        self.baseline_path: Optional[str] = baseline_path
+        #: {file relative to the scan folder: reason} for files Ghost could not parse.
+        self.unparsable: dict = dict(unparsable or {})
+        #: Plain sentences for everything that makes Ghost's silence unreliable over
+        #: the WHOLE scan (not just one file): a failed check, an incomplete scan,
+        #: a baseline that hid findings, an unparsable file with no name given.
+        self.blind: List[str] = list(blind)
 
 
 #: Ghost's exit code for "I crashed". 0 is clean, 1 is findings, 2 is "did not
@@ -134,7 +155,44 @@ def _read(parsed, returncode: int, stderr_tail: str) -> Findings:
     findings = parsed.get("findings")
     if not isinstance(findings, list):
         raise InvocationFailed("ghost_buster's JSON has no list of findings")
-    return Findings(findings, _gaps(parsed))
+    return Findings(findings, _gaps(parsed), **_blindness(parsed))
+
+
+def _blindness(parsed: dict) -> dict:
+    """What Ghost said about how completely it looked, in either shape of its JSON.
+
+    Tolerant on purpose: a Ghost that does not report a field is read as having
+    nothing to report there, never as having reported a problem.
+    """
+    unparsable: dict = {}
+    scan = parsed.get("scan")
+    if isinstance(scan, dict):
+        for row in scan.get("unparsable") or []:
+            if isinstance(row, dict) and row.get("file"):
+                unparsable[str(row["file"])] = str(row.get("reason") or "could not be parsed")
+    blind: List[str] = []
+    for gap in _gaps(parsed):
+        # A "parse" gap that names its files is per-file (see `unparsable`); one that
+        # does not name any has to be treated as covering the whole scan.
+        if gap.startswith("parse:") and unparsable:
+            continue
+        blind.append(gap)
+    status = parsed.get("status") if isinstance(parsed.get("status"), str) else None
+    if status == "incomplete" and not blind and not unparsable:
+        blind.append("Ghost ended the scan as incomplete without saying which check did not run")
+    baseline = parsed.get("baseline")
+    suppressed, path = 0, None
+    if isinstance(baseline, dict):
+        path = baseline.get("path") if isinstance(baseline.get("path"), str) else None
+        raw = baseline.get("suppressed")
+        if isinstance(raw, bool) or not isinstance(raw, (int, float)):
+            raw = len(raw) if isinstance(raw, (list, tuple)) else 0
+        suppressed = int(raw)
+        if suppressed > 0:
+            blind.append("a baseline hid %d finding(s) from this scan%s"
+                         % (suppressed, " (%s)" % path if path else ""))
+    return {"status": status, "suppressed": suppressed, "baseline_path": path,
+            "unparsable": unparsable, "blind": blind}
 
 
 def _crash_message(parsed: dict) -> str:

@@ -56,8 +56,11 @@ from ..sandbox import Completed, Sandbox
 COUNT_BLOCK_OPEN = "<!-- ghost_buster:test-count -->"
 COUNT_BLOCK_CLOSE = "<!-- /ghost_buster:test-count -->"
 
-#: Ghost's own bookkeeping, which it writes into the tree it examines and
-#: excludes from its own commits.
+#: Ghost's own bookkeeping files. Current Ghosts do NOT write these into the
+#: tree they scan unless asked to (a ledger or casefile is opt-in, and a
+#: baseline is only read), but older ones did, and any of them may be sitting
+#: in a world that was built to look like a real repository. They are listed so
+#: that a world's own copy is treated as Ghost's memory, not as project content.
 MEMORY_FILES = (".ghost_ledger.json", ".ghost_baseline.json", ".ghost_casefile.json")
 
 #: Documents Ghost's `why_not_writable` would judge writable. Ghost no longer
