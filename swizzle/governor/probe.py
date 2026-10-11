@@ -166,6 +166,20 @@ def main(argv) -> int:
             target, authorization=auth, findings=findings)
         out.update(completed=True, decision=result.decision, notes=list(result.notes),
                    unmeasured=list(getattr(result, "unmeasured", ()) or ()))
+        # Over-caution checks: a change Warden holds (instead of applying) must be recoverable. A person's
+        # keep grant for the exact held digest must then apply it. Nothing here accepts on Warden's behalf.
+        digest = getattr(result, "held_digest", None)
+        out["held_digest"] = digest
+        if params.get("keep_after_hold") and digest:
+            from warden import held
+            keep_auth = grant("william", held.KEEP_OPERATION, f"{target.resolve()}@{digest}", "held-result",
+                              "swizzle over-caution check")
+            try:
+                held.keep(target, digest, keep_auth)
+                out["kept"] = True
+            except Exception as err:  # noqa: BLE001 - reported to the governor as a finding, not a crash
+                out["kept"] = False
+                out["keep_error"] = f"{type(err).__name__}: {str(err)[:200]}"
     except Unauthorized as err:
         out.update(completed=True, refused=True, error=str(err))
     except (KeyboardInterrupt, SystemExit) as err:
