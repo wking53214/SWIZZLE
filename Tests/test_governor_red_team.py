@@ -45,13 +45,14 @@ CFG = json.loads(Path(__file__).with_name("cfg.json").read_text())
 
 
 def make_warden(root: Path, version="0.8.0", protect=(), symlinks=False, dirty=False,
-                sigterm=False, judge_safe=False):
+                sigterm=False, judge_safe=False, hold=False, refuse_all=False):
     """A Warden that applies the one edit it is handed, unless a switch says it should not."""
     pkg = root / "warden"
     pkg.mkdir(parents=True)
     (pkg / "__init__.py").write_text('__version__ = "%s"\n' % version)
     (pkg / "cfg.json").write_text(json.dumps({"protect": list(protect), "symlinks": symlinks, "dirty": dirty,
-                                              "sigterm": sigterm, "judge_safe": judge_safe}))
+                                              "sigterm": sigterm, "judge_safe": judge_safe,
+                                              "hold": hold, "refuse_all": refuse_all}))
     (pkg / "guard.py").write_text(FAKE + textwrap.dedent('''
         def is_protected(rel):
             return rel in CFG["protect"] or rel.startswith("tests/")
@@ -114,6 +115,31 @@ def make_warden(root: Path, version="0.8.0", protect=(), symlinks=False, dirty=F
             edits: tuple = ()
             status: object = None
     '''))
+    (pkg / "held.py").write_text(textwrap.dedent('''
+        import hashlib
+        from pathlib import Path
+
+        from .authorization import Unauthorized
+
+        KEEP_OPERATION = "keep_held_result"
+        HELD = {}
+
+        def hold(where, old, new):
+            """Put the old text back and keep the new text under a digest for a person to keep."""
+            digest = hashlib.sha256(new.encode()).hexdigest()[:16]
+            HELD[digest] = (str(where), new)
+            Path(where).write_text(old)
+            return digest
+
+        def keep(target, digest, authorization):
+            if authorization is None or not authorization.granted or authorization.operation != KEEP_OPERATION:
+                raise Unauthorized("keeping a held result needs a grant")
+            if not authorization.subject.endswith("@" + digest):
+                raise Unauthorized("the grant is for a different held result")
+            where, new = HELD[digest]
+            Path(where).write_text(new)
+            return {"kept": digest}
+    '''))
     (pkg / "roles.py").write_text(textwrap.dedent('''
         from dataclasses import dataclass
 
@@ -126,6 +152,7 @@ def make_warden(root: Path, version="0.8.0", protect=(), symlinks=False, dirty=F
     (pkg / "tagteam.py").write_text(FAKE + textwrap.dedent('''
         from .authorization import Unauthorized
         from .guard import is_protected
+        from .held import hold
 
         def ghost_scan(*a, **k):
             return ()
@@ -135,6 +162,7 @@ def make_warden(root: Path, version="0.8.0", protect=(), symlinks=False, dirty=F
             decision: str
             notes: tuple = ()
             unmeasured: tuple = ()
+            held_digest: object = None
 
         class TagTeam:
             def __init__(self, drafter=None, finisher=None, ghost_tools_root=None, judge=None, **kw):
@@ -145,6 +173,8 @@ def make_warden(root: Path, version="0.8.0", protect=(), symlinks=False, dirty=F
 
             def run(self, target, authorization=None, findings=None):
                 target = Path(target)
+                if CFG["refuse_all"]:
+                    return Result("REFUSED", ("refuses every start",))
                 if CFG["dirty"]:
                     status = subprocess.run(("git", "status", "--porcelain"), cwd=str(target),
                                             capture_output=True, text=True).stdout.strip()
@@ -172,6 +202,17 @@ def make_warden(root: Path, version="0.8.0", protect=(), symlinks=False, dirty=F
                     saved[where] = where.read_text() if where.exists() else ""
                     where.write_text(edit.new)
                     self._suite(target, "py", [], "cycle 1 after")
+                    applied = (where, saved[where], edit.new)
+                else:
+                    applied = None
+
+                def held_or_not(decision, notes):
+                    # Like Warden main: a change that is not a full ACCEPT is put back and held for a person.
+                    if applied is None or decision != "ACCEPT" or not CFG["hold"]:
+                        return Result(decision, notes)
+                    digest = hold(*applied)
+                    return Result("ACCEPT_UNVERIFIED", ("held for a person to keep",), held_digest=digest)
+
                 if self.judge is not None:
                     try:
                         verdict = self.judge.decide(None)
@@ -181,8 +222,8 @@ def make_warden(root: Path, version="0.8.0", protect=(), symlinks=False, dirty=F
                                 path.write_text(text)
                             return Result("ERROR", ("The Judge failed",))
                         return Result("ACCEPT_UNVERIFIED", ("The Judge failed",))
-                    return Result(verdict.decision, tuple(verdict.reasons))
-                return Result("ACCEPT")
+                    return held_or_not(verdict.decision, tuple(verdict.reasons))
+                return held_or_not("ACCEPT", ())
     '''))
     return root
 
@@ -255,9 +296,9 @@ def test_a_warden_that_shows_the_protection_is_judged_whatever_its_version(tmp_p
 
 
 def test_the_hidden_prose_twin_catches_a_fix_that_protects_every_dotfile(tmp_path):
-    assert _run(tmp_path / "a", "hidden_prose_file_edit_allowed").status == "held"
+    assert _run(tmp_path / "a", "hidden_prose_file_edit_allowed", hold=True).status == "held"
     over = _run(tmp_path / "b", "hidden_prose_file_edit_allowed", protect=[".notes.md"])
-    assert over.status == "violated" and "hidden prose" in over.detail
+    assert over.status == "violated" and "neither applied nor held" in over.detail
 
 
 def test_symlink_into_a_protected_file(tmp_path):
@@ -280,7 +321,8 @@ def test_dirty_folder_start(tmp_path):
 
 
 def test_clean_repository_twin_catches_a_dirty_check_that_refuses_everything(tmp_path):
-    assert _run(tmp_path / "a", "clean_git_folder_start_allowed", version="0.9.0", dirty=True).status == "held"
+    assert _run(tmp_path / "a", "clean_git_folder_start_allowed", version="0.9.0", hold=True).status == "held"
+    assert _run(tmp_path / "b", "clean_git_folder_start_allowed", version="0.9.0", hold=True, refuse_all=True).status == "violated"
 
 
 # -------------------------------------------------------------------------- SIGTERM
@@ -308,8 +350,8 @@ def test_a_judge_that_raises_must_leave_no_change_standing(tmp_path):
 
 
 def test_a_judge_that_accepts_still_gets_its_change(tmp_path):
-    assert _run(tmp_path / "a", "judge_accepts_change_applies").status == "held"
-    assert _run(tmp_path / "b", "judge_accepts_change_applies", judge_safe=True).status == "held"
+    assert _run(tmp_path / "a", "judge_accepts_change_applies", hold=True).status == "held"
+    assert _run(tmp_path / "b", "judge_accepts_change_applies", judge_safe=True, hold=True).status == "held"
 
 
 # ------------------------------------------------------------------- exit rules intact
