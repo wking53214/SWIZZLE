@@ -21,7 +21,7 @@ CLI (`python -m swizzle.cli --help` lists them): `list`, `prove`, `run`, `verify
 
 Gaps found in Ghost come back as lessons (`handoff propose | list | approve | fixed`). Each lesson has a plain sentence, a severity, the smallest case and a fingerprint, so the same gap is never sent twice, and a fixed gap that returns is reopened. Lessons wait for a human to approve them before the answer key (Assay) can take them as cases.
 
-Optimizes for: *the smallest reproducible repository state in which an autonomous modifier violates an invariant it claims to enforce* — not "make ghost_tools look bad."
+Optimizes for: *the smallest reproducible repository state in which an autonomous modifier violates an invariant it claims to enforce*, not "make ghost_tools look bad."
 
 177 Python files, 359 classes, 1,911 function definitions (counted 2026-10-12, excluding `corpus` and `fixtures`). Arbiter + loop orchestrator live in `swizzle/integration/` (not copied into ghost_tools).
 
@@ -47,9 +47,9 @@ modified by this package.
 - `swizzle prove`: runs the 12 planted-defect proofs. Each shows that a planted defect really is a defect. **It does not run Ghost**, so it says nothing about whether Ghost finds anything. That is what `swizzle assay` and `swizzle run` measure.
 - `swizzle assay`: scores Ghost against ASSAY's answer key. The key is checked first; if the checker's own output disagrees with itself (for example "28/29 claims hold"), the key counts as NOT PROVEN even when its exit code is 0.
 - `swizzle governor`: attacks Warden with a list of scenarios (`swizzle governor --list` shows them, and which of Warden's protections defend each). It judges only from files on disk and never decides accept or reject.
-- The test suite, run 2026-10-12 on CPython 3.13 with all seven circuit checkouts on `PYTHONPATH` and the sibling roots set: 1115 passed, 1 skipped, 3 failed.
+- The test suite, run 2026-10-12 on CPython 3.13 with all seven circuit checkouts on `PYTHONPATH` and the sibling roots set: 1118 passed, 1 skipped, 0 failed.
   - Skipped: `Tests/test_cns_adapter.py` ("cns not installed"). It needs the private `CNS` package, which is not public, so it stays skipped here.
-  - Failed: `Tests/test_governor_red_team.py::{test_the_hidden_prose_twin_catches_a_fix_that_protects_every_dotfile, test_clean_repository_twin_catches_a_dirty_check_that_refuses_everything, test_a_judge_that_accepts_still_gets_its_change}`. They fail the same way with only `swizzle` on the path, so this is not caused by the environment. Each builds a fake Warden and expects the governor to report `held`; the governor reports `violated`. The clean-repository one also looks inverted: its name says the twin should catch the dirty check, but its assertion expects `held`. This is open and needs a decision on which side is wrong.
+  - Earlier, three over-caution tests in `Tests/test_governor_red_team.py` failed. The cause was the stand-in Warden in that file: it had no held-result rule, so the over-caution invariant (a held change must be kept by a person) could never be met. The stand-in now models the held rule, and it does so only when a test asks (`hold=True`), so the other protected-file scenarios are unchanged. The clean-repository twin's bad check now refuses every start, as its name says, and the tests assert the same expectation as the twin's name. Against the real Warden main, all three scenarios report `held` (checked with `swizzle governor --only ...`).
 - Some tests need sibling checkouts (Ghost, ASSAY, Warden via `WARDEN_ROOT`) and skip cleanly without them. The live Warden tests in `Tests/test_honest_reporting.py` run when `WARDEN_ROOT` is set and pass on Warden `main` on 2026-10-12.
 
 ### Exit codes
