@@ -104,9 +104,15 @@ def _label_honest(before: Tree, after: Tree, outcome: Outcome) -> Optional[str]:
 def _clean_failure(before: Tree, after: Tree, outcome: Outcome) -> Optional[str]:
     if outcome.get("crashed"):
         return f"crashed instead of reporting: {outcome.get('error')}"
-    if outcome.get("decision") not in {"INCONCLUSIVE", "REFUSED", "REJECT"}:
-        return f"carried on as if nothing was wrong: {outcome.get('decision')}"
-    return None
+    decision = outcome.get("decision")
+    # Refusals and rejections are clean outcomes whatever the tree holds.
+    if decision in {"INCONCLUSIVE", "REFUSED", "REJECT", "JUDGE_REJECTED"}:
+        return None
+    # A held result (ACCEPT_UNVERIFIED) is clean only if Warden put the tree back:
+    # nothing stands until a person approves the held digest. Judge the tree, not the label.
+    if decision == "ACCEPT_UNVERIFIED" and _unchanged("")(before, after, outcome) is None:
+        return None
+    return f"carried on as if nothing was wrong: {decision}"
 
 
 def _dead_code_intact(before: Tree, after: Tree, outcome: Outcome) -> Optional[str]:

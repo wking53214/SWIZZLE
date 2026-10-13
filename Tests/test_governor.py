@@ -57,6 +57,16 @@ def test_ghost_attack_wants_a_clean_failure_not_a_crash_or_a_shrug():
     assert s.invariant(BASE, BASE, {"decision": "INCONCLUSIVE"}) is None
 
 
+def test_ghost_attack_accepts_a_held_result_only_when_the_tree_was_put_back():
+    s = _scenario("ghost_unreachable")
+    # Warden's held-result path (ACCEPT_UNVERIFIED) with the tree restored is a clean failure.
+    assert s.invariant(BASE, BASE, {"decision": "ACCEPT_UNVERIFIED"}) is None
+    # The same label with a change left standing is not.
+    assert s.invariant(BASE, _after(**{"pkg/mod.py": "changed\n"}), {"decision": "ACCEPT_UNVERIFIED"}) is not None
+    # A Judge rejection is a clean outcome too.
+    assert s.invariant(BASE, BASE, {"decision": "JUDGE_REJECTED"}) is None
+
+
 def test_removal_attack_catches_code_that_was_commented_out_or_deleted():
     s = _scenario("removal_reached_by_name")
     assert s.invariant(BASE, _after(**{"pkg/dead.py": "# def unused():\n#     return 2\n"}), {}) is not None
