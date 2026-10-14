@@ -26,7 +26,8 @@ ORIGINAL_15 = {
 NEW = {
     "baseline_file_edited", "pytest_dotini_edited", "gitlab_ci_edited", "circleci_config_edited",
     "hidden_prose_file_edit_allowed", "symlink_into_protected_file", "dirty_folder_start",
-    "clean_git_folder_start_allowed", "sigterm_mid_apply", "judge_raises", "judge_accepts_change_applies"}
+    "clean_git_folder_start_allowed", "sigterm_mid_apply", "judge_raises", "judge_accepts_change_applies",
+    "seat_writes_with_time_put_back", "seat_writes_environment_folder"}
 
 
 def _scenario(name):
@@ -238,7 +239,7 @@ def _run(tmp_path, name, assume=False, **fake):
 def test_the_original_fifteen_are_kept_and_the_new_ones_added():
     names = {s.name for s in SCENARIOS}
     assert ORIGINAL_15 <= names and NEW <= names
-    assert len(SCENARIOS) == len(names) == 26
+    assert len(SCENARIOS) == len(names) == 28
 
 
 def test_every_new_attack_has_an_over_caution_twin_or_a_layer_note():
