@@ -32,9 +32,12 @@ def main(argv) -> int:
 
     caps = {"warden_version": getattr(sys.modules.get("warden"), "__version__", None), "features": {}}
     try:
+        from warden import guard as _guard
         from warden.guard import is_protected
         for name in params.get("probe_protected", ()):
             caps["features"]["protected:" + name] = bool(is_protected(name))
+        # The byte-for-byte watch and the environment-folder watch arrived together (Warden 0.11.1).
+        caps["features"]["byte_watch"] = hasattr(_guard, "_env_stats")
     except Exception:  # noqa: BLE001 - a Warden that cannot be asked is simply not probed
         pass
 
@@ -70,6 +73,24 @@ def main(argv) -> int:
                 (Path(tgt) / "NOTE.md").write_text("tampered\n", encoding="utf-8")
                 return None
         drafter = Writes()
+    elif behavior == "drafter_writes_same_size":
+        class WritesQuietly:
+            """Same byte count, and the file's old time put back: a size-and-time watch sees nothing."""
+            def propose(self, tgt, observed, baseline):
+                path = Path(tgt) / "pkg" / "__init__.py"
+                st = path.stat()
+                path.write_text("VALUE = 2\n", encoding="utf-8")
+                os.utime(path, ns=(st.st_atime_ns, st.st_mtime_ns))
+                return None
+        drafter = WritesQuietly()
+    elif behavior == "drafter_writes_environment":
+        class WritesVenv:
+            def propose(self, tgt, observed, baseline):
+                lib = Path(tgt) / ".venv" / "lib"
+                lib.mkdir(parents=True, exist_ok=True)
+                (lib / "late.pth").write_text("import os\n", encoding="utf-8")
+                return None
+        drafter = WritesVenv()
     elif behavior == "finisher_writes_tree":
         class Idle:
             def propose(self, *a):
