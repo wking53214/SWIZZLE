@@ -90,6 +90,7 @@ Typed serialisable `RepositoryGenome` + hypothesis. Reports, minimized cases, re
 ASSAY registry.json → swizzle assay → ghost_tools scored against the MANIFEST answer key
 SWIZZLE warps + lab worlds → attacks on ghost_tools
 Warden → swizzle prove (its own proofs must hold before Warden ACCEPTs; this says the planted defects are real, not that Ghost finds them)
+Warden → swizzle governor (every scenario must be held before the Judge is asked; `warden tagteam --stack FOLDER` runs this with the rest of the circuit, see STACK.md)
 observe-perceive / sentinel_os  ✗ not imported
 ```
 
