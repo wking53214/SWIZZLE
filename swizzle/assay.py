@@ -125,6 +125,15 @@ TRUE_NAMES: Dict[str, TrueName] = {
         beyond_syntax="the two implementations no longer share a shape (one uses "
                       "numpy arrays, the other delegates to the extracted kernel); "
                       "the sameness is the formula and its thresholds, not the code"),
+    "fm_3_6_cannot_fail": TrueName(
+        detectors=("assertless_test", "mock_only_test"),
+        why="Four green tests that could never have been red: a stub, an assertless one, "
+            "a guarded assertion that never runs, a mock-only one. The finding has to say "
+            "the tests are not evidence; a remark about an unused class is not it."),
+    "fm_3_7_unbacked_claim": TrueName(
+        detectors=("unverified_status_claim",),
+        why="A README calling itself production-ready and 'RL Ready' beside no code and no "
+            "test. The finding has to surface the label for re-verification."),
 }
 
 
