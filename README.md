@@ -25,14 +25,34 @@ Optimizes for: *the smallest reproducible repository state in which an autonomou
 
 177 Python files, 359 classes, 1,911 function definitions (counted 2026-10-12, excluding `corpus` and `fixtures`). Arbiter + loop orchestrator live in `swizzle/integration/` (not copied into ghost_tools).
 
-## 2b. Optional CNS adapter
+## 2b. Optional CNS connection
 
-`swizzle.cns_adapter` maps `Verdict` → `cns.gate` outcomes when the private
-`CNS` package is installed. It is **optional**: SWIZZLE imports and runs
-without CNS. When CNS is absent the adapter returns an advisory translation
-(`authority=advisory_only`) with no `subject_digest`. When CNS is present,
-`subject_digest` comes only from `cns.gate.subject_digest`. CNS is never
-modified by this package.
+`swizzle.cns_adapter` connects SWIZZLE to CNS in both directions. It is **optional**: SWIZZLE
+imports and runs without CNS, declares no runtime dependency, and imports `cns` only when a gate
+is constructed. Install the pinned contract with `pip install 'swizzle[cns]'` (CNS v1.8.0); without it a
+gate raises `CnsNotInstalled`, which names that command. CNS is never modified by this package.
+
+- `translate_verdict` (unchanged) maps one warp `Verdict` to a `cns.gate` outcome, or to an advisory
+  record when CNS is absent. It is not a `Gate`, and it stamps every result `ALPHA`, though a warp
+  verdict judges a scan that has already run. That is left as it is, because changing it would
+  change what existing callers receive.
+- `ProofGate` (ALPHA) asks whether the instrument is sound. Its candidate is what `swizzle prove`
+  computes, `[(warp name, Proof)]`, returned by `run_proofs()`. Every warp's proof held: `PASS`. A
+  proof that did not hold (or crashed): `TERMINAL_BREACH`, because nothing a broken instrument says
+  counts. No proofs, or a warp without one: `RETRY`. An unreadable candidate, or an answer it does not
+  recognise: `TERMINAL_BREACH`.
+- `AttackGate` (OMEGA) asks whether each attack on the governor held. Its candidate is the list
+  `swizzle governor --json` prints. `held`: `PASS`. `violated`: `TERMINAL_BREACH`. `not_run` (no clean
+  answer) or an empty report: `RETRY`. Any other status: `TERMINAL_BREACH`. Severity is validated as
+  text and never used; what a violated invariant means for a run is the Judge's to decide.
+- `attack_rows(report)` checks SWIZZLE's own attack output against `cns.attack.AttackResult` and
+  returns `(rows, problems)`, so a drifted field fails SWIZZLE's tests rather than a reader.
+- Every verdict is bound to what it judged with `cns.gate.subject_digest`. A candidate that cannot be
+  read or bound is `TERMINAL_BREACH` with no digest, never a pass. An exception from SWIZZLE's own
+  code propagates.
+
+Warden runs `swizzle prove` and `swizzle governor --json` as subprocesses and reads their text and
+JSON; the gates are for a caller that holds those results in Python.
 
 ## 3. What It Does NOT Do / Non-Goals
 
@@ -47,8 +67,8 @@ modified by this package.
 - `swizzle prove`: runs the 12 planted-defect proofs. Each shows that a planted defect really is a defect. **It does not run Ghost**, so it says nothing about whether Ghost finds anything. That is what `swizzle assay` and `swizzle run` measure.
 - `swizzle assay`: scores Ghost against ASSAY's answer key. The key is checked first; if the checker's own output disagrees with itself (for example "28/29 claims hold"), the key counts as NOT PROVEN even when its exit code is 0.
 - `swizzle governor`: attacks Warden with a list of scenarios (`swizzle governor --list` shows them, and which of Warden's protections defend each). It judges only from files on disk and never decides accept or reject.
-- The test suite, run 2026-10-12 on CPython 3.13 with all seven circuit checkouts on `PYTHONPATH` and the sibling roots set: 1118 passed, 1 skipped, 0 failed.
-  - Skipped: `Tests/test_cns_adapter.py` ("cns not installed"). It needs the private `CNS` package, which is not public, so it stays skipped here.
+- The test suite, run 2026-10-16 on CPython 3.13 with the ghost_tools, ASSAY and Warden checkouts (`GHOST_TOOLS`, `ASSAY`, `WARDEN_ROOT` set) and the `cns` extra installed: 1231 passed, 0 skipped, 0 failed. The same checkout with no sibling checkouts and no CNS: 1127 passed, 6 skipped, 0 failed.
+  - Skipped when CNS is absent: `Tests/test_cns_connector.py` and one test in `Tests/test_cns_adapter.py`. CI installs the `cns` extra, so they run there. `Tests/test_cns_independence.py` blocks `cns` and runs everywhere.
   - Earlier, three over-caution tests in `Tests/test_governor_red_team.py` failed. The cause was the stand-in Warden in that file: it had no held-result rule, so the over-caution invariant (a held change must be kept by a person) could never be met. The stand-in now models the held rule, and it does so only when a test asks (`hold=True`), so the other protected-file scenarios are unchanged. The clean-repository twin's bad check now refuses every start, as its name says, and the tests assert the same expectation as the twin's name. Against the real Warden main, all three scenarios report `held` (checked with `swizzle governor --only ...`).
 - Some tests need sibling checkouts (Ghost, ASSAY, Warden via `WARDEN_ROOT`) and skip cleanly without them. The live Warden tests in `Tests/test_honest_reporting.py` run when `WARDEN_ROOT` is set and pass on Warden `main` on 2026-10-12.
 
