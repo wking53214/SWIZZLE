@@ -11,7 +11,7 @@ domain Verdict as a GateOutcome without an explicit mapping.
 from __future__ import annotations
 
 import importlib
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, is_dataclass
 from typing import Any, Mapping, Optional, Tuple
 
 from .schema import Verdict
@@ -350,3 +350,33 @@ class ProofGate(_BoundGate):
                 digest,
             )
         return self._result("PASS", "all %d proofs held" % len(rows), digest)
+
+
+def _attack_dicts(attacks: object) -> list:
+    """The attack report as plain mappings.
+
+    A ``Finding`` (what ``attack()`` returns) is read through its fields; a dict (what
+    ``swizzle governor --json`` prints) is used as it is."""
+    return [asdict(a) if is_dataclass(a) and not isinstance(a, type) else a for a in attacks]
+
+
+def attack_rows(attacks: object) -> Tuple[Tuple[Any, ...], Tuple[str, ...]]:
+    """Check SWIZZLE's own attack output against ``cns.attack.AttackResult``, at the source.
+
+    ``attacks`` is the list ``swizzle governor --json`` prints, or the ``Finding`` list
+    ``swizzle.governor.run.attack`` returns. Returns ``(rows, problems)``: every row as an
+    ``AttackResult`` and no problems, or no rows and the problems, one per entry that does not
+    meet the row, naming the field. A report that is not a list is one problem. Rows are never
+    returned alongside problems, so nobody acts on a half-valid report. Extra keys are allowed.
+    Needs CNS 1.8.0 or later: raises ``CnsNotInstalled`` otherwise.
+    """
+    row = _cns("cns.attack").AttackResult
+    if not isinstance(attacks, (list, tuple)):
+        return (), ("an attack report is a list, not %s" % type(attacks).__name__,)
+    rows, problems = [], []
+    for i, entry in enumerate(_attack_dicts(attacks)):
+        try:
+            rows.append(row.from_dict(entry))
+        except ValueError as exc:
+            problems.append("attack %d: %s" % (i, exc))
+    return (() if problems else tuple(rows)), tuple(problems)
