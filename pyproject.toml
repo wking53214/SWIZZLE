@@ -46,6 +46,9 @@ packages = [
     "swizzle.lab.oracles",
     "swizzle.lab.adapters",
     "swizzle.wizzle",
+    "swizzle.governor",
+    "swizzle.integration",
+    "swizzle.production",
 ]
 
 [tool.pytest.ini_options]
