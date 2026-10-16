@@ -380,3 +380,81 @@ def attack_rows(attacks: object) -> Tuple[Tuple[Any, ...], Tuple[str, ...]]:
         except ValueError as exc:
             problems.append("attack %d: %s" % (i, exc))
     return (() if problems else tuple(rows)), tuple(problems)
+
+
+#: What ``subject`` is set to when the caller does not name the judged attack report.
+DEFAULT_ATTACK_SUBJECT = "swizzle-governor-attacks"
+
+
+class AttackGate(_BoundGate):
+    """Did each attack on the governor hold? SWIZZLE's own question, in SWIZZLE's own words.
+
+    OMEGA: the attacks have been run and this judges the report they produced. The candidate is
+    the list of attack results (``swizzle governor --json``, or the ``Finding`` list
+    ``attack()`` returns). Every entry is first read with ``cns.attack.AttackResult.from_dict``;
+    an entry that does not meet it makes the whole report TERMINAL_BREACH and unbound.
+
+    The only field read for the answer is ``status``, in the governor's vocabulary
+    (``swizzle.governor.run.Finding``). ``severity`` is validated as text and not used: what a
+    violated invariant weighs for a run is the Judge's to say, not SWIZZLE's.
+
+    =============================================  =============================================
+    status                                         Outcome
+    =============================================  =============================================
+    ``held``                                       PASS (Warden ran to completion, the invariant
+                                                   stood)
+    ``violated``                                   TERMINAL_BREACH (the governor broke an
+                                                   invariant; no retry repairs a finding)
+    ``not_run``                                    RETRY (no clean answer: Warden crashed, timed
+                                                   out, was skipped as predating the check, or
+                                                   the run was interrupted; says nothing about
+                                                   the invariant, so ask again)
+    anything else                                  TERMINAL_BREACH (never read as permission)
+    an empty report                                RETRY (nothing was attacked, so nothing held;
+                                                   `swizzle governor` exits 2 here too)
+    not a list, an entry not meeting the row,      TERMINAL_BREACH, unbound
+    or content a digest cannot bind
+    =============================================  =============================================
+
+    Across a report the worst entry decides: any breach, then any retry, then PASS.
+    """
+
+    name = "swizzle.governor_attacks"
+    _POSITION = "OMEGA"
+
+    def __init__(self, *, subject: str = DEFAULT_ATTACK_SUBJECT) -> None:
+        super().__init__(subject)
+        _cns("cns.attack")  # fail here too, not on first use, if CNS predates cns.attack
+
+    def check(self, candidate: object) -> Any:
+        rows, problems = attack_rows(candidate)
+        if problems:
+            more = "; and more" if len(problems) > 3 else ""
+            return self._unbound("; ".join(problems[:3]) + more)
+        try:
+            digest = self._bind({"attacks": _attack_dicts(candidate)})
+        except (TypeError, ValueError, RecursionError) as exc:
+            return self._unbound(str(exc))
+        if not rows:
+            return self._result(
+                "RETRY", "no attack was reported, so nothing held; run them and ask again", digest
+            )
+
+        def named(status: str) -> str:
+            return ", ".join(r.scenario for r in rows if r.status == status)
+
+        unknown = sorted({r.status for r in rows} - {"held", "violated", "not_run"})
+        if unknown or named("violated"):
+            parts = ["violated: %s" % named("violated")] if named("violated") else []
+            parts += ["unrecognised status %r: %s" % (s, named(s)) for s in unknown]
+            if unknown:
+                parts.append("an answer this gate does not recognise is never read as permission")
+            return self._result("TERMINAL_BREACH", "; ".join(parts), digest)
+        if named("not_run"):
+            return self._result(
+                "RETRY",
+                "no clean answer for: %s; they say nothing about their invariants, so run them "
+                "again" % named("not_run"),
+                digest,
+            )
+        return self._result("PASS", "all %d attacks held" % len(rows), digest)
