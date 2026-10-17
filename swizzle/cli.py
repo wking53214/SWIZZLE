@@ -173,8 +173,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             _detach_stdout()
         return 0
     if args.command is None:
-        parser.print_help()
-        return 0
+        # No command is a usage error, like every other CLI: the help goes to stderr and the exit is 2.
+        print("swizzle: a command is required.", file=sys.stderr)
+        parser.print_help(sys.stderr)
+        return 2
     handlers = {
         "list": _list,
         "prove": _prove,
@@ -550,9 +552,35 @@ def _summon(args) -> int:
     return 0
 
 
+def _verify_target_problem(repository: Path) -> str | None:
+    """A plain sentence when there is nothing to verify against, else None.
+
+    A claim about a folder that is missing, is not a folder, cannot be read, or has nothing in it cannot be
+    observed at all. The oracles would each report "unmeasured" and the command would still exit 0, which a
+    caller reads as "verified". An empty folder is refused on purpose: with no file in it, no oracle has
+    anything to look at, so the honest result is "could not verify", not a table of unaskable answers.
+    """
+    if not repository.exists():
+        return "verify target %s does not exist, so there is nothing to verify against." % repository
+    if not repository.is_dir():
+        return "verify target %s is not a directory, so there is nothing to verify against." % repository
+    try:
+        empty = next(repository.iterdir(), None) is None
+    except OSError as exc:
+        return "verify target %s cannot be read (%s)." % (repository, exc.strerror or exc)
+    if empty:
+        return "verify target %s is an empty directory, so there is nothing to verify against." % repository
+    return None
+
+
 def _verify(args) -> int:
+    """Exit 0: the claim was evaluated and the result printed. Exit 2: nothing could be verified against."""
     from .wizzle.integration import VerificationArtifact, verify_artifact
 
+    problem = _verify_target_problem(args.repository)
+    if problem:
+        print("swizzle: %s" % problem, file=sys.stderr)
+        return 2
     result, oracle_results = verify_artifact(
         VerificationArtifact(repository=args.repository, target="ghost"),
         member_name=args.member,

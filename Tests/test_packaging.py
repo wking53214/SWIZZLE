@@ -51,10 +51,8 @@ def test_the_wheel_ships_no_test_files_and_every_declared_package(tmp_path):
     assert done.returncode == 0, done.stderr[-2000:]
     (wheel,) = list(out.glob("swizzle-*.whl"))
     names = zipfile.ZipFile(wheel).namelist()
-    # swizzle/integration/test_track.py is a library module (an experiment tracker whose class is
-    # called TestTrack), not a pytest file; it is the one allowed name.
-    tests = [n for n in names if (Path(n).name.startswith("test_") or "/tests/" in n.lower())
-             and n != "swizzle/integration/test_track.py"]
+    # No exception: a library module that was named test_track.py is now experiment_track.py.
+    tests = [n for n in names if Path(n).name.startswith("test_") or "/tests/" in n.lower()]
     assert tests == [], "test files ship in the wheel: %s" % tests
     top = {n.split("/")[0] for n in names}
     assert "swizzle" in top and not any(t in top for t in ("Tests", "tools", "fixtures", "corpus"))

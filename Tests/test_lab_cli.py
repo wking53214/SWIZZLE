@@ -33,10 +33,11 @@ def test_summon_still_works(tmp_path, capsys):
     assert (tmp_path / "sql_behind_a_comment" / "app" / "audit.py").is_file()
 
 
-def test_no_command_prints_help(capsys):
-    code, out = run([], capsys)
-    assert code == 0
-    assert "usage" in out.lower()
+def test_no_command_prints_help_and_is_a_usage_error(capsys):
+    code = main([])
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "usage" in captured.err.lower()
 
 
 # ------------------------------------------------------ laboratory commands
@@ -62,12 +63,14 @@ def test_mutators_documents_every_entry(capsys):
 
 
 def test_corpus_on_an_empty_directory(tmp_path, capsys):
+    (tmp_path / "c").mkdir()        # a named corpus folder must exist (Tests/test_cli_fail_closed.py)
     code, out = run(["corpus", "--corpus-path", str(tmp_path / "c")], capsys)
     assert code == 0
     assert "empty" in out
 
 
 def test_corpus_json_is_json(tmp_path, capsys):
+    (tmp_path / "c").mkdir()        # a named corpus folder must exist (Tests/test_cli_fail_closed.py)
     code, out = run(["corpus", "--corpus-path", str(tmp_path / "c"), "--json"], capsys)
     assert code == 0
     assert json.loads(out) == []

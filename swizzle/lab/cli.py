@@ -9,6 +9,7 @@ everything here is additional.
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -35,7 +36,27 @@ from .sandbox import Sandbox, purge
 DEFAULT_CORPUS = Path("corpus")
 
 _CORPUS_HELP = ("the attack-memory folder (default: ./corpus). It is created only when "
-                "a command records something; --corpus-path is the older spelling")
+                "a command records something; --corpus-path is the older spelling. `corpus` "
+                "exits 2 for a folder you name that does not exist")
+
+
+def _named_corpus_problem(args) -> str | None:
+    """A plain sentence when a corpus folder the caller NAMED cannot be read, else None.
+
+    The default location (`./corpus`, the object `DEFAULT_CORPUS` itself) may be absent: it has simply not
+    been written yet, and reading it is correctly "empty". A folder named with --corpus-dir that is missing,
+    is not a folder or cannot be read is a mistake, and "the corpus is empty" would hide it.
+    """
+    path = args.corpus_path
+    if path is DEFAULT_CORPUS:
+        return None
+    if not path.exists():
+        return "--corpus-dir %s does not exist." % path
+    if not path.is_dir():
+        return "--corpus-dir %s is not a directory." % path
+    if not os.access(path, os.R_OK | os.X_OK):
+        return "--corpus-dir %s cannot be read." % path
+    return None
 
 
 def _corpus_arg(parser) -> None:
@@ -587,6 +608,10 @@ def _reproduce(args) -> int:
 
 @_register("corpus")
 def _corpus(args) -> int:
+    problem = _named_corpus_problem(args)
+    if problem:
+        print("swizzle: %s" % problem, file=sys.stderr)
+        return 2
     store = Corpus(args.corpus_path)
     if args.promote:
         try:

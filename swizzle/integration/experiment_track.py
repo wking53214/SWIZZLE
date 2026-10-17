@@ -1,4 +1,4 @@
-"""Test track for experimental improvements before committing to main codebase.
+"""Experiment track for trying improvements before committing to the main codebase.
 
 Allows safe experimentation with rollback capability and A/B testing.
 """
@@ -51,7 +51,7 @@ class ExperimentResult:
         return self.net_improvement() > 0
 
 
-class TestTrack:
+class ExperimentTrack:
     """Manages experimental features and rollback."""
 
     def __init__(self, workspace: Path):

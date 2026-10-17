@@ -117,7 +117,7 @@ Implements the closed-loop improvement cycle between Swizzle and Ghost Tools.
 | `triage_ledger.py` | Track decisions and filter patterns |
 | `trend_analyzer.py` | Detect confidence/approval trends and anomalies |
 | `query_engine.py` | Query improvement statistics |
-| `test_track.py` | Track experiments and metrics |
+| `experiment_track.py` | Track experiments and metrics (was `test_track.py`; renamed so no library module is named like a test file) |
 
 ### Cross-Repository Coordination
 

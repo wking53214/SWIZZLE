@@ -1,7 +1,7 @@
 # Implementation status
 
 Refreshed 2026-10-17. SWIZZLE 0.8.0, measured against ghost_tools
-`dd1b8039a9b32fe41cfa2823228ab3a03c394d0f` (version 1.9.1; the commit CI pins),
+`dd1b8039a9b32fe41cfa2823228ab3a03c394d0f` (version 1.9.1; the commit CI pinned at 0.8.0, since moved, see CHANGELOG 0.8.1),
 ASSAY `4da3919f19a04cb59b45c6d07d55229c923e5126` (0.10.0) and Warden
 `2cf0eeccf839f88d624deb133fe1cb4b16a99009` (0.12.0).
 

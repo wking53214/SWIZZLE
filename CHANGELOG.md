@@ -9,6 +9,45 @@ all read it back through the installed package metadata (`swizzle/_version.py`).
 Dates are taken from the git history. Where the history carries no release, the change is listed
 under the first version that contains it.
 
+## [0.8.1] - 2026-10-17
+
+A cleanup pass on the 0.8.0 hardening, driven by an independent re-audit.
+
+### Changed
+- `swizzle` with no command now prints usage on standard error and exits 2 (it exited 0). `--help`,
+  `--version` and `--contract` still exit 0.
+- CI pins every GitHub Action by full commit SHA with its release tag in a comment (`actions/checkout`
+  v4.2.2, `actions/setup-python` v5.6.0).
+- CI sibling pins are the "tested set": ghost_tools `288cefa7608cace8be0f91cabcc305930466d84b`
+  (ghost_tools 1.10.0) and ASSAY `5aafbf3b45c68d0948574ff4364cde614890839e` (ASSAY 0.11.0). Warden stays at
+  `2cf0eeccf839f88d624deb133fe1cb4b16a99009`; it is re-pinned separately. The tested set may sit commits
+  behind each repository's head, and the workflow header says how to bump it.
+- `swizzle.integration.test_track` is renamed `swizzle.integration.experiment_track` (class `TestTrack` is now
+  `ExperimentTrack`). It is a library module, but its name matched the `test_*.py` pattern that tools use to
+  recognise a test file, and it shipped in the wheel under that name. There is no alias at the old path
+  (an alias file would reintroduce the name). The wheel test no longer has an allowed exception for it.
+- `swizzle.integration.ml_predictor` (the aliases kept from the `frequency_predictor` rename) now raises a
+  `DeprecationWarning` when imported. The names keep working.
+- Tests changed because the behaviour they asserted changed on purpose: `Tests/test_lab_cli.py`
+  `test_corpus_on_an_empty_directory` and `test_corpus_json_is_json` named a corpus folder that did not exist
+  and expected "empty"; they now create the empty folder first. `Tests/test_continuous_loop.py` imports the
+  renamed `ExperimentTrack`. `Tests/test_packaging.py` drops its `test_track.py` exception.
+  `Tests/test_lab_cli.py::test_no_command_prints_help` (now `..._and_is_a_usage_error`) expects exit 2 and usage on
+  standard error. `Tests/test_no_surprise_writes.py::test_corpus_dir_is_accepted_...` creates the named empty
+  folder first and asserts reading leaves it empty.
+
+### Fixed
+- `swizzle verify DIR --member ... ` exited 0 and printed a table of UNASKABLE oracle results for a `DIR` that
+  does not exist. It now exits 2 with a message for a missing, non-directory, unreadable or empty `DIR`. An
+  empty directory is refused because no oracle has anything to look at; a non-empty folder the oracles cannot
+  judge is still a result (UNASKABLE, exit 0).
+- `swizzle corpus --corpus-dir DIR` (or `--corpus-path`) exited 0 with "the corpus is empty" for a `DIR` that
+  does not exist or is not a directory (for example `/dev/null/x`). A named corpus folder that cannot be read
+  now exits 2. The default `./corpus` may be absent, since nothing has written it yet, and still reads empty.
+- The CI pin comments for ghost_tools and ASSAY said `# v0.10.0`, but the pinned commits were 13 and 8 commits
+  past that tag. The comments now give the sibling's version at the commit and say it is a tested set.
+- The tag note below now says what is true: see "Notes for the owner".
+
 ## [0.8.0] - 2026-10-17
 
 This release is a production-hardening pass. It is also the first version that is true to itself:
@@ -129,6 +168,7 @@ record carried the wrong version.
 
 ## Notes for the owner
 
-- The repository carries a git tag `v0.10.0` (2026-10-12). No version in `pyproject.toml` has ever been
-  `0.10.0`, so the tag does not name a release of this package. No tag was created or moved by the 0.8.0
-  work; whether to tag `v0.8.0`, and what to do about `v0.10.0`, is left to the owner.
+- An older git tag `v0.10.0` (2026-10-12) exists in this repository. No version in `pyproject.toml` has ever
+  been `0.10.0`, so the tag does not correspond to this version or to any release of this package. Releases of
+  this version (0.8.0, 0.8.1) are not tagged yet. Tagging is the owner's decision; no tag was created, moved or
+  deleted by the 0.8.0 or 0.8.1 work.

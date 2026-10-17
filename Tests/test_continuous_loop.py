@@ -4,7 +4,7 @@ import pytest
 from pathlib import Path
 import tempfile
 
-from swizzle.integration.test_track import TestTrack, ExperimentStatus, Metric
+from swizzle.integration.experiment_track import ExperimentTrack, ExperimentStatus, Metric
 from swizzle.integration.arbiter import Arbiter, ValidationMetric, ValidationVerdictType
 from swizzle.integration.loop_orchestrator import LoopOrchestrator, LoopStatus
 
@@ -15,7 +15,7 @@ class TestTrackTests:
     def test_create_experiment(self):
         """Verify experiment creation."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            track = TestTrack(Path(tmpdir))
+            track = ExperimentTrack(Path(tmpdir))
 
             exp_id = track.create_experiment("exp_001", "Test experiment")
 
@@ -25,7 +25,7 @@ class TestTrackTests:
     def test_record_experiment_run(self):
         """Verify recording experiment results."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            track = TestTrack(Path(tmpdir))
+            track = ExperimentTrack(Path(tmpdir))
 
             baseline = [
                 Metric(name="accuracy", value=0.90, unit="percent"),
@@ -46,7 +46,7 @@ class TestTrackTests:
     def test_evaluate_experiment_passed(self):
         """Verify experiment evaluation for positive result."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            track = TestTrack(Path(tmpdir))
+            track = ExperimentTrack(Path(tmpdir))
 
             baseline = [Metric(name="score", value=100.0, unit="points")]
             experiment = [Metric(name="score", value=110.0, unit="points")]
@@ -60,7 +60,7 @@ class TestTrackTests:
     def test_evaluate_experiment_failed(self):
         """Verify experiment evaluation for negative result."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            track = TestTrack(Path(tmpdir))
+            track = ExperimentTrack(Path(tmpdir))
 
             baseline = [Metric(name="score", value=100.0, unit="points")]
             experiment = [Metric(name="score", value=95.0, unit="points")]
@@ -74,7 +74,7 @@ class TestTrackTests:
     def test_promote_experiment(self):
         """Verify promoting passed experiment."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            track = TestTrack(Path(tmpdir))
+            track = ExperimentTrack(Path(tmpdir))
 
             baseline = [Metric(name="score", value=100.0, unit="points")]
             experiment = [Metric(name="score", value=110.0, unit="points")]
@@ -89,7 +89,7 @@ class TestTrackTests:
     def test_net_improvement_calculation(self):
         """Verify net improvement calculation."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            track = TestTrack(Path(tmpdir))
+            track = ExperimentTrack(Path(tmpdir))
 
             baseline = [
                 Metric(name="accuracy", value=0.90, unit="percent"),

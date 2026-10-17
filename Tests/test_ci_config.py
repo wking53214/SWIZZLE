@@ -77,3 +77,13 @@ def test_readme_describes_the_ci_siblings_the_workflow_really_checks_out():
     for name in ("ghost_tools", "ASSAY", "WARDEN"):
         assert name in readme
     assert ".github/workflows/tests.yml" in readme
+
+
+def test_every_action_is_pinned_by_full_commit_sha_with_its_tag_in_a_comment():
+    uses = re.findall(r"^\s*- uses: (\S+?)(?:\s+#\s*(.*))?$", WORKFLOW, re.M)
+    assert uses, "the workflow uses no actions?"
+    for action, comment in uses:
+        name, _, ref = action.partition("@")
+        assert re.fullmatch(r"[0-9a-f]{40}", ref), "%s is not pinned to a full commit SHA" % action
+        assert re.fullmatch(r"v\d+(\.\d+){2}", (comment or "").strip()), (
+            "%s has no release tag in its comment (got %r)" % (name, comment))

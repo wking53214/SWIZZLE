@@ -292,3 +292,16 @@ def test_the_old_ml_names_are_aliases_and_the_module_says_it_is_not_machine_lear
     assert ml_predictor.MLModel is frequency_predictor.FrequencyModel
     assert ml_predictor.create_ml_predictor is frequency_predictor.create_frequency_predictor
     assert "not machine learning" in frequency_predictor.__doc__
+
+
+def test_importing_the_old_ml_module_warns_that_it_is_deprecated():
+    import importlib
+    import sys
+    import warnings
+    sys.modules.pop("swizzle.integration.ml_predictor", None)
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        importlib.import_module("swizzle.integration.ml_predictor")
+    deprecations = [w for w in caught if issubclass(w.category, DeprecationWarning)]
+    assert deprecations, "the old module imports silently"
+    assert "frequency_predictor" in str(deprecations[0].message)

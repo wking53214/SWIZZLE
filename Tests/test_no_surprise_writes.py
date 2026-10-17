@@ -49,12 +49,14 @@ def test_corpus_dir_is_accepted_and_nothing_is_created_by_reading_it(tmp_path):
     work = tmp_path / "work"
     work.mkdir()
     named = tmp_path / "elsewhere" / "memory"
+    named.mkdir(parents=True)               # a corpus folder you name must exist (Tests/test_cli_fail_closed.py)
     done = _swizzle(work, "corpus", "--corpus-dir", str(named))
     assert done.returncode == 0, done.stderr
     assert _listing(work) == []
-    assert not named.exists()
+    assert _listing(named) == []
     done = _swizzle(work, "corpus", "--corpus-path", str(named))      # the older spelling still works
     assert done.returncode == 0, done.stderr
+    assert _listing(named) == []
 
 
 def test_recording_writes_only_under_the_given_directory(tmp_path):
