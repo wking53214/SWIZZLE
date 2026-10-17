@@ -15,7 +15,6 @@ import pytest
 
 from swizzle.lab import world
 from swizzle.lab.genome import RepositoryGenome
-from swizzle.lab.groundtruth import of as ground_truth_of
 from Tests.fake_target import FakeTarget
 
 CORPUS = Path(__file__).resolve().parents[1] / "corpus"

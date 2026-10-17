@@ -23,7 +23,8 @@ _ORDER = (Disclosure.UNDISCLOSED, Disclosure.EXCLUSION_ABUSE,
 
 _HEADING = {
     Disclosure.UNDISCLOSED: "UNDISCLOSED -- no part of ghost_tools mentions this gap",
-    Disclosure.EXCLUSION_ABUSE: "EXCLUSION WORN AS A COSTUME -- a real exclusion, put on by code that is not entitled to it",
+    Disclosure.EXCLUSION_ABUSE: ("EXCLUSION WORN AS A COSTUME -- a real exclusion, put on by code "
+                                 "that is not entitled to it"),
     Disclosure.DISCLOSED: "DISCLOSED -- ghost_tools states this scope limit itself",
 }
 
@@ -117,14 +118,20 @@ def _blind_spots(outcomes: Sequence[Outcome],
 
 def _one_escape(outcome: Outcome, warp: Warp) -> List[str]:
     true_name = warp.true_name
+    # An escape is a defect that was not found, so a true name is expected; a warp
+    # without one (a decoy) is shown without a place rather than crashing the report.
+    where = "%s:%s" % (true_name.file, true_name.line_start or "-") if true_name else "-"
+    why = true_name.why if true_name else "this warp declares no defect"
+    proof = outcome.proof
+    proof_text = ("%s (%s)" % (_wrap(proof.account, 14), proof.kind) if proof is not None
+                  else "no proof was run for this warp")
     lines = [
         "",
         "    %s  (target: %s)" % (warp.name, warp.targets),
-        "      where   %s:%s" % (true_name.file, true_name.line_start or "-"),
-        "      why     %s" % _wrap(true_name.why, 14),
+        "      where   %s" % where,
+        "      why     %s" % _wrap(why, 14),
         "      trick   %s" % _wrap(warp.intent, 14),
-        "      proof   %s (%s)" % (_wrap(outcome.proof.account, 14),
-                                   outcome.proof.kind),
+        "      proof   %s" % proof_text,
     ]
     if outcome.attribution:
         lines.append("      control %s" % _wrap(outcome.attribution, 14))
@@ -143,7 +150,8 @@ def _false_positives(outcomes: Sequence[Outcome],
         warp = index[outcome.warp]
         lines.append("  %s" % warp.name)
         lines.append("      %s" % outcome.account)
-        lines.append("      proof   %s" % _wrap(outcome.proof.account, 14))
+        lines.append("      proof   %s" % (_wrap(outcome.proof.account, 14) if outcome.proof is not None
+                                       else "no proof was run for this warp"))
         if warp.disclosure_quote:
             lines.append("      quoted  \"%s\"" % _wrap(warp.disclosure_quote, 14))
     lines.append("")
@@ -198,7 +206,7 @@ def as_dicts(outcomes: Sequence[Outcome], warps: Sequence[Warp]) -> List[dict]:
                 "kind": outcome.proof.kind,
                 "account": outcome.proof.account,
             },
-            "findings": [{"detector": d, "file": f, "line": l}
-                         for d, f, l in outcome.findings],
+            "findings": [{"detector": d, "file": f, "line": line}
+                         for d, f, line in outcome.findings],
         })
     return out

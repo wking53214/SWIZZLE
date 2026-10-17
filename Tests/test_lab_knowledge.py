@@ -16,7 +16,7 @@ import json
 
 import pytest
 
-from swizzle.lab.knowledge import Acquisition, Knowledge, Store, Tally
+from swizzle.lab.knowledge import Acquisition, Store
 
 
 @pytest.fixture()

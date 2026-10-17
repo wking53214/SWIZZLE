@@ -21,10 +21,9 @@ might do, including the correct thing.
 from __future__ import annotations
 
 import hashlib
-import os
 import re
 from pathlib import Path
-from typing import Any, Dict, Mapping, Optional, Sequence, Tuple
+from typing import Mapping, Optional, Sequence
 
 from swizzle.lab.adapter import Observation, TargetAdapter
 from swizzle.lab.draft import TargetDialect

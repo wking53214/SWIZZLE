@@ -29,6 +29,22 @@ def _debris():
     return {p.name for p in Path(tempfile.gettempdir()).glob("swizzle-governor-*")}
 
 
+@pytest.fixture(autouse=True)
+def _private_tempdir(tmp_path_factory, monkeypatch):
+    """Give each test its own temp root, so `_debris()` sees only this process's governor.
+
+    The system temp folder is shared: another SWIZZLE run on the same machine (a
+    sibling checkout's suite, a second pytest, a developer's `swizzle governor`)
+    creates and removes `swizzle-governor-*` folders there at any time. Comparing
+    the global listing before and after therefore failed whenever something else
+    ran at once, whether or not the governor leaked. With a private root, any
+    folder this test finds is one the governor under test really left behind.
+    """
+    private = tmp_path_factory.mktemp("private_tmp")
+    monkeypatch.setattr(tempfile, "tempdir", str(private))
+    return private
+
+
 # --------------------------------------------------------------- 1. crashed Warden
 
 @pytest.mark.parametrize("scenario", SCENARIOS, ids=lambda s: s.name)
@@ -70,7 +86,9 @@ def test_probe_that_crashes_or_prints_nothing_is_not_run_in_the_real_runner(tmp_
     quiet = _stub_python(tmp_path, "exit 0")
     f = gov.run_scenario(_scn(), tmp_path, Path(__file__).resolve().parents[1], python=quiet)
     assert f.status == "not_run" and "no readable result" in f.detail
-    crash = _stub_python(tmp_path, 'echo \'SWIZZLE_RESULT {"crashed": true, "error": "KeyError: x", "completed": false}\'')
+    crash = _stub_python(
+        tmp_path,
+        'echo \'SWIZZLE_RESULT {"crashed": true, "error": "KeyError: x", "completed": false}\'')
     f = gov.run_scenario(_scn(), tmp_path, Path(__file__).resolve().parents[1], python=crash)
     assert f.status == "not_run" and f.detail == "Warden crashed before deciding: KeyError: x"
     assert _debris() == before
@@ -201,7 +219,8 @@ def test_a_failed_sql_proof_does_not_claim_the_injection_worked(tmp_path):
     warp = by_name("sql_through_a_name")
     root = summon(warp, tmp_path)
     (root / "app" / "queries.py").write_text(
-        'def find_user(conn, uid):\n    return conn.execute("SELECT id, name FROM users WHERE id = ?", (uid,)).fetchall()\n',
+        'def find_user(conn, uid):\n'
+        '    return conn.execute("SELECT id, name FROM users WHERE id = ?", (uid,)).fetchall()\n',
         encoding="utf-8")
     proof = prove(warp, root)
     assert not proof.holds

@@ -13,7 +13,7 @@ that a pass rate cannot.
 
 from __future__ import annotations
 
-from typing import Any, Dict, Iterable, List, Mapping, Sequence, Tuple
+from typing import Any, Dict, Mapping, Sequence, Tuple
 
 from .attack import CaseResult
 from .genome import AttackCategory
@@ -98,9 +98,9 @@ def matrix(results: Sequence[CaseResult] = ()) -> Dict[str, Dict[str, Any]]:
     for result in results:
         surfaces = set(_CATEGORY_SURFACES.get(result.genome.category.value, ()))
         for signal in result.violations:
-            surface = _FAILURE_SURFACES.get(failure_class(signal.kind))
-            if surface:
-                surfaces.add(surface)
+            failed_surface = _FAILURE_SURFACES.get(failure_class(signal.kind))
+            if failed_surface:
+                surfaces.add(failed_surface)
         for surface in surfaces:
             row = out.setdefault(surface, {"description": "", "mutators": [],
                                            "cases": 0, "attacks": 0, "critical": 0})

@@ -4,9 +4,7 @@ Handlers process incoming events and update the integration models accordingly.
 Each event type has a corresponding handler that knows how to process it.
 """
 
-from typing import Optional, Callable, Dict, Any
-from datetime import datetime
-import uuid
+from typing import Optional, Callable, Dict
 
 from swizzle.integration.event_system import Event, EventType, get_event_bus
 from swizzle.integration.triage_ledger import TriageEntry, Decision, Severity as TriageSeverity
@@ -90,7 +88,7 @@ class EventHandler:
         finding_type_map = {
             "dated_claim": FindingType.DATED_CLAIM,
             "prose_deleted": FindingType.PROSE_DELETED,
-            "boundary_violated": FindingType.BOUNDARY_VIOLATED,
+            "boundary_violated": FindingType.WRITE_OUTSIDE_BOUNDARY,
         }
 
         pattern = FalsePositivePattern(

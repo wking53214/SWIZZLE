@@ -5,6 +5,7 @@ build/
 dist/
 .pytest_cache/
 .ruff_cache/
+.mypy_cache/
 
 # ghost_buster artifacts
 .ghost_casefile.json

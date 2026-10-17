@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import importlib
 from dataclasses import asdict, dataclass, is_dataclass
-from typing import Any, Mapping, Optional, Tuple
+from typing import Any, Iterable, Mapping, Optional, Tuple
 
 from .schema import Verdict
 
@@ -217,7 +217,7 @@ class _BoundGate:
         )
 
     def _bind(self, content: Mapping[str, object]) -> str:
-        return self._gate.subject_digest(_plain(content))  # type: ignore[arg-type]
+        return self._gate.subject_digest(_plain(content))
 
 
 def run_proofs(warps: Any = None) -> list:
@@ -352,7 +352,7 @@ class ProofGate(_BoundGate):
         return self._result("PASS", "all %d proofs held" % len(rows), digest)
 
 
-def _attack_dicts(attacks: object) -> list:
+def _attack_dicts(attacks: Iterable[Any]) -> list:
     """The attack report as plain mappings.
 
     A ``Finding`` (what ``attack()`` returns) is read through its fields; a dict (what
@@ -431,6 +431,8 @@ class AttackGate(_BoundGate):
         if problems:
             more = "; and more" if len(problems) > 3 else ""
             return self._unbound("; ".join(problems[:3]) + more)
+        if not isinstance(candidate, (list, tuple)):    # attack_rows has already reported this as a problem
+            return self._unbound("an attack report is a list, not %s" % type(candidate).__name__)
         try:
             digest = self._bind({"attacks": _attack_dicts(candidate)})
         except (TypeError, ValueError, RecursionError) as exc:

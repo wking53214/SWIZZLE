@@ -7,7 +7,6 @@ than a target having changed.
 
 from __future__ import annotations
 
-import pytest
 
 from swizzle.lab import attack
 from swizzle.lab.signals import Judgement, Severity, failure_class
@@ -117,7 +116,6 @@ def test_an_inconclusive_oracle_does_not_score():
 def test_a_broken_oracle_cannot_hide_the_others():
     """One oracle raising must not take the run down or look like a pass."""
     from swizzle.lab import oracles
-    from swizzle.lab.evidence import Evidence
 
     def explode(evidence):
         raise RuntimeError("deliberate")

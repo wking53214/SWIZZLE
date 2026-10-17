@@ -78,8 +78,10 @@ class UnifiedIndex:
                 decision_id=decision.id,
                 repo=repo,
                 type=decision.type.value if hasattr(decision.type, 'value') else str(decision.type),
-                risk_level=decision.risk_level.value if hasattr(decision.risk_level, 'value') else str(decision.risk_level),
-                confidence=decision.confidence.value if hasattr(decision.confidence, 'value') else float(decision.confidence),
+                risk_level=(decision.risk_level.value if hasattr(decision.risk_level, 'value')
+                            else str(decision.risk_level)),
+                confidence=(decision.confidence.value if hasattr(decision.confidence, 'value')
+                            else float(decision.confidence)),
                 approved=decision.approved,
                 executed=decision.executed,
                 created_at=decision.created_at,
@@ -127,13 +129,13 @@ class UnifiedIndex:
             "execution_rate": executed / total if total > 0 else 0.0,
         }
 
-    def get_confidence_distribution(self, repo: Optional[str] = None) -> Dict[str, int]:
+    def get_confidence_distribution(self, repo: Optional[str] = None) -> Dict[float, int]:
         """Get distribution of confidence scores."""
         decisions = list(self.decisions.values())
         if repo:
             decisions = [d for d in decisions if d.repo == repo]
 
-        distribution = defaultdict(int)
+        distribution: Dict[float, int] = defaultdict(int)
         for d in decisions:
             bucket = int(d.confidence * 10) / 10  # Round to nearest 0.1
             distribution[bucket] += 1
@@ -163,7 +165,7 @@ class UnifiedIndex:
         now = datetime.fromisoformat(datetime.now().isoformat().replace('Z', '+00:00').split('+')[0])
         cutoff = now - timedelta(hours=hours)
 
-        timeline = defaultdict(int)
+        timeline: Dict[str, int] = defaultdict(int)
         for event in self.events.values():
             try:
                 event_time = datetime.fromisoformat(event.timestamp.replace('Z', '+00:00').split('+')[0])
@@ -176,7 +178,8 @@ class UnifiedIndex:
 
         return dict(sorted(timeline.items()))
 
-    def get_decision_success_rate(self, decision_type: Optional[str] = None, repo: Optional[str] = None) -> Dict[str, Any]:
+    def get_decision_success_rate(self, decision_type: Optional[str] = None,
+                                  repo: Optional[str] = None) -> Dict[str, Any]:
         """Get success rate for decisions (approved and executed)."""
         decisions = list(self.decisions.values())
         if repo:
@@ -213,7 +216,7 @@ class UnifiedIndex:
 
     def get_mutation_effectiveness(self) -> Dict[str, int]:
         """Analyze which mutations are discovered most often."""
-        counter = Counter()
+        counter: Counter[str] = Counter()
         for event in self.events.values():
             if event.type == "mutation_case_discovered":
                 severity = event.data.get("severity", "UNKNOWN")

@@ -14,9 +14,14 @@ win, provably, and the score means something either way.
 
 from __future__ import annotations
 
-__version__ = "0.4.0"
+import logging
+
+from ._version import __version__
 
 from .schema import Disclosure, Outcome, Proof, TrueName, Verdict, Warp
+
+# A library stays silent unless its caller (or `swizzle -v`) configures logging.
+logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 __all__ = ["Disclosure", "Outcome", "Proof", "TrueName", "Verdict", "Warp",
            "__version__"]

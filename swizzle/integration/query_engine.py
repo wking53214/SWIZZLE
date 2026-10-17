@@ -1,11 +1,11 @@
 """Query engine for cross-repository analytics."""
 
-from typing import Dict, List, Optional, Any
+from typing import Dict, Optional, Any
 from dataclasses import dataclass
 from enum import Enum
 
 from .unified_index import UnifiedIndex, get_unified_index
-from .trend_analyzer import TrendAnalyzer, create_trend_analyzer
+from .trend_analyzer import create_trend_analyzer
 
 
 class QueryType(str, Enum):
@@ -41,7 +41,7 @@ class QueryEngine:
 
     def query_stats(self, repo: Optional[str] = None, metric: Optional[str] = None) -> Dict[str, Any]:
         """Query statistics."""
-        stats = {
+        stats: Dict[str, Any] = {
             "decisions": self.index.get_approval_stats(repo),
             "confidence_distribution": self.index.get_confidence_distribution(repo),
             "event_counts": {

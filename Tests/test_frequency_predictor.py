@@ -1,16 +1,15 @@
-"""Tests for ML-based confidence prediction."""
+"""Tests for frequency-based confidence prediction (plain counting; formerly called ML)."""
 
-import pytest
 from datetime import datetime
 
 from swizzle.integration.unified_index import (
-    UnifiedIndex, IndexedDecision, get_unified_index, reset_unified_index
+    IndexedDecision, get_unified_index, reset_unified_index
 )
-from swizzle.integration.ml_predictor import MLPredictor, PredictionCache, create_ml_predictor
+from swizzle.integration.frequency_predictor import PredictionCache, create_frequency_predictor
 
 
 class TestMLPredictor:
-    """Test ML predictor functionality."""
+    """Test frequency predictor functionality."""
 
     def test_model_training(self):
         """Verify models are trained from historical decisions."""
@@ -31,7 +30,7 @@ class TestMLPredictor:
             )
             index.add_decision("swizzle", decision)
 
-        predictor = create_ml_predictor(index)
+        predictor = create_frequency_predictor(index)
 
         # Verify model was created for the decision type/risk pair
         key = ("apply_filter_pattern", "low")
@@ -62,7 +61,7 @@ class TestMLPredictor:
             )
             index.add_decision("swizzle", decision)
 
-        predictor = create_ml_predictor(index)
+        predictor = create_frequency_predictor(index)
 
         # Predict with high similarity (exact match expected)
         pred_high_similarity = predictor.predict_confidence(
@@ -95,7 +94,7 @@ class TestMLPredictor:
             )
             index.add_decision("swizzle", decision)
 
-        predictor = create_ml_predictor(index)
+        predictor = create_frequency_predictor(index)
 
         # Should return default 0.5 when insufficient samples
         pred = predictor.predict_confidence("apply_filter_pattern", "low")
@@ -106,7 +105,7 @@ class TestMLPredictor:
         reset_unified_index()
         index = get_unified_index()
 
-        predictor = create_ml_predictor(index)
+        predictor = create_frequency_predictor(index)
 
         # Unknown type should return default
         pred = predictor.predict_confidence("unknown_type", "low")
@@ -132,7 +131,7 @@ class TestMLPredictor:
                 )
                 index.add_decision("swizzle", decision)
 
-        predictor = create_ml_predictor(index)
+        predictor = create_frequency_predictor(index)
         stats = predictor.get_model_stats()
 
         # Should have stats for both low and high risk
@@ -164,7 +163,7 @@ class TestMLPredictor:
             )
             index.add_decision("swizzle", decision)
 
-        predictor = create_ml_predictor(index)
+        predictor = create_frequency_predictor(index)
 
         # Suggest adjustment for conservative confidence
         adjusted = predictor.suggest_confidence_adjustment(
@@ -180,7 +179,7 @@ class TestMLPredictor:
         reset_unified_index()
         index = get_unified_index()
 
-        predictor = create_ml_predictor(index)
+        predictor = create_frequency_predictor(index)
 
         adjusted = predictor.suggest_confidence_adjustment(
             "unknown_type", "low", current_confidence=0.7
@@ -212,7 +211,7 @@ class TestPredictionCache:
             )
             index.add_decision("swizzle", decision)
 
-        predictor = create_ml_predictor(index)
+        predictor = create_frequency_predictor(index)
         cache = PredictionCache(predictor)
 
         # Get prediction twice
@@ -244,7 +243,7 @@ class TestPredictionCache:
             )
             index.add_decision("swizzle", decision)
 
-        predictor = create_ml_predictor(index)
+        predictor = create_frequency_predictor(index)
         cache = PredictionCache(predictor)
 
         # Get predictions with different similarities
@@ -275,7 +274,7 @@ class TestPredictionCache:
             )
             index.add_decision("swizzle", decision)
 
-        predictor = create_ml_predictor(index)
+        predictor = create_frequency_predictor(index)
         cache = PredictionCache(predictor)
 
         # Get prediction
@@ -285,3 +284,11 @@ class TestPredictionCache:
         # Clear cache
         cache.clear_cache()
         assert len(cache.cache) == 0
+
+
+def test_the_old_ml_names_are_aliases_and_the_module_says_it_is_not_machine_learning():
+    from swizzle.integration import frequency_predictor, ml_predictor
+    assert ml_predictor.MLPredictor is frequency_predictor.FrequencyPredictor
+    assert ml_predictor.MLModel is frequency_predictor.FrequencyModel
+    assert ml_predictor.create_ml_predictor is frequency_predictor.create_frequency_predictor
+    assert "not machine learning" in frequency_predictor.__doc__

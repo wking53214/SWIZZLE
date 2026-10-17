@@ -24,7 +24,7 @@ import pytest
 
 from swizzle.lab import attack, world
 from swizzle.lab.groundtruth import of as ground_truth_of
-from swizzle.lab.signals import Judgement, Severity, failure_class
+from swizzle.lab.signals import failure_class
 from Tests import lab_cases
 from Tests.fake_target import FakeTarget
 
@@ -81,8 +81,6 @@ def test_an_inconclusive_oracle_never_reads_as_a_pass():
     """The temporal oracle, asked about a case with no temporal mutation,
     must say nothing rather than OK -- and when it cannot tell, it must say
     inconclusive rather than clean."""
-    from swizzle.lab.evidence import Evidence
-    from swizzle.lab.oracles import temporal
     genome = lab_cases.simple(mutations=())
     result = attack.run(genome, FakeTarget("abstain"))
     assert not [s for s in result.signals if s.oracle == "temporal"]
@@ -155,7 +153,6 @@ def test_blind_spot_ground_truth_can_be_wrong_and_nothing_notices():
     away: a case can declare a claim rewritable, and every oracle will then
     happily report a target for declining to rewrite it.
     """
-    from dataclasses import replace
     genome = lab_cases.dated()
     result = attack.run(genome, FakeTarget("abstain"))
     protected = [r for r in result.ground_truth.protected if r.text]

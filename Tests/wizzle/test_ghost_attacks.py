@@ -4,8 +4,8 @@ Validates that all 10 attacks are properly defined and independently evaluable.
 """
 
 import pytest
-from .ghost_attacks import (
-    GhostAttackGenerator, AttackType, GhostAttack
+from swizzle.wizzle.ghost_attacks import (
+    GhostAttackGenerator, AttackType
 )
 
 

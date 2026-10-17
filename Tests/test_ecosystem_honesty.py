@@ -125,7 +125,8 @@ def test_the_verifiers_real_failure_reason_is_relayed(tmp_path, monkeypatch, cap
 
 def test_a_verifier_that_crashes_with_no_summary_still_gives_its_last_words(tmp_path):
     root = _fake_assay(tmp_path)
-    (root / "verify_manifest.py").write_text("import sys\nsys.stderr.write('Traceback\\nKeyError: boom\\n')\nraise SystemExit(1)\n")
+    (root / "verify_manifest.py").write_text(
+        "import sys\nsys.stderr.write('Traceback\\nKeyError: boom\\n')\nraise SystemExit(1)\n")
     ok, why = ts.prove_answer_key(root)
     assert not ok and "KeyError: boom" in why and "exited 1" in why
 
@@ -281,7 +282,8 @@ def _git_checkout(path: Path, files: dict) -> str:
         (path / name).write_text(text)
     env = {"GIT_CONFIG_GLOBAL": "/dev/null", "GIT_CONFIG_SYSTEM": "/dev/null", "PATH": __import__("os").environ["PATH"]}
     for step in (("init", "-q"), ("add", "-A"),
-                 ("-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false", "commit", "-q", "-m", "x")):
+                 ("-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false",
+                  "commit", "-q", "-m", "x")):
         subprocess.run(("git",) + step, cwd=str(path), env=env, check=True, capture_output=True)
     return subprocess.run(("git", "rev-parse", "HEAD"), cwd=str(path), env=env, check=True,
                           capture_output=True, text=True).stdout.strip()

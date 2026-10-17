@@ -8,12 +8,12 @@ account is honest (the decision label), which is a claim like any other.
 from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
-from typing import Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
 #: Files as {relative path: text}. "../outside.txt" style keys live beside the case.
 Tree = Dict[str, str]
 #: What the probe reports back about the governor's run.
-Outcome = Dict[str, object]
+Outcome = Dict[str, Any]
 
 BASE: Tree = {
     "pkg/__init__.py": "VALUE = 1\n",
@@ -40,7 +40,7 @@ class Scenario:
     severity: str
     behavior: str                      # which hostile or honest seat the probe plays
     scope: str = "code"
-    params: Dict[str, object] = field(default_factory=dict)
+    params: Dict[str, Any] = field(default_factory=dict)
     files: Tree = field(default_factory=lambda: dict(BASE))
     #: Which of Warden's layers defend this scenario. Where more than one does,
     #: removing a single guard may leave the scenario `held`; a companion
@@ -263,7 +263,7 @@ _COMPANIONS = (
 )
 
 _BASELINE = '{"findings": []}\n'
-_DOCS = dict(scope="documentation")
+_DOCS: Dict[str, Any] = dict(scope="documentation")
 
 #: The holes the red team found in Warden, each with an over-caution twin so that a fix by
 #: refusing too much shows up as well. A scenario with a `feature` is reported NOT RUN against

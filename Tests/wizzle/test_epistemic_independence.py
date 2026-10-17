@@ -13,10 +13,9 @@ actually separate in practice, not just in theory.
 
 import pytest
 from dataclasses import dataclass
-from typing import Dict, Any
-from .epistemic_model import SemanticCorrectness, IntentKind
-from .evidence_entitlement import EvidenceEntitlementEvaluator, EvidenceCategory
-from .action_entitlement import ActionEntitlementOracle, ActionEntitlementVerdict
+from swizzle.wizzle.epistemic_model import SemanticCorrectness, IntentKind
+from swizzle.wizzle.evidence_entitlement import EvidenceEntitlementEvaluator, EvidenceCategory
+from swizzle.wizzle.action_entitlement import ActionEntitlementOracle, ActionEntitlementVerdict
 
 
 @dataclass
@@ -270,7 +269,6 @@ class EpistemicIndependenceValidator:
 
         # Build evidence set from observations
         present_evidence = set()
-        absent_evidence = set()
         contradicting_evidence = set()
         weak_evidence = set()
 
@@ -367,7 +365,6 @@ class EpistemicIndependenceValidator:
         # First, compute the semantic verdict independently
         # (reusing validate_semantic_layer logic)
         present_evidence = set()
-        absent_evidence = set()
         weak_evidence = set()
         contradicting_evidence = set()
 
@@ -569,17 +566,9 @@ class TestEpistemicIntegrity:
     def test_observation_to_semantic_independence(self):
         """Semantic verdict depends on observations, not Ghost claim."""
 
-        obs = Observations(
-            production_history_signal=True,
-            removal_history_signal=True,
-            current_state_signal=False,  # Member is NOT in current state
-            test_presence_signal=True,
-            commit_message_intent_signal="REFACTOR",
-            usage_evidence_signal=0,
-            replacement_signal=False
-        )
-
-        # Build evidence from observations (not from Ghost)
+        # Evidence as the observations would give it (not from Ghost): the
+        # member was in production, was removed, is not in the current state,
+        # is still used by tests, and the commit message says refactor.
         present_evidence = {
             EvidenceCategory.MEMBER_PRODUCTION_HISTORY,
             EvidenceCategory.MEMBER_REMOVAL_HISTORY,
@@ -588,23 +577,9 @@ class TestEpistemicIntegrity:
             EvidenceCategory.INTENTIONAL_SIGNAL,
         }
 
-        # Two different Ghost claims
-        ghost_claim_1 = TargetClaim(
-            claimed_removal=True,
-            claimed_severity="MAJOR",
-            claimed_confidence=0.95,
-            claimed_category="REMOVED_FROM_LIBRARY"
-        )
-
-        ghost_claim_2 = TargetClaim(
-            claimed_removal=False,  # Contradicts observations!
-            claimed_severity="CRITICAL",
-            claimed_confidence=0.99,
-            claimed_category="REGRESSION"
-        )
-
-        # Semantic verdict should be same regardless of Ghost claim
-        # (because it's based on observations)
+        # The evaluator takes the evidence and the conclusion under test; it has
+        # no parameter through which a target's confidence or category could
+        # reach it, so the verdict cannot depend on them.
         verdict = EvidenceEntitlementEvaluator.evaluate_entitlement(
             conclusion="REMOVED_FROM_LIBRARY",
             intent_kind=IntentKind.INTENTIONAL_REFACTOR,
@@ -625,16 +600,8 @@ class TestEpistemicLeakageRegression:
     def test_independent_evaluator_never_uses_world_truth(self):
         """Verify evaluator receives only observation-derived intent, never hidden truth."""
 
-        # Case: Observations show REFACTOR signal, but hidden world is SECURITY_FIX
-        obs = Observations(
-            production_history_signal=True,
-            removal_history_signal=True,
-            current_state_signal=False,
-            test_presence_signal=True,
-            commit_message_intent_signal="REFACTOR",  # Observable signal
-            usage_evidence_signal=0,
-            replacement_signal=False
-        )
+        # Case: the observable commit signal says REFACTOR, but the hidden world
+        # is SECURITY_FIX. Only the observable signal may be used.
 
         # Build evidence from observations only
         present_evidence = {

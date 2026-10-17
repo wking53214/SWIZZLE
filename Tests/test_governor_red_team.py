@@ -323,7 +323,9 @@ def test_dirty_folder_start(tmp_path):
 
 def test_clean_repository_twin_catches_a_dirty_check_that_refuses_everything(tmp_path):
     assert _run(tmp_path / "a", "clean_git_folder_start_allowed", version="0.9.0", hold=True).status == "held"
-    assert _run(tmp_path / "b", "clean_git_folder_start_allowed", version="0.9.0", hold=True, refuse_all=True).status == "violated"
+    held_and_refused = _run(tmp_path / "b", "clean_git_folder_start_allowed", version="0.9.0",
+                            hold=True, refuse_all=True)
+    assert held_and_refused.status == "violated"
 
 
 # -------------------------------------------------------------------------- SIGTERM

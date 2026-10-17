@@ -38,13 +38,12 @@ from __future__ import annotations
 
 import hashlib
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from . import world
-from .adapter import Observation, TargetAdapter
+from .adapter import TargetAdapter
 from .evidence import read_tree
 from .genome import RepositoryGenome
 from .groundtruth import of as ground_truth_of
@@ -135,9 +134,11 @@ class Iteration:
                 lines.append("           %s" % entry.note[:90])
         lines.append("")
         if self.settling is Settling.CYCLE:
+            # A CYCLE is only ever recorded together with the round it started at.
+            first_seen = self.repeated_at if self.repeated_at is not None else 0
             lines.append("  The state at round %d came back at round %d: a "
                          "period-%d cycle."
-                         % (self.repeated_at, self.repeated_at + self.period,
+                         % (first_seen, first_seen + self.period,
                             self.period))
             lines.append("  Accepting this tool's output and running it again "
                          "returns the repository")
@@ -167,7 +168,9 @@ def iterate(genome: RepositoryGenome, adapter: TargetAdapter, *,
     started = time.perf_counter()
     dialect = adapter.dialect()
     draft = world.build(genome, dialect)
-    truth = ground_truth_of(draft)
+    # Called for its checks: it raises if the world is inconsistent or an expected
+    # witness is missing. The frozen truth itself is not needed by this loop.
+    ground_truth_of(draft)
     sandbox = Sandbox(keep=keep)
     entries: List[Round] = []
     settling, repeated_at, period, note = Settling.INERT, None, 0, ""

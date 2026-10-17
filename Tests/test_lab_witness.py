@@ -28,10 +28,9 @@ from __future__ import annotations
 import pytest
 
 from swizzle.lab import world, witness
-from swizzle.lab.draft import ClaimPlacement, TargetDialect
+from swizzle.lab.draft import TargetDialect
 from swizzle.lab.genome import (AttackCategory, ClaimSpec, ClaimStyle,
-                                DocumentKind, DocumentSpec, MutationSpec,
-                                RepositoryGenome, TestShape)
+                                DocumentKind, DocumentSpec, RepositoryGenome, TestShape)
 from swizzle.lab.groundtruth import UnwitnessedGroundTruth
 from swizzle.lab.groundtruth import of as ground_truth_of
 from swizzle.lab.witness import Witness

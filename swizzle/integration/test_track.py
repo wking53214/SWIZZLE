@@ -3,7 +3,7 @@
 Allows safe experimentation with rollback capability and A/B testing.
 """
 
-from typing import Dict, List, Optional, Any, Callable
+from typing import Dict, List, Any
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -131,7 +131,7 @@ class TestTrack:
 
         # Calculate improvements
         improvements = {}
-        for baseline, experiment in zip(baseline_metrics, experiment_metrics):
+        for baseline, experiment in zip(baseline_metrics, experiment_metrics, strict=False):
             if baseline.name == experiment.name:
                 if baseline.value == 0:
                     improvement = 0.0

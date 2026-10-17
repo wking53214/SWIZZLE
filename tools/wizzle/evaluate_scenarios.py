@@ -45,7 +45,7 @@ def evaluate_scenarios():
         history = oracle_results["history"]
         print(f"Inferred intent: {history.get('inferred_intent')}")
         print(f"Confidence: {history.get('confidence'):.2f}")
-        print(f"Evidence:")
+        print("Evidence:")
         for key, value in history.get('evidence', {}).items():
             print(f"  {key}: {value}")
 
@@ -67,7 +67,7 @@ def evaluate_scenarios():
         json.dump(results, f, indent=2, default=str)
 
     print(f"\n{'=' * 70}")
-    print(f"Evaluation complete")
+    print("Evaluation complete")
     print(f"Results saved to: {output_file}")
     print(f"{'=' * 70}")
 

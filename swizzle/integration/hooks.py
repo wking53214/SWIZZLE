@@ -9,9 +9,6 @@ Hooks:
 """
 
 from pathlib import Path
-from typing import List, Optional, Callable, Dict, Any
-import subprocess
-import json
 
 
 class HookManager:
@@ -57,7 +54,8 @@ git diff-tree --no-commit-id --name-only -r HEAD | grep -E "integration/.*\\.py|
             python3 -c "from swizzle.integration.hooks import trigger_regression_event; trigger_regression_event()" ;;
         *feedback_loop*)
             echo "Feedback event triggered"
-            python3 -c "from swizzle.integration.hooks import trigger_false_positive_event; trigger_false_positive_event()" ;;
+            python3 -c "from swizzle.integration.hooks import trigger_false_positive_event; \\
+trigger_false_positive_event()" ;;
         *mutation_transfer*)
             echo "Mutation event triggered"
             python3 -c "from swizzle.integration.hooks import trigger_mutation_event; trigger_mutation_event()" ;;
@@ -82,7 +80,7 @@ def trigger_triage_event() -> None:
     from swizzle.integration.triage_ledger import DEFAULT_LEDGER
 
     if DEFAULT_LEDGER.entries:
-        latest = DEFAULT_LEDGER.entries[-1]
+        latest = list(DEFAULT_LEDGER.entries.values())[-1]
         event = create_triage_event(
             finding_id=latest.id,
             finding_type=latest.finding_type,
@@ -107,7 +105,8 @@ def trigger_violation_event() -> None:
         latest = unresolved[-1]
         event = create_violation_event(
             violation_id=latest.id,
-            violation_type=latest.violation_type.value if hasattr(latest.violation_type, 'value') else str(latest.violation_type),
+            violation_type=(latest.violation_type.value if hasattr(latest.violation_type, 'value')
+                            else str(latest.violation_type)),
             boundary_id=latest.boundary_id,
             location=latest.location,
             severity=latest.severity,
@@ -129,7 +128,6 @@ def trigger_regression_event() -> None:
         for case_id, regression_messages in regressions.items():
             # Trigger event for first regression message
             if regression_messages:
-                msg = regression_messages[0]
                 event = create_regression_event(
                     contract_id="performance_regression",
                     case_id=case_id,

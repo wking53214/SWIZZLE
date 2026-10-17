@@ -1,14 +1,12 @@
 """Tests for cross-repository queries and analytics."""
 
-import pytest
-from pathlib import Path
 from datetime import datetime
 
 from swizzle.integration.unified_index import (
-    UnifiedIndex, IndexedEvent, IndexedDecision, get_unified_index, reset_unified_index
+    IndexedEvent, IndexedDecision, get_unified_index, reset_unified_index
 )
-from swizzle.integration.trend_analyzer import TrendAnalyzer, create_trend_analyzer
-from swizzle.integration.query_engine import QueryEngine, create_query_engine
+from swizzle.integration.trend_analyzer import create_trend_analyzer
+from swizzle.integration.query_engine import create_query_engine
 from swizzle.integration.cross_repo import CrossRepoManager
 
 

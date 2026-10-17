@@ -23,7 +23,7 @@ import json
 from typing import List, Sequence
 
 from ..evidence import Evidence
-from ..signals import Severity, Signal, ok, unsure, violation
+from ..signals import Severity, Signal, ok, violation
 
 ORACLE = "ledger"
 

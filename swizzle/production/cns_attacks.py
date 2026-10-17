@@ -1,7 +1,6 @@
 """CNS attack catalogue for docking-boundary evaluation."""
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import List, Optional
 
 CNS_ATTACK_CLASSES = [
     "authority_spoofing", "authority_omission", "authority_substitution",

@@ -3,8 +3,8 @@
 import json
 import pytest
 from pathlib import Path
-from unittest.mock import Mock, patch
-from .ghost_invoker import GhostInvoker, GhostFinding, GhostAnalysis
+from unittest.mock import patch
+from swizzle.wizzle.ghost_invoker import GhostInvoker, GhostFinding, GhostAnalysis
 
 
 def test_ghost_finding_dataclass():

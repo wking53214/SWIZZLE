@@ -4,65 +4,118 @@ name: tests
 # warp and proves its own defect with no scanner involved; if it is green,
 # every escape the report claims is an escape from something real.
 #
-# ghost_tools is checked out beside this repository so the end-to-end tests
-# run too. They skip cleanly when it is absent, which is deliberate: SWIZZLE
-# has to be testable without dragging the subject of the measurement in.
+# WHAT THIS WORKFLOW REALLY RUNS
 #
-# The cns extra is installed so that Tests/test_cns_connector.py and
-# Tests/test_cns_adapter.py run here instead of skipping. SWIZZLE itself does
-# not need CNS; Tests/test_cns_independence.py proves that with CNS blocked.
+# The `tests` job checks out ghost_tools, ASSAY, WARDEN and CNS beside this
+# repository at full commit SHAs, sets GHOST_TOOLS, ASSAY and WARDEN_ROOT to
+# them, and installs the `cns` extra. Nothing is continue-on-error: if a
+# sibling cannot be fetched the job fails, instead of skipping the live tests
+# and still reporting green. The live tests (Tests/test_against_ghost_buster.py,
+# the live parts of Tests/test_assay.py and Tests/test_honest_reporting.py, and
+# the governor attacks) therefore run on every Python version below.
+#
+# The `siblings-latest` job runs the same suite against the default branch of
+# each sibling. It is non-blocking by design: it exists to say early that a
+# sibling moved, not to hold this repository to a moving target.
+#
+# HOW TO BUMP A PIN
+#
+# Each `ref:` below is a full 40-character commit SHA with the tag it
+# corresponds to in a comment. To move one, run
+#     git -C ../<sibling> rev-parse HEAD
+# (or `gh api repos/wking53214/<sibling>/commits/<tag> -q .sha`), paste the SHA,
+# update the comment, and run the suite. Tests/test_ci_config.py fails if a pin
+# stops being a full SHA or if continue-on-error comes back on a blocking step.
+# The CNS pin is in pyproject.toml (the `cns` extra), pinned the same way.
 
 on:
   push:
     branches: ["**"]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
-  pytest:
+  static:
+    name: ruff and mypy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: pip install -e ".[dev,cns]"
+
+      - name: Lint (ruff)
+        run: ruff check .
+
+      - name: Type check (mypy)
+        run: mypy
+
+  tests:
     runs-on: ubuntu-latest
     strategy:
-      # One version failing must not cancel the other: a cancelled job
+      # One version failing must not cancel the others: a cancelled job
       # reports nothing about its own version.
       fail-fast: false
       matrix:
-        python-version: ["3.11", "3.12"]
+        python-version: ["3.11", "3.12", "3.13"]
+    env:
+      # The sibling checkouts below sit beside the swizzle checkout.
+      GHOST_TOOLS: ${{ github.workspace }}/ghost_tools
+      ASSAY: ${{ github.workspace }}/ASSAY
+      WARDEN_ROOT: ${{ github.workspace }}/WARDEN
     steps:
       - uses: actions/checkout@v4
         with:
           path: swizzle
 
       - uses: actions/checkout@v4
-        continue-on-error: true
         with:
           repository: wking53214/ghost_tools
+          ref: dd1b8039a9b32fe41cfa2823228ab3a03c394d0f  # v0.10.0 (ghost_tools 1.9.1)
           path: ghost_tools
 
       # ASSAY's answer key makes Tests/test_assay.py's live tests
       # run, and feeds the ASSAY report below.
       - uses: actions/checkout@v4
-        continue-on-error: true
         with:
           repository: wking53214/ASSAY
+          ref: 4da3919f19a04cb59b45c6d07d55229c923e5126  # v0.10.0 (ASSAY 0.10.0)
           path: ASSAY
 
-      # The governor under attack. Optional: the attacks run only when it is here.
+      # The governor under attack. The attacks and the live tests in
+      # Tests/test_honest_reporting.py need it.
       - uses: actions/checkout@v4
-        continue-on-error: true
         with:
           repository: wking53214/WARDEN
+          ref: 2cf0eeccf839f88d624deb133fe1cb4b16a99009  # main after v0.11.4 (Warden 0.12.0)
           path: WARDEN
 
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Check the siblings are really there
+        run: |
+          test -f "$GHOST_TOOLS/ghost_buster/cli.py"
+          test -d "$ASSAY"
+          test -d "$WARDEN_ROOT/warden"
+
+      # The cns extra is installed so that Tests/test_cns_connector.py and
+      # Tests/test_cns_adapter.py run here instead of skipping. SWIZZLE itself
+      # does not need CNS; Tests/test_cns_independence.py proves that with CNS blocked.
       - name: Install
         working-directory: swizzle
         run: pip install -e ".[dev,cns]"
 
       - name: Test
         working-directory: swizzle
-        run: python -m pytest -q
+        run: python -m pytest -q -rs
 
       - name: Report against ghost_buster
         working-directory: swizzle
@@ -71,12 +124,7 @@ jobs:
         # It runs even when Test fails: a red suite used to skip this step,
         # so the pairing went unexercised for as long as the suite was red.
         if: ${{ !cancelled() }}
-        run: |
-          if [ -d ../ghost_tools/ghost_buster ]; then
-            GHOST_TOOLS=../ghost_tools python -m swizzle run
-          else
-            echo "no ghost_tools checkout; skipping the report"
-          fi
+        run: python -m swizzle run
 
       - name: Report against ASSAY
         working-directory: swizzle
@@ -84,12 +132,7 @@ jobs:
         # the ASSAY pairing itself cannot run (exit 2): an answer key
         # that cannot be proven, or a failure mode with no true name.
         if: ${{ !cancelled() }}
-        run: |
-          if [ -d ../ghost_tools/ghost_buster ] && [ -d ../ASSAY ]; then
-            GHOST_TOOLS=../ghost_tools python -m swizzle assay --assay ../ASSAY
-          else
-            echo "::warning::ghost_tools or ASSAY checkout missing; ASSAY report did not run"
-          fi
+        run: python -m swizzle assay --assay "$ASSAY"
 
       - name: Attack the governor (Warden)
         working-directory: swizzle
@@ -98,9 +141,44 @@ jobs:
         # the attacks at all, or Warden crashing so that a scenario could not be
         # judged (exit 2), does.
         if: ${{ !cancelled() }}
-        run: |
-          if [ -d ../WARDEN/warden ]; then
-            python -m swizzle governor --warden ../WARDEN || [ $? -eq 1 ]
-          else
-            echo "::warning::WARDEN checkout missing; governor attacks did not run"
-          fi
+        run: python -m swizzle governor --warden "$WARDEN_ROOT" || [ $? -eq 1 ]
+
+      - name: Contract
+        working-directory: swizzle
+        if: ${{ !cancelled() }}
+        run: python -m swizzle.cli --contract
+
+  siblings-latest:
+    name: siblings at their default branch (non-blocking)
+    runs-on: ubuntu-latest
+    # Clearly separate and never required: it reports drift in a sibling, it does not gate this repository.
+    continue-on-error: true
+    env:
+      GHOST_TOOLS: ${{ github.workspace }}/ghost_tools
+      ASSAY: ${{ github.workspace }}/ASSAY
+      WARDEN_ROOT: ${{ github.workspace }}/WARDEN
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: swizzle
+      - uses: actions/checkout@v4
+        with:
+          repository: wking53214/ghost_tools
+          path: ghost_tools
+      - uses: actions/checkout@v4
+        with:
+          repository: wking53214/ASSAY
+          path: ASSAY
+      - uses: actions/checkout@v4
+        with:
+          repository: wking53214/WARDEN
+          path: WARDEN
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        working-directory: swizzle
+        run: pip install -e ".[dev,cns]"
+      - name: Test against the latest siblings
+        working-directory: swizzle
+        run: python -m pytest -q -rs

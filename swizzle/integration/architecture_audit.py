@@ -6,7 +6,7 @@ Ghost's boundary tests can validate Swizzle's adapter contracts.
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional
 from pathlib import Path
 import json
 

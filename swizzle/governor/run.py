@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import atexit
 import json
+import logging
 import os
 import shutil
 import signal
@@ -15,12 +16,15 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence
 
 from .. import sources
-from .scenarios import NEW_CHECKS_SINCE, SCENARIOS, Scenario, Tree
+from .scenarios import SCENARIOS, Scenario, Tree
+
+log = logging.getLogger(__name__)
 
 _SKIP = {".git", "__pycache__", ".pytest_cache", ".venv"}
 
@@ -59,9 +63,26 @@ _NO_DECISION = {"", "ERROR"}
 _live_dirs: set = set()
 
 
+def _remove_tree(path: Path, attempts: int = 5) -> bool:
+    """Delete ``path``, retrying while something else is still writing into it.
+
+    A governor that was killed on a timeout can leave a straggler (a process
+    that left the probe's process group) that creates a file while the tree is
+    being removed, and a single ``rmtree(ignore_errors=True)`` then leaves the
+    folder behind. Retry a few times; report whether the folder is really gone.
+    """
+    for attempt in range(attempts):
+        shutil.rmtree(path, ignore_errors=True)
+        if not Path(path).exists():
+            return True
+        time.sleep(0.05 * (attempt + 1))
+    log.warning("could not remove the temporary folder %s", path)
+    return False
+
+
 def _cleanup_all() -> None:
     for path in list(_live_dirs):
-        shutil.rmtree(path, ignore_errors=True)
+        _remove_tree(path)
         _live_dirs.discard(path)
 
 
@@ -79,7 +100,7 @@ def parse_version(text: object):
     return tuple(int(x or 0) for x in found.groups()) if found else None
 
 
-def feature_check(scenario: Scenario, caps: Dict[str, object], files_version: Optional[str],
+def feature_check(scenario: Scenario, caps: Dict[str, Any], files_version: Optional[str],
                   assume: bool = False) -> Optional[str]:
     """None when Warden is expected to pass this scenario; else a plain reason it is not run.
 
@@ -115,6 +136,10 @@ def _kill_group(proc: subprocess.Popen) -> None:
         proc.kill()
 
 
+#: Seconds to wait for a killed probe's pipes to close before giving up on a straggler that holds them.
+_REAP_TIMEOUT = 10.0
+
+
 def _launch(cmd, cwd: str, env, timeout: float):
     """Run the probe in its own process group. (stdout, stderr, returncode) or raise TimeoutExpired."""
     proc = subprocess.Popen(cmd, cwd=cwd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
@@ -123,12 +148,19 @@ def _launch(cmd, cwd: str, env, timeout: float):
         out, err = proc.communicate(timeout=timeout)
     except BaseException:
         _kill_group(proc)
-        proc.communicate()
+        try:
+            proc.communicate(timeout=_REAP_TIMEOUT)
+        except subprocess.TimeoutExpired:
+            # A straggler outside the group still holds the pipes. The probe is
+            # dead; do not wait on the straggler, and do not leak the pipes.
+            for pipe in (proc.stdout, proc.stderr):
+                if pipe is not None:
+                    pipe.close()
         raise
     return out, err, proc.returncode
 
 
-def judge_outcome(scenario: Scenario, outcome: Optional[Dict[str, object]], stderr: str = "",
+def judge_outcome(scenario: Scenario, outcome: Optional[Dict[str, Any]], stderr: str = "",
                   returncode: int = 0) -> Optional[Finding]:
     """The one place that decides whether a run produced anything to judge.
 
@@ -190,9 +222,9 @@ def _build_case(scenario: Scenario, case: Path) -> Optional[str]:
     return None
 
 
-def _caps(stdout: str) -> Dict[str, object]:
+def _caps(stdout: str) -> Dict[str, Any]:
     """Everything the probe said about what Warden is, merged, last word winning."""
-    merged: Dict[str, object] = {"features": {}}
+    merged: Dict[str, Any] = {"features": {}}
     for line in stdout.splitlines():
         if not line.startswith("SWIZZLE_CAPS "):
             continue
@@ -229,7 +261,8 @@ def run_scenario(scenario: Scenario, warden_root: Path, swizzle_root: Path,
         before = snapshot(base)
         spec = outer / "spec.json"
         params = dict(scenario.params)
-        params["probe_protected"] = [scenario.feature[len("protected:"):]] if scenario.feature.startswith("protected:") else []
+        params["probe_protected"] = (
+            [scenario.feature[len("protected:"):]] if scenario.feature.startswith("protected:") else [])
         # Where the check is expected, SIGTERM is sent even to a Warden that has no handler for it:
         # leaving the tree changed is then the finding. Where it is not expected, it is not sent.
         params["send_anyway"] = bool(scenario.feature and expected)
@@ -251,19 +284,21 @@ def run_scenario(scenario: Scenario, warden_root: Path, swizzle_root: Path,
         bad = judge_outcome(scenario, outcome, stderr, code)
         if bad is not None:
             return bad
+        if outcome is None:                       # judge_outcome has already reported this; belt and braces
+            return _not_run(scenario, "the probe printed no result")
         absent = feature_check(scenario, caps, files_version, assume_new_checks)
         if absent:
             return _not_run(scenario, absent, kind="feature_absent")
         after = snapshot(base)
     finally:
-        shutil.rmtree(outer, ignore_errors=True)
+        _remove_tree(outer)
         _live_dirs.discard(outer)
     problem = scenario.invariant(before, after, outcome)
     return Finding(scenario.name, scenario.hypothesis, scenario.severity,
                    "violated" if problem else "held", problem or "", str(outcome.get("decision") or ""))
 
 
-def _outcome(stdout: str) -> Optional[Dict[str, object]]:
+def _outcome(stdout: str) -> Optional[Dict[str, Any]]:
     for line in reversed(stdout.splitlines()):
         try:
             if line.startswith("SWIZZLE_RESULT "):

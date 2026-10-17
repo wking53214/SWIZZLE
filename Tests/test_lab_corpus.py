@@ -23,9 +23,20 @@ def confirmed_case():
     return attack.run(lab_cases.with_prose_in_block(), FakeTarget("replace_block"))
 
 
-def test_every_bucket_exists(store):
+def test_opening_a_corpus_writes_nothing_and_every_bucket_reads_empty(store):
+    """A read-only command must leave no folder behind; the folders appear with the first write."""
+    assert not store.root.exists()
     for bucket in BUCKETS:
+        assert store.entries(bucket) == []
+        assert store.genomes(bucket) == []
+    assert not store.root.exists()
+
+
+def test_every_bucket_is_made_by_the_write_that_needs_it(store, confirmed_case):
+    for bucket in BUCKETS:
+        store.record(confirmed_case, bucket)
         assert (store.root / bucket).is_dir()
+        assert len(store.entries(bucket)) == 1
 
 
 def test_a_record_is_self_contained(store, confirmed_case):

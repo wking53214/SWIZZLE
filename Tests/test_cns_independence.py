@@ -21,7 +21,9 @@ ROOT = Path(__file__).resolve().parents[1]
 BLOCK = "import sys; sys.modules['cns'] = None; sys.modules['cns.gate'] = None; "
 BLOCK += "sys.modules['cns.attack'] = None\n"
 
-EXTRA = 'cns = ["cns @ git+https://github.com/wking53214/CNS.git@v1.8.0"]'
+#: The v1.8.0 tag, pinned by its full commit (the pin policy: a SHA, with the tag in a comment).
+EXTRA = ('cns = ["cns @ git+https://github.com/wking53214/CNS.git@5252ceebe98185f7be81212d988055ccf9884568"]'
+         '  # v1.8.0')
 
 
 def _run(code: str) -> subprocess.CompletedProcess[str]:
@@ -121,12 +123,12 @@ def test_the_package_declares_no_runtime_dependency():
     assert "cns" in _pyproject()["project"]["optional-dependencies"]
 
 
-def test_the_cns_extra_is_exactly_warden_s_pin_on_a_tag_or_a_full_commit():
+def test_the_cns_extra_is_pinned_to_the_v1_8_0_commit():
     text = (ROOT / "pyproject.toml").read_text()
     assert EXTRA in text.splitlines()
     (spec,) = _pyproject()["project"]["optional-dependencies"]["cns"]
     assert re.fullmatch(
-        r"cns @ git\+https://github\.com/wking53214/CNS\.git@(v\d+\.\d+\.\d+|[0-9a-f]{40})", spec
+        r"cns @ git\+https://github\.com/wking53214/CNS\.git@[0-9a-f]{40}", spec
     ), spec
 
 

@@ -9,13 +9,8 @@ This ensures WIZZLE's epistemic foundation is sound.
 """
 
 import pytest
-import json
-from copy import deepcopy
-from .oracles import HistoryOracle, CurrentStateOracle, SemanticIntegrityOracle
-from .additional_oracles import SeverityOracle, TopologyOracle, RegressionRiskOracle
-from .epistemic_model import IntentKind
-from .evaluator import Evaluator
-from pathlib import Path
+from swizzle.wizzle.oracles import HistoryOracle, CurrentStateOracle
+from swizzle.wizzle.additional_oracles import SeverityOracle, RegressionRiskOracle
 
 
 class TestOracleIndependenceNever:
@@ -25,8 +20,6 @@ class TestOracleIndependenceNever:
         """HistoryOracle analyzes git history, never reads Ghost findings."""
 
         # Setup: Any ghost claim about severity/confidence should not affect history analysis
-        oracle_results = {}
-
         # Run oracle WITHOUT any ghost data present
         # We can't mock Path.exists, so we'll just verify the method signature
         import inspect
@@ -122,13 +115,9 @@ class TestOracleIndependenceConsistency:
 
         # Now simulate Ghost making a FALSE claim about severity
         # (This should NOT affect oracle's assessment)
-        ghost_false_claim = {
-            "severity": "CRITICAL",  # False and extreme
-            "confidence": 0.99,       # False confidence
-            "member_removed": True
-        }
+        # (The oracle takes no Ghost input at all; its signature is asserted elsewhere.)
 
-        # Oracle should still produce same assessment (it doesn't read ghost_false_claim)
+        # Oracle should still produce same assessment (it has no way to read a Ghost claim)
         severity_result_with_corruption = SeverityOracle.analyze(oracle_results)
 
         # Severity assessment should be IDENTICAL
@@ -152,8 +141,6 @@ class TestOracleIndependenceConsistency:
         result1 = SeverityOracle.analyze(oracle_results)
 
         # Even if Ghost claims high confidence, oracle verdict unchanged
-        ghost_false_confidence = {"confidence": 0.95}  # Oracle never reads this
-
         result2 = SeverityOracle.analyze(oracle_results)
 
         assert result1["justified_severity"] == result2["justified_severity"]
@@ -204,8 +191,6 @@ class TestOracleIndependenceCannotBeMisled:
 
         # Ghost might falsely claim: "This looks like a refactor"
         # But oracle reads actual commit history, not Ghost's interpretation
-        ghost_false_interpretation = {"oracle_interpretation": "INTENTIONAL_REFACTOR"}
-
         # Oracle produces same result
         severity_result2 = SeverityOracle.analyze(oracle_results)
 
@@ -229,8 +214,6 @@ class TestOracleIndependenceCannotBeMisled:
 
         # Ghost might falsely claim high confidence (to pressure action)
         # But oracle confidence is based on evidence, not Ghost's claim
-        ghost_false_confidence_boost = {"confidence": 0.95}
-
         # Oracle produces same conservative assessment
         severity_result2 = SeverityOracle.analyze(oracle_results)
 
@@ -262,10 +245,6 @@ class TestOracleIndependenceContradictory:
         assert verdict["justified_severity"] == "MINOR"
 
         # Even if Ghost says: CRITICAL severity (opposite)
-        ghost_opposite_claim = {
-            "severity": "CRITICAL",
-            "claim": "This is a major breaking change"
-        }
 
         # Oracle still produces correct assessment
         verdict2 = SeverityOracle.analyze(oracle_results)

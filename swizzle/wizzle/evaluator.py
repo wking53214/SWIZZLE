@@ -6,11 +6,11 @@ Does not allow semantic truth to leak from ground-truth labels.
 
 import json
 from pathlib import Path
-from typing import Dict, Any, Optional, Set
+from typing import Dict, Any
 from dataclasses import asdict
 from .epistemic_model import (
     ExperimentResult, IntentKind, FactualCorrectness,
-    SemanticCorrectness, ObservedFact, SemanticTruth, GhostObservation
+    SemanticCorrectness, GhostObservation
 )
 from .oracles import HistoryOracle, CurrentStateOracle, SemanticIntegrityOracle
 from .additional_oracles import (
@@ -18,15 +18,15 @@ from .additional_oracles import (
     TestCoverageOracle, BehavioralCompatibilityOracle, HistoricalUsageOracle
 )
 from .evidence_entitlement import (
-    EvidenceEntitlementEvaluator, EvidenceCategory, classify_evidence_from_oracle_results
+    EvidenceEntitlementEvaluator, classify_evidence_from_oracle_results
 )
 
 class Evaluator:
     """Run experiments and produce results."""
-    
+
     def __init__(self, repo_path: Path):
         self.repo_path = repo_path
-    
+
     def run_oracles(self) -> Dict[str, Any]:
         """Run all independent oracles."""
 
@@ -72,7 +72,7 @@ class Evaluator:
         )
         present, absent = classify_evidence_from_oracle_results(oracle_results)
         return inferred, frozenset(present), frozenset(absent)
-    
+
     def evaluate_observation(
         self,
         ghost_obs: GhostObservation,
@@ -103,7 +103,8 @@ class Evaluator:
 
         # Assess semantic correctness using Evidence Entitlement Evaluator
         # Extract evidence from oracle results
-        test_imports_member = ghost_obs.member_name in oracle_results.get("current_state", {}).get("members_in_tests", [])
+        members_in_tests = oracle_results.get("current_state", {}).get("members_in_tests", [])
+        test_imports_member = ghost_obs.member_name in members_in_tests
         present_evidence, absent_evidence = classify_evidence_from_oracle_results(
             oracle_results,
             test_imports_member=test_imports_member
@@ -145,19 +146,19 @@ class Evaluator:
     ) -> ExperimentResult:
         """Backward-compatible name for independent observation evaluation."""
         return self.evaluate_observation(ghost_obs, oracle_results)
-    
+
     def save_result(self, result: ExperimentResult, output_path: Path):
         """Save experiment result as JSON."""
-        
+
         # Convert to dict, handling enums
         result_dict = asdict(result)
-        
+
         # Convert enums to strings
         def enum_to_str(obj):
             if hasattr(obj, 'name'):
                 return obj.name
             return obj
-        
+
         def convert_enums(d):
             if isinstance(d, dict):
                 return {k: convert_enums(v) for k, v in d.items()}
@@ -165,33 +166,33 @@ class Evaluator:
                 return [convert_enums(v) for v in d]
             else:
                 return enum_to_str(d)
-        
+
         result_dict = convert_enums(result_dict)
-        
+
         output_path.parent.mkdir(parents=True, exist_ok=True)
         with open(output_path, 'w') as f:
             json.dump(result_dict, f, indent=2)
 
 class ContrastivePairGenerator:
     """Generate paired worlds with same evidence, different semantic truth."""
-    
+
     @staticmethod
     def generate_pair(intent_a: IntentKind, intent_b: IntentKind) -> tuple:
         """Generate two worlds that look similar but have different intent.
-        
+
         Returns (world_a_spec, world_b_spec, shared_evidence)
         """
-        
+
         # Both worlds have identical commit messages and structure
         # Only the ground-truth intent differs
-        
+
         shared_evidence = {
             "member_removed_from_production": True,
             "member_now_in_tests": True,
             "removal_commit_message": "refactor: simplify implementation",
             "commit_messages_appear_intentional": True,
         }
-        
+
         return (
             {"intent": intent_a, "name": f"world_{intent_a.name}"},
             {"intent": intent_b, "name": f"world_{intent_b.name}"},

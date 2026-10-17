@@ -14,15 +14,12 @@ This test demonstrates that observation ≠ interpretation ≠ conclusion ≠ ac
 """
 
 import pytest
-import tempfile
-from pathlib import Path
-from .ghost_invoker import GhostInvoker, GhostFinding, GhostAnalysis
-from .evaluator import Evaluator
-from .epistemic_model import (
+from swizzle.wizzle.ghost_invoker import GhostFinding
+from swizzle.wizzle.epistemic_model import (
     IntentKind, SemanticCorrectness, FactualCorrectness, GhostObservation
 )
-from .evidence_entitlement import EvidenceEntitlementEvaluator, EvidenceCategory
-from .action_entitlement import ActionEntitlementOracle, ActionEntitlementVerdict
+from swizzle.wizzle.evidence_entitlement import EvidenceEntitlementEvaluator, EvidenceCategory
+from swizzle.wizzle.action_entitlement import ActionEntitlementOracle, ActionEntitlementVerdict
 
 
 def test_canonical_counterexample_overclaim():
@@ -140,12 +137,12 @@ def test_canonical_counterexample_overclaim():
     print(f"Member: {ghost_finding.member_name}")
     print(f"\nGhost's observation: {ghost_finding.message}")
     print(f"Ghost's severity claim: {ghost_finding.severity} (confidence: {ghost_finding.metadata['confidence']})")
-    print(f"\nWIZZLE's assessment:")
+    print("\nWIZZLE's assessment:")
     print(f"  Factual: {factual_correctness.name} ✓")
     print(f"  Semantic: {verdict.semantic_correctness.name} ✗")
     print(f"  Max justified severity: {verdict.maximum_justified_severity}")
     print(f"  Action entitled: {action_detail.verdict.name} ✗")
-    print(f"\nConclusion: Ghost's MAJOR severity claim EXCEEDS evidence entitlement")
+    print("\nConclusion: Ghost's MAJOR severity claim EXCEEDS evidence entitlement")
     print("="*60)
 
 
@@ -163,13 +160,6 @@ def test_canonical_counterexample_factual_then_semantic():
     # Case: Member was removed (factual truth)
     # But we can't determine intent (semantic uncertainty)
     # Therefore action not entitled (epistemic principle)
-
-    ghost_obs = GhostObservation(
-        member_name="UnknownRemoval",
-        provenance_class="REMOVED_FROM_LIBRARY",
-        severity="MAJOR",
-        evidence_cited=["Member exists in history, absent in current"]
-    )
 
     # Evidence: member was removed, but intent unclear
     present_evidence = {EvidenceCategory.MEMBER_REMOVAL_HISTORY}
@@ -201,7 +191,7 @@ def test_canonical_counterexample_factual_then_semantic():
     assert action_detail.verdict == ActionEntitlementVerdict.NOT_ENTITLED
 
     print("\nCase 2: Factual does not imply action")
-    print(f"  Factual: Member was removed (observable fact)")
+    print("  Factual: Member was removed (observable fact)")
     print(f"  Semantic: {verdict.semantic_correctness.name} (cannot determine intent)")
     print(f"  Action: {action_detail.verdict.name} (insufficient evidence)")
 

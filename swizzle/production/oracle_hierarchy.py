@@ -2,7 +2,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Dict
 
 class OracleBasis(str, Enum):
     TARGET_REPORTED = "TARGET_REPORTED"

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "swizzle"
-version = "0.7.1"
+version = "0.8.0"
 description = "An adaptive adversarial evaluator for repository-level autonomous modification systems: builds reproducible repository states in which a target is likely to make an incorrect epistemic, diagnostic or mutational decision, and proves independently whether it did"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -20,6 +20,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Quality Assurance",
     "Topic :: Software Development :: Testing",
 ]
@@ -34,9 +35,12 @@ swizzle = "swizzle.cli:main"
 [project.optional-dependencies]
 # pytest-benchmark provides the `benchmark` fixture that
 # Tests/test_integration_end_to_end.py::TestIntegrationPerformance uses.
-dev = ["pytest>=8", "pytest-benchmark"]
+# ruff and mypy are the static gates CI runs (see [tool.ruff] and [tool.mypy] below); setuptools builds the
+# wheel that Tests/test_packaging.py inspects.
+dev = ["pytest>=8", "pytest-benchmark", "ruff>=0.6", "mypy>=1.10", "setuptools>=68"]
 # The CNS gate contract, for swizzle.cns_adapter's ProofGate and AttackGate. Optional: SWIZZLE runs without it.
-cns = ["cns @ git+https://github.com/wking53214/CNS.git@v1.8.0"]
+# Pinned to a full commit (the v1.8.0 tag), so the contract cannot move under a build.
+cns = ["cns @ git+https://github.com/wking53214/CNS.git@5252ceebe98185f7be81212d988055ccf9884568"]  # v1.8.0
 
 [tool.setuptools]
 packages = [
@@ -52,7 +56,43 @@ packages = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["Tests", "swizzle/wizzle"]
+testpaths = ["Tests"]
 
 [tool.ruff]
-line-length = 100
+line-length = 120
+extend-exclude = ["corpus", "fixtures"]
+
+[tool.ruff.lint]
+# E/W: pycodestyle errors and warnings, F: pyflakes, B: bugbear. `I` (import
+# order) is left out on purpose: it would reorder hundreds of imports for no
+# defect, and the code has no formatter to keep it ordered afterwards.
+select = ["E", "F", "W", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+# The governor scenarios are data: each one carries a full-sentence hypothesis,
+# detail and remedy that the tests and the report print verbatim. Wrapping the
+# sentences would change nothing the code does and would make the catalogue
+# harder to read, so line length is not enforced for this one file.
+"swizzle/governor/scenarios.py" = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+files = ["swizzle", "tools"]
+check_untyped_defs = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+# Optional or sibling dependencies that are not installed with SWIZZLE and ship no
+# stubs. Each is imported lazily behind a try/except or inside a subprocess, so a
+# missing package is handled at run time, not hidden here:
+#   cns          the optional contract package (swizzle[cns]); the adapter raises CnsNotInstalled without it
+#   ghost_buster the target under test (a sibling checkout, imported by path)
+#   warden       the governor under attack (imported only in a subprocess)
+#   libcst       the optional transformer used by the pydantic adapter
+#   pydantic     the library the pydantic adapter migrates
+[[tool.mypy.overrides]]
+module = ["cns", "cns.*", "ghost_buster", "ghost_buster.*", "warden", "warden.*", "libcst", "libcst.*", "pydantic", "pydantic.*"]
+ignore_missing_imports = true
+
+# Test modules are not part of the type gate: they live in a directory with no
+# package (`Tests/` has no __init__.py, so names collide for mypy), build many
+# throwaway fakes and monkeypatch freely. They are checked by running them.

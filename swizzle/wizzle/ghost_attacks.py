@@ -18,8 +18,7 @@ evaluable by oracles without knowing Ghost's conclusion.
 """
 
 from dataclasses import dataclass
-from typing import Dict, Any, Optional
-from pathlib import Path
+from typing import Dict, Any
 from enum import Enum, auto
 
 
@@ -54,7 +53,7 @@ class GhostAttack:
 class GhostAttackGenerator:
     """Generate and evaluate Ghost attack scenarios."""
 
-    ATTACKS = {}  # Populated by attack_* methods
+    ATTACKS: Dict[str, GhostAttack] = {}  # Populated by attack_* methods
 
     @staticmethod
     def attack_a_intentional_refactor() -> GhostAttack:
@@ -460,7 +459,7 @@ class GhostAttackGenerator:
             }
         """
 
-        result = {
+        result: Dict[str, Any] = {
             "attack_id": attack.attack_id,
             "attack_type": attack.attack_type.name,
         }

@@ -17,7 +17,7 @@ def _entry(name, kind="missed_current_claim", oracle="reporting", judgement="vio
 def test_only_reporting_violations_become_lessons():
     entries = [_entry("a"), _entry("b", oracle="structural"), _entry("c", judgement="ok"),
                _entry("d", kind="something_else")]
-    assert [l.source_case for l in lessons_from(entries)] == ["a"]
+    assert [lesson.source_case for lesson in lessons_from(entries)] == ["a"]
 
 
 def test_the_same_shape_gets_the_same_id_whatever_it_is_called():

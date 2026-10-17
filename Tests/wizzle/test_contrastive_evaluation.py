@@ -1,9 +1,8 @@
 """Tests for contrastive pair evaluation."""
 
 import pytest
-from pathlib import Path
-from .contrastive_evaluation import ContrastiveEvaluator, ContrastiveResult
-from .epistemic_model import SemanticTruth, IntentKind
+from swizzle.wizzle.contrastive_evaluation import ContrastiveEvaluator, ContrastiveResult
+from swizzle.wizzle.epistemic_model import SemanticTruth, IntentKind
 
 
 def test_contrastive_result_dataclass():

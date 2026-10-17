@@ -23,11 +23,12 @@ import importlib.util
 import sqlite3
 import sys
 from pathlib import Path
+from types import ModuleType
 from typing import Iterator
 
 
 @contextlib.contextmanager
-def imported(root: Path, dotted: str) -> Iterator[object]:
+def imported(root: Path, dotted: str) -> Iterator[ModuleType]:
     """Import `dotted` out of the warp at `root`, then forget it.
 
     Warps reuse module names between them (every one of them has an `app`),

@@ -27,7 +27,7 @@ the import graph and fails if any of them can reach one.
 
 from __future__ import annotations
 
-from typing import Callable, Dict, Mapping, Sequence, Tuple
+from typing import Callable, Dict, Sequence, Tuple
 
 from ..evidence import Evidence
 from ..signals import Signal
@@ -59,7 +59,7 @@ def judge_all(evidence: Evidence,
     must not be able to masquerade as a clean result either.
     """
     from ..signals import unsure
-    out = []
+    out: list[Signal] = []
     for name, oracle in ORACLES.items():
         if only and name not in only:
             continue

@@ -12,7 +12,7 @@ This layer prevents WIZZLE from assuming semantic correctness implies action war
 
 from enum import Enum, auto
 from dataclasses import dataclass, field
-from typing import List, Dict, Any, Optional
+from typing import List, Optional
 from .epistemic_model import SemanticCorrectness
 
 
@@ -80,8 +80,8 @@ class ActionEntitlementOracle:
         has_replacement_test: bool = False,
         has_behavioral_verification: bool = False,
         has_explicit_policy: bool = False,
-        affected_systems: List[str] = None,
-        risk_factors: List[ActionRisk] = None
+        affected_systems: Optional[List[str]] = None,
+        risk_factors: Optional[List[ActionRisk]] = None
     ) -> ActionEntitlementDetail:
         """Assess whether action is entitled given semantic verdict.
 

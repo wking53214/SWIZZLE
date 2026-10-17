@@ -101,7 +101,8 @@ class TriageLedger:
                 "true_decisions": true_count,
                 "false_decisions": false_count,
                 "deferred_decisions": deferred_count,
-                "false_positive_rate": false_count / (true_count + false_count) if (true_count + false_count) > 0 else 0,
+                "false_positive_rate": (false_count / (true_count + false_count)
+                                        if (true_count + false_count) > 0 else 0),
                 "recent_decisions": [
                     {
                         "decision": e.decision.value,

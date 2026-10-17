@@ -14,7 +14,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from typing import List, Optional, Sequence
+from typing import Any, Callable, Dict, List, Optional
 
 from . import (catalogue, convergence, coverage, metrics, minimize, probes,
                reporting, search)
@@ -24,11 +24,23 @@ from .adapters import GhostToolsAdapter
 from .attack import run as run_case
 from .corpus import Corpus, PromotionRefused
 from .differential import compare
-from .genome import AttackCategory, RepositoryGenome
+from .genome import RepositoryGenome
 from .mutators import registry
 from .sandbox import Sandbox, purge
 
+#: Where the attack memory lives when --corpus-dir is not given: a folder called
+#: `corpus` in the current directory. Nothing is created there until something is
+#: recorded (`--corpus` on attack/evolve/minimize, `corpus --promote`, `standing
+#: --record`, ...); read-only commands never create it.
 DEFAULT_CORPUS = Path("corpus")
+
+_CORPUS_HELP = ("the attack-memory folder (default: ./corpus). It is created only when "
+                "a command records something; --corpus-path is the older spelling")
+
+
+def _corpus_arg(parser) -> None:
+    parser.add_argument("--corpus-dir", "--corpus-path", dest="corpus_path", type=Path,
+                        default=DEFAULT_CORPUS, metavar="DIR", help=_CORPUS_HELP)
 
 
 def add_parsers(sub) -> None:
@@ -59,7 +71,7 @@ def add_parsers(sub) -> None:
     attack.add_argument("--corpus", action="store_true",
                         help="archive results (attacks to discovered, clean "
                              "cases to rejected)")
-    attack.add_argument("--corpus-path", type=Path, default=DEFAULT_CORPUS)
+    _corpus_arg(attack)
     attack.add_argument("--report", action="store_true",
                         help="print the full report for every case that fails")
     attack.add_argument("--json", action="store_true")
@@ -80,7 +92,7 @@ def add_parsers(sub) -> None:
                              "of the catalogue (minimized, regression, "
                              "discovered, rejected, or `all`)")
     evolve.add_argument("--corpus", action="store_true")
-    evolve.add_argument("--corpus-path", type=Path, default=DEFAULT_CORPUS)
+    _corpus_arg(evolve)
     evolve.add_argument("--json", action="store_true")
     evolve.add_argument("--ghost-tools", type=Path, default=None, metavar="PATH")
     evolve.add_argument("--no-knowledge", action="store_true",
@@ -92,14 +104,14 @@ def add_parsers(sub) -> None:
     minimise.add_argument("case")
     minimise.add_argument("--budget", type=int, default=minimize.DEFAULT_BUDGET)
     minimise.add_argument("--corpus", action="store_true")
-    minimise.add_argument("--corpus-path", type=Path, default=DEFAULT_CORPUS)
+    _corpus_arg(minimise)
     minimise.add_argument("--json", action="store_true")
     minimise.add_argument("--ghost-tools", type=Path, default=None, metavar="PATH")
 
     reproduce = sub.add_parser("reproduce", help="rebuild and re-run one case "
                                                  "from its genome")
     reproduce.add_argument("case")
-    reproduce.add_argument("--corpus-path", type=Path, default=DEFAULT_CORPUS)
+    _corpus_arg(reproduce)
     reproduce.add_argument("--keep", type=Path, default=None, metavar="DIR",
                            help="materialise the world here and leave it")
     reproduce.add_argument("--build-only", action="store_true",
@@ -110,7 +122,7 @@ def add_parsers(sub) -> None:
 
     corpus_cmd = sub.add_parser("corpus", help="the attack memory")
     corpus_cmd.add_argument("--bucket", default="", metavar="NAME")
-    corpus_cmd.add_argument("--corpus-path", type=Path, default=DEFAULT_CORPUS)
+    _corpus_arg(corpus_cmd)
     corpus_cmd.add_argument("--promote", default="", metavar="CASE")
     corpus_cmd.add_argument("--force", action="store_true",
                             help="promote a case only one oracle saw")
@@ -121,7 +133,7 @@ def add_parsers(sub) -> None:
                                           "a human decision")
     hand.add_argument("action", choices=("propose", "list", "approve", "fixed"))
     hand.add_argument("lesson", nargs="?", default="", metavar="ID")
-    hand.add_argument("--corpus-path", type=Path, default=DEFAULT_CORPUS)
+    _corpus_arg(hand)
     hand.add_argument("--handoff-path", type=Path, default=Path("handoff"))
     hand.add_argument("--json", action="store_true")
 
@@ -132,7 +144,7 @@ def add_parsers(sub) -> None:
                       help="which archived cases to run (default regression)")
     diff.add_argument("--seeds", action="store_true",
                       help="use the seed catalogue instead of the corpus")
-    diff.add_argument("--corpus-path", type=Path, default=DEFAULT_CORPUS)
+    _corpus_arg(diff)
     diff.add_argument("--json", action="store_true")
     diff.add_argument("--fail-on-unmeasured", action="store_true",
                       help="exit 1 when a case could not be measured on either "
@@ -144,7 +156,7 @@ def add_parsers(sub) -> None:
                         help="read a machine report instead of running anything")
     report.add_argument("--bucket", default="", metavar="NAME",
                         help="run archived cases from this bucket")
-    report.add_argument("--corpus-path", type=Path, default=DEFAULT_CORPUS)
+    _corpus_arg(report)
     report.add_argument("--json", action="store_true")
     report.add_argument("--ghost-tools", type=Path, default=None, metavar="PATH")
 
@@ -159,7 +171,7 @@ def add_parsers(sub) -> None:
                                "adjacency, variant); repeatable")
     standing.add_argument("--budget", type=int, default=6, metavar="N",
                           help="variants to build and run (default 6)")
-    standing.add_argument("--corpus-path", type=Path, default=DEFAULT_CORPUS)
+    _corpus_arg(standing)
     standing.add_argument("--record", action="store_true",
                           help="write the resolution back into the corpus entry")
     standing.add_argument("--json", action="store_true")
@@ -175,7 +187,7 @@ def add_parsers(sub) -> None:
     hold.add_argument("--seed", type=int, default=1, metavar="N")
     hold.add_argument("--run", action="store_true",
                       help="measure the frozen population against the target")
-    hold.add_argument("--corpus-path", type=Path, default=DEFAULT_CORPUS)
+    _corpus_arg(hold)
     hold.add_argument("--json", action="store_true")
     hold.add_argument("--ghost-tools", type=Path, default=None, metavar="PATH")
     hold.add_argument("--timeout", type=float, default=900.0, metavar="SECONDS")
@@ -187,13 +199,13 @@ def add_parsers(sub) -> None:
                       help="one case; omit for all")
     hist.add_argument("--returned", action="store_true",
                       help="only cases that went quiet and came back")
-    hist.add_argument("--corpus-path", type=Path, default=DEFAULT_CORPUS)
+    _corpus_arg(hist)
     hist.add_argument("--json", action="store_true")
 
     know = sub.add_parser(
         "knowledge",
         help="what the laboratory has learned, and how it came to know it")
-    know.add_argument("--corpus-path", type=Path, default=DEFAULT_CORPUS)
+    _corpus_arg(know)
     know.add_argument("--json", action="store_true")
     know.add_argument("--ghost-tools", type=Path, default=None, metavar="PATH")
 
@@ -207,7 +219,7 @@ def add_parsers(sub) -> None:
                       help="the bound. Not settling within it is the finding, "
                            "never a reason to keep going (default %d)"
                            % convergence.DEFAULT_ROUNDS)
-    loop.add_argument("--corpus-path", type=Path, default=DEFAULT_CORPUS)
+    _corpus_arg(loop)
     loop.add_argument("--json", action="store_true")
     loop.add_argument("--ghost-tools", type=Path, default=None, metavar="PATH")
     loop.add_argument("--timeout", type=float, default=900.0, metavar="SECONDS")
@@ -216,7 +228,7 @@ def add_parsers(sub) -> None:
     tidy.add_argument("--purge", action="store_true")
 
 
-HANDLERS = {}
+HANDLERS: Dict[str, Callable[[Any], int]] = {}
 
 
 def handle(command: str, args) -> int:
@@ -447,9 +459,9 @@ def _evolve(args) -> int:
                            population=args.population, seed=args.seed,
                            knowledge=store, on_case=announce)
     if args.corpus:
-        store = Corpus(args.corpus_path)
+        archive = Corpus(args.corpus_path)
         for result in report.best:
-            store.record(result, "discovered", note="found by search")
+            archive.record(result, "discovered", note="found by search")
 
     if args.json:
         print(json.dumps(report.to_dict(), indent=2, sort_keys=True))
@@ -616,7 +628,7 @@ def _handoff(args) -> int:
             Corpus(args.corpus_path).entries("minimized")
         sent = store.propose(lessons_from(entries))
         if args.json:
-            print(json.dumps([l.to_dict() for l in sent], indent=2, sort_keys=True))
+            print(json.dumps([lesson.to_dict() for lesson in sent], indent=2, sort_keys=True))
         else:
             for lesson in sent:
                 print("%-12s %-8s %s" % (lesson.id, lesson.severity, lesson.plain))
@@ -743,6 +755,7 @@ def _standing(args) -> int:
         from .history import History
         ledger = History(args.corpus_path / "standings.json")
     revision = str(dict(adapter.version()).get("commit", ""))
+    targets: List[tuple]
     if args.case:
         entries = [e for e in store.entries() if e.name == args.case]
         if not entries:
@@ -750,7 +763,6 @@ def _standing(args) -> int:
             if genome is None:
                 print("swizzle: no case called %r" % args.case, file=sys.stderr)
                 return 2
-            entries = [None]
             targets = [(args.case, genome, None, None, None)]
         else:
             targets = [(e.name, e.genome, e.original_genome, e.observation, e)
@@ -855,7 +867,7 @@ def _seed_ledger(ledger, entry, before) -> None:
 def _newest(entries):
     """One entry per case, preferring the most interrogated bucket."""
     order = {"regression": 0, "minimized": 1, "discovered": 2, "rejected": 3}
-    best = {}
+    best: Dict[str, Any] = {}
     for entry in entries:
         current = best.get(entry.name)
         if current is None or order.get(entry.bucket, 9) < order.get(current.bucket, 9):

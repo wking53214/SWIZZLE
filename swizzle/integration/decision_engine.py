@@ -16,7 +16,7 @@ from datetime import datetime
 import uuid
 
 from swizzle.integration.event_system import Event, EventType
-from swizzle.integration.ml_predictor import MLPredictor, PredictionCache
+from swizzle.integration.frequency_predictor import FrequencyPredictor, PredictionCache
 from swizzle.integration.unified_index import get_unified_index
 
 
@@ -46,7 +46,9 @@ class ConfidenceSource(str, Enum):
     CONSENSUS = "consensus"  # Multiple sources agree
     STATISTICAL = "statistical"  # Threshold exceeded
     EXPERT_SYSTEM = "expert_system"  # Rule engine output
-    ML_MODEL = "ml_model"  # ML model prediction
+    # Kept for compatibility with stored records. The "model" is a historical success rate
+    # (see frequency_predictor), not machine learning.
+    ML_MODEL = "ml_model"
 
 
 @dataclass
@@ -140,9 +142,9 @@ class DecisionEngine:
         self.decision_log: List[AutomatedDecision] = []
         self.handlers: Dict[DecisionType, Callable[[AutomatedDecision], None]] = {}
 
-        # ML predictor for confidence enhancement
+        # Frequency predictor (historical counts, not machine learning) for confidence enhancement
         index = get_unified_index()
-        self.ml_predictor = MLPredictor(index)
+        self.ml_predictor = FrequencyPredictor(index)
         self.prediction_cache = PredictionCache(self.ml_predictor)
 
     def _enhance_confidence_with_ml(
@@ -152,20 +154,20 @@ class DecisionEngine:
         base_confidence: float,
         action_similarity: float = 0.8,
     ) -> float:
-        """Enhance confidence using ML predictor based on historical patterns."""
+        """Enhance confidence using the frequency predictor (historical success rates)."""
         ml_prediction = self.prediction_cache.get_prediction(
             decision_type.value,
             risk_level.value,
             action_similarity=action_similarity,
         )
 
-        # Check if ML model has sufficient training data
+        # Check whether there is enough history for this decision type and risk level
         key = (decision_type.value, risk_level.value)
         model = self.ml_predictor.models.get(key)
 
-        # Only blend with ML if model has sufficient samples (3+)
+        # Only blend with the history if it has enough samples (3+)
         if model and model.sample_count >= 3:
-            # Blend base confidence with ML prediction when we have historical data
+            # Blend base confidence with the historical success rate when we have data
             enhanced = (base_confidence * 0.7) + (ml_prediction * 0.3)
             return min(1.0, max(0.0, enhanced))
 
@@ -194,7 +196,7 @@ class DecisionEngine:
         # High confidence FP patterns are low-risk to add to filters
         risk = RiskLevel.LOW if base_confidence >= 0.90 else RiskLevel.MEDIUM
 
-        # Enhance confidence using ML predictor based on historical patterns
+        # Enhance confidence using the frequency predictor (historical success rates)
         finding_type = event.data.get("finding_type", "unknown")
         ml_enhanced_confidence = self._enhance_confidence_with_ml(
             DecisionType.APPLY_FILTER_PATTERN,
@@ -209,7 +211,7 @@ class DecisionEngine:
             evidence=[
                 f"Pattern confirmed by {event.source_tool}",
                 f"Base confidence: {base_confidence:.2f}",
-                f"ML-enhanced confidence: {ml_enhanced_confidence:.2f}",
+                f"History-adjusted confidence: {ml_enhanced_confidence:.2f}",
                 f"Finding type: {finding_type}",
             ],
         )
@@ -246,7 +248,7 @@ class DecisionEngine:
             value=1.0,  # Violations are deterministic
             source=ConfidenceSource.EXPERT_SYSTEM,
             evidence=[
-                f"Violation detected by Swizzle audit",
+                "Violation detected by Swizzle audit",
                 f"Type: {event.data.get('violation_type')}",
             ],
         )
@@ -336,7 +338,7 @@ class DecisionEngine:
         improvement = event.data.get("improvement_percent", 0)
         base_confidence = min(0.95, 0.70 + improvement / 100)
 
-        # Enhance with ML prediction for oracle training decisions
+        # Enhance with the frequency prediction for oracle training decisions
         ml_enhanced_confidence = self._enhance_confidence_with_ml(
             DecisionType.UPDATE_ORACLE_TRAINING,
             RiskLevel.LOW,
@@ -351,7 +353,7 @@ class DecisionEngine:
                 f"Oracle improvement: {improvement:.1f}%",
                 f"New accuracy: {event.data.get('accuracy', 0):.2%}",
                 f"Base confidence: {base_confidence:.2f}",
-                f"ML-enhanced confidence: {ml_enhanced_confidence:.2f}",
+                f"History-adjusted confidence: {ml_enhanced_confidence:.2f}",
             ],
         )
 
@@ -488,13 +490,13 @@ class DecisionEngine:
         }
 
     def refresh_ml_models(self) -> None:
-        """Refresh ML models from updated unified index."""
+        """Rebuild the historical success rates from the updated unified index."""
         index = get_unified_index()
-        self.ml_predictor = MLPredictor(index)
+        self.ml_predictor = FrequencyPredictor(index)
         self.prediction_cache.clear_cache()
 
     def get_ml_model_stats(self) -> Dict[str, Any]:
-        """Get statistics for trained ML models."""
+        """Get the historical success rates per (decision type, risk level)."""
         return self.ml_predictor.get_model_stats()
 
 

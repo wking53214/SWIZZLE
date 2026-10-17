@@ -14,12 +14,13 @@ import signal
 import sys
 import traceback
 from pathlib import Path
+from typing import Any, Dict, Optional
 
 
 def main(argv) -> int:
     spec = json.loads(Path(argv[1]).read_text(encoding="utf-8"))
     target, behavior, scope, params = Path(spec["target"]), spec["behavior"], spec["scope"], spec["params"]
-    out = {"decision": None, "notes": [], "unmeasured": None, "crashed": False, "error": "",
+    out: Dict[str, Any] = {"decision": None, "notes": [], "unmeasured": None, "crashed": False, "error": "",
            "refused": False, "completed": False, "configured": {"ghost": False, "swizzle": False, "suite": True}}
     try:
         from warden import tagteam
@@ -30,7 +31,7 @@ def main(argv) -> int:
         print(json.dumps({"unavailable": f"{type(err).__name__}: {err}"}))
         return 0
 
-    caps = {"warden_version": getattr(sys.modules.get("warden"), "__version__", None), "features": {}}
+    caps: Dict[str, Any] = {"warden_version": getattr(sys.modules.get("warden"), "__version__", None), "features": {}}
     try:
         from warden import guard as _guard
         from warden.guard import is_protected
@@ -64,15 +65,24 @@ def main(argv) -> int:
             self.used = True
             return self.make(Path(tgt), observed)
 
-    drafter, finisher, judge, ghost_root, findings = None, None, None, None, []
+    class Idle:
+        def propose(self, *a):
+            return None
+
+    # The seats are duck-typed stand-ins for Warden's own roles, so they are `Any` here.
+    drafter: Any = None
+    finisher: Any = None
+    judge: Any = None
+    ghost_root: Optional[Path] = None
+    findings: Optional[list] = []
     edit = FileEdit(path=params.get("path", "NOTE.md"), kind="write", new=params.get("new", ""), old="")
     if behavior == "drafter_writes_tree":
-        class Writes:
+        class WritesTree:
             def propose(self, tgt, observed, baseline):
                 (Path(tgt) / "SNEAK.txt").write_text("written by the drafter\n", encoding="utf-8")
                 (Path(tgt) / "NOTE.md").write_text("tampered\n", encoding="utf-8")
                 return None
-        drafter = Writes()
+        drafter = WritesTree()
     elif behavior == "drafter_writes_same_size":
         class WritesQuietly:
             """Same byte count, and the file's old time put back: a size-and-time watch sees nothing."""
@@ -92,22 +102,14 @@ def main(argv) -> int:
                 return None
         drafter = WritesVenv()
     elif behavior == "finisher_writes_tree":
-        class Idle:
-            def propose(self, *a):
-                return None
-
-        class Writes:
+        class FinisherWritesTree:
             def finish(self, tgt, baseline, facts):
                 (Path(tgt) / "NOTE.md").write_text("tampered\n", encoding="utf-8")
                 return None
-        drafter, finisher = Idle(), Writes()
+        drafter, finisher = Idle(), FinisherWritesTree()
     elif behavior == "edit":
         drafter = Once(lambda tgt, observed: transformation(edit))
     elif behavior == "finisher_edit":
-        class Idle:
-            def propose(self, *a):
-                return None
-
         class Plants:
             def finish(self, tgt, baseline, facts):
                 return transformation(edit)
@@ -125,9 +127,12 @@ def main(argv) -> int:
             return transformation(FileEdit(path="pkg/dead.py", kind="delete", new=""), (defect,))
         drafter = Once(make)
         # Ghost keeps reporting the finding until the code is commented out or gone.
-        tagteam.ghost_scan = lambda tgt, **kw: (finding,) if "def unused" in (
-            (Path(tgt) / "pkg" / "dead.py").read_text(encoding="utf-8") if (Path(tgt) / "pkg" / "dead.py").exists() else ""
-        ).replace("# def unused", "") else ()
+        def _dead_source(tgt):
+            dead = Path(tgt) / "pkg" / "dead.py"
+            return dead.read_text(encoding="utf-8") if dead.exists() else ""
+
+        tagteam.ghost_scan = lambda tgt, **kw: (
+            (finding,) if "def unused" in _dead_source(tgt).replace("# def unused", "") else ())
         TagTeam._calibrate = lambda self, python, notes: True
         out["configured"].update(ghost=True, swizzle=True)
     elif behavior == "ghost_missing":
@@ -138,9 +143,10 @@ def main(argv) -> int:
         drafter = Once(lambda tgt, observed: transformation(edit))
         original = getattr(TagTeam, "_suite", None)
         if original is None:
-            print(json.dumps({"unavailable": "this Warden has no TagTeam._suite, so SIGTERM cannot be placed after the apply"}))
+            print(json.dumps({"unavailable": "this Warden has no TagTeam._suite, so SIGTERM "
+                                             "cannot be placed after the apply"}))
             return 0
-        state = {"sent": False}
+        state: Dict[str, bool] = {"sent": False}
 
         def hooked(self, *a, **kw):
             when = a[-1] if a and isinstance(a[-1], str) else str(kw.get("when", ""))

@@ -1,11 +1,10 @@
 """Tests for evidence entitlement evaluator."""
 
 import pytest
-from .evidence_entitlement import (
-    EvidenceCategory, EvidenceEntitlementEvaluator, EntitlementVerdictDetail,
-    classify_evidence_from_oracle_results
+from swizzle.wizzle.evidence_entitlement import (
+    EvidenceCategory, EvidenceEntitlementEvaluator, classify_evidence_from_oracle_results
 )
-from .epistemic_model import IntentKind, SemanticCorrectness
+from swizzle.wizzle.epistemic_model import IntentKind, SemanticCorrectness
 
 
 def test_removed_from_library_with_required_evidence():

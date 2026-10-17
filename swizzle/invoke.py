@@ -17,12 +17,15 @@ written against.
 from __future__ import annotations
 
 import json
+import logging
 import os
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 from typing import List, Optional, Sequence, Tuple
+
+log = logging.getLogger(__name__)
 
 #: Checks that reach outside the file set, and the reasons are in the module
 #: docstring. `--single-repo` stops it asking about a joined repository.
@@ -117,11 +120,14 @@ def scan(repo: Path, ghost_tools: Optional[Path] = None,
         existing = environment.get("PYTHONPATH", "")
         environment["PYTHONPATH"] = (str(ghost_tools) + os.pathsep + existing
                                      if existing else str(ghost_tools))
+    log.debug("running ghost_buster over %s (timeout %ss, ghost_tools=%s)", repo, timeout, ghost_tools)
     try:
         done = subprocess.run(command, capture_output=True, text=True,
                               timeout=timeout, env=environment, cwd=str(repo))
     except (OSError, subprocess.TimeoutExpired) as exc:
+        log.warning("ghost_buster could not be run over %s: %s", repo, exc)
         raise InvocationFailed("could not run ghost_buster: %s" % exc) from exc
+    log.debug("ghost_buster exited %d over %s", done.returncode, repo)
 
     stderr_tail = (done.stderr or "").strip()[-400:]
     body = _json_body(done.stdout)

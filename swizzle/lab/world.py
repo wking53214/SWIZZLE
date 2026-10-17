@@ -14,11 +14,12 @@ through `Sandbox.resolve`.
 
 from __future__ import annotations
 
+import random
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, List, Sequence, Tuple
 
 from .draft import TargetDialect, WorldDraft, sha256
-from .genome import (AttackCategory, ClaimSpec, ClaimStyle, CountBlockSpec,
+from .genome import (ClaimSpec, ClaimStyle, CountBlockSpec,
                      DocumentKind, DocumentSpec, Phase, RepositoryGenome)
 from . import mutators
 from .sandbox import Sandbox
@@ -261,7 +262,8 @@ def build(genome: RepositoryGenome, dialect: TargetDialect) -> WorldDraft:
         draft.symlinks.append((link.link, link.target, link.escapes_repository))
     if genome.filesystem.filler_modules:
         mutators.get("add_filler_modules").apply(
-            draft, {"count": genome.filesystem.filler_modules}, None)
+            draft, {"count": genome.filesystem.filler_modules},
+            random.Random("%d:add_filler_modules" % genome.seed))
 
     draft.dirty.extend(genome.git.dirty)
 

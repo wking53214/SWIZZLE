@@ -15,7 +15,7 @@ got safer from an evaluator that went blind.
 
 from __future__ import annotations
 
-from typing import Dict, Sequence, Tuple
+from typing import Dict, Tuple
 
 from .genome import (AttackCategory, ClaimSpec, ClaimStyle, CountBlockSpec,
                      DocumentKind, DocumentSpec, MutationSpec, Phase,
@@ -599,7 +599,7 @@ def get(name: str) -> RepositoryGenome:
     try:
         return by_name()[name]
     except KeyError:
-        raise KeyError("no seed case called %r; `swizzle seed` lists them" % name)
+        raise KeyError("no seed case called %r; `swizzle seed` lists them" % name) from None
 
 
 def select(pattern: str = "") -> Tuple[RepositoryGenome, ...]:

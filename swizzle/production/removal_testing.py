@@ -48,5 +48,6 @@ class RemovalTest:
                 except Exception:
                     results[prop.value] = PropertyResult.UNKNOWN.value
         failed = [k for k, v in results.items() if v == PropertyResult.FAILED.value]
-        overall = "FAILED" if failed else ("PASSED" if any(v == PropertyResult.PASSED.value for v in results.values()) else "UNKNOWN")
+        any_passed = any(v == PropertyResult.PASSED.value for v in results.values())
+        overall = "FAILED" if failed else ("PASSED" if any_passed else "UNKNOWN")
         return RemovalTestResult(self.proposal_id, results, overall)

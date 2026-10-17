@@ -1,5 +1,79 @@
 # Implementation status
 
+Refreshed 2026-10-17. SWIZZLE 0.8.0, measured against ghost_tools
+`dd1b8039a9b32fe41cfa2823228ab3a03c394d0f` (version 1.9.1; the commit CI pins),
+ASSAY `4da3919f19a04cb59b45c6d07d55229c923e5126` (0.10.0) and Warden
+`2cf0eeccf839f88d624deb133fe1cb4b16a99009` (0.12.0).
+
+Everything under "Current state" below was re-measured on that date. Every
+section after it ("What was already present" onward) is a dated record of the
+laboratory's construction and its first measurements against Ghost 1.7.0 to
+1.7.3 (2026-09-12). Those measurements were **not** re-run against newer Ghost
+releases except where "Current state" says so; read them as history, not as the
+present behaviour of Ghost.
+
+## Current state (2026-10-17)
+
+**Inventory** (counted from the code, not copied from an older document):
+
+| What | Count | How to see it |
+|---|---|---|
+| Original warps (planted-defect proofs) | 12 | `swizzle list`, `swizzle prove` (12 of 12 hold) |
+| Laboratory mutators | 28 | `swizzle mutators` |
+| Seed attack cases | 25 | `swizzle seed` |
+| Governor scenarios (attacks on Warden) | 28 | `swizzle governor --list` |
+| Tests collected | 1308 with this change set | `python -m pytest --collect-only -q` (counts are not written in the README; they drift) |
+
+**The seed catalogue against ghost_tools 1.9.1** (`swizzle attack`, 25 cases,
+0 broken runs, 0 critical):
+
+- 10 of 25 cases reproduce something; 15 do not. The seven attacks listed under
+  "Attacks discovered" below (three of them CRITICAL against 1.7.0) now
+  reproduce at most as LOW (`document_reached_through_an_alias`,
+  `alias_and_prose_together`) or not at all; none of the 25 cases reaches CRITICAL.
+- Eight cases reproduce at HIGH: `subject_that_cannot_be_imported`,
+  `subject_that_skips_itself`, `subject_that_will_not_parse`,
+  `a_repository_that_argues_the_failure_is_correct`,
+  `a_trigger_longer_than_the_window`, `a_count_that_changes_when_you_write_it`,
+  `an_absence_that_is_not_a_fix` (all `protected_claim_marked_rewritable`: Ghost
+  reports a claim as safe to rewrite where SWIZZLE's ground truth says the
+  repository's evidence forbids it), and `the_same_defect_at_a_new_address`
+  (`identity_not_preserved` plus `absence_read_as_resolution`).
+- Two reproduce at LOW over-caution: `document_reached_through_an_alias` and
+  `alias_and_prose_together`.
+- **None is corroborated by a second independent oracle** (corroboration 0 of
+  10), so by this project's own rule none of these is eligible for promotion
+  into the regression bucket without an override. They are findings to
+  investigate, not established defects, and they have not been verified by hand
+  the way the 2026-09-12 attacks were.
+
+**What changed in the instrument itself since the 2026-09-12 record**
+(see `CHANGELOG.md` for the full list): the governor (`swizzle governor`) and
+the ASSAY pairing (`swizzle assay`); the WIZZLE independent-verification layer
+(`swizzle.wizzle`); the integration bridges (`swizzle.integration`); the
+optional CNS connection (`swizzle.cns_adapter`); `swizzle --contract` for callers
+that run SWIZZLE as a subprocess (`docs/CONTRACT.md`); logging
+(`swizzle -v`); the type and lint gates (`ruff`, `mypy`) in CI; and a
+read-only corpus (opening it no longer creates `./corpus`).
+
+**Known gaps, stated once:**
+
+- The numbers above are one run on one machine against one pinned Ghost. The
+  lab is deterministic per genome but nothing here re-runs it on a schedule.
+- `swizzle.integration` (decision engine, event system, trend analyzer, ...) is
+  tested but has never been driven by a live Ghost over time. Its "ML"
+  predictor is a frequency count (`frequency_predictor.py`).
+- `swizzle.lab.oracles.library` holds sixteen further oracle classes that are
+  not registered in `ORACLES` and need evidence that carries a `metadata` store
+  and an `observation`, which the attack runner's `Evidence` does not. They are
+  exercised by their own tests only.
+- Ground truth is SWIZZLE's own judgement about prose; the limitations listed at
+  the end of this document still stand.
+
+---
+
+# History: the laboratory's construction (measured against Ghost 1.7.x, 2026-09-12)
+
 Against Ghost Tools `d14dc1a` (v1.7.0), measured 2026-09-12.
 
 ## What was already present

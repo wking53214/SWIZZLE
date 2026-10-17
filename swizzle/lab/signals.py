@@ -32,7 +32,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum, IntEnum
-from typing import Any, Mapping, Tuple
+from typing import Any, Mapping
 
 
 class Severity(IntEnum):

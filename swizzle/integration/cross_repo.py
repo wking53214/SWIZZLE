@@ -1,11 +1,11 @@
 """Cross-repository integration and analytics orchestration."""
 
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Dict, Optional, Any
 from datetime import datetime
 import json
 
-from .unified_index import UnifiedIndex, get_unified_index
+from .unified_index import get_unified_index
 from .query_engine import QueryEngine, create_query_engine
 
 

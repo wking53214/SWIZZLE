@@ -9,7 +9,6 @@ from pathlib import Path
 from datetime import datetime
 import time
 
-from swizzle.integration.test_track import TestTrack, Metric
 from swizzle.integration.arbiter import Arbiter, ValidationMetric
 from swizzle.integration.loop_orchestrator import LoopOrchestrator
 
@@ -55,7 +54,7 @@ def run_continuous_loop_demo():
     orchestrator.start_loop()
 
     print(f"[{datetime.now().strftime('%H:%M:%S')}] Starting continuous improvement loop")
-    print(f"Configuration:")
+    print("Configuration:")
     print(f"  • Max iterations: {orchestrator.loop_state.max_iterations}")
     print(f"  • Convergence threshold: {orchestrator.loop_state.convergence_threshold*100:.2f}%")
     print()
@@ -144,7 +143,7 @@ def run_continuous_loop_demo():
 
     # Summary statistics
     status = orchestrator.get_loop_status()
-    print(f"Final Statistics:")
+    print("Final Statistics:")
     print(f"  • Total iterations: {status['total_iterations']}")
     print(f"  • Acceptance rate: {status['acceptance_rate']*100:.1f}%")
     print(f"  • Total improvement: {status['total_improvement']*100:+.2f}%")
@@ -152,13 +151,13 @@ def run_continuous_loop_demo():
     print()
 
     # Arbiter reports
-    print(f"Swizzle Arbiter:")
+    print("Swizzle Arbiter:")
     swizzle_report = swizzle_arbiter.get_validation_report()
     print(f"  • Validations: {swizzle_report['total_validations']}")
     print(f"  • Acceptance rate: {swizzle_report['acceptance_rate']*100:.1f}%")
     print()
 
-    print(f"Ghost Tools Arbiter:")
+    print("Ghost Tools Arbiter:")
     ghost_report = ghost_tools_arbiter.get_validation_report()
     print(f"  • Validations: {ghost_report['total_validations']}")
     print(f"  • Acceptance rate: {ghost_report['acceptance_rate']*100:.1f}%")

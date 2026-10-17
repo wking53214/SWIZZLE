@@ -35,6 +35,7 @@ anything of the user's.
 from __future__ import annotations
 
 import hashlib
+import logging
 import os
 import shutil
 import subprocess
@@ -43,9 +44,20 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, Mapping, Optional, Sequence
 
+log = logging.getLogger(__name__)
+
 
 class SandboxViolation(RuntimeError):
     """A path outside the sandbox was about to be written or deleted."""
+
+
+def _text(value: "bytes | str | None") -> str:
+    """Text from what a timed-out subprocess left behind (it may be bytes even with text=True)."""
+    if value is None:
+        return ""
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace")
+    return value
 
 
 @dataclass(frozen=True)
@@ -188,13 +200,14 @@ class Sandbox:
         if env:
             environment.update(env)
         started = time.perf_counter()
+        log.debug("sandbox run %s in %s (timeout %ss)", list(argv), where, timeout)
         try:
             done = subprocess.run(list(argv), cwd=str(where), capture_output=True,
                                   text=True, timeout=timeout, env=environment)
             return Completed(tuple(argv), done.returncode, done.stdout, done.stderr,
                              False, time.perf_counter() - started)
         except subprocess.TimeoutExpired as exc:
-            return Completed(tuple(argv), -1, exc.stdout or "", exc.stderr or "",
+            return Completed(tuple(argv), -1, _text(exc.stdout), _text(exc.stderr),
                              True, time.perf_counter() - started)
         except OSError as exc:
             return Completed(tuple(argv), -1, "", "%s: %s" % (type(exc).__name__, exc),

@@ -5,6 +5,8 @@ enabling comparison between Ghost's conclusions and oracle assessments.
 """
 
 import json
+import logging
+import shutil
 import subprocess
 from pathlib import Path
 from dataclasses import dataclass
@@ -13,7 +15,10 @@ from typing import Optional, Dict, Any
 from .evidence_entitlement import (
     EvidenceEntitlementEvaluator, classify_evidence_from_oracle_results
 )
-from .epistemic_model import SemanticCorrectness, IntentKind
+from .epistemic_model import IntentKind
+
+log = logging.getLogger(__name__)
+
 
 @dataclass
 class GhostFinding:
@@ -65,18 +70,13 @@ class GhostInvoker:
         Raises:
             RuntimeError: If Ghost is not found.
         """
-        result = subprocess.run(
-            "which ghost",
-            shell=True,
-            capture_output=True,
-            text=True
-        )
-        if result.returncode != 0:
+        found = shutil.which("ghost")
+        if found is None:
             raise RuntimeError(
                 "Ghost not found in PATH. "
                 "Install Ghost or pass ghost_path explicitly."
             )
-        return Path(result.stdout.strip())
+        return Path(found)
 
     def invoke(self, repo_path: Path, timeout: float = 30.0) -> GhostAnalysis:
         """Run Ghost on a repository and return findings.
@@ -117,10 +117,12 @@ class GhostInvoker:
 
         try:
             # Attempt to invoke Ghost with JSON output
-            cmd = f"{self.ghost_path} analyze --json {repo_path}"
+            # argv list, no shell: a repository path with spaces or shell
+            # metacharacters is one argument, never part of a command.
+            cmd = [str(self.ghost_path), "analyze", "--json", str(repo_path)]
+            log.debug("invoking %s", cmd)
             result = subprocess.run(
                 cmd,
-                shell=True,
                 capture_output=True,
                 text=True,
                 timeout=timeout
@@ -251,7 +253,7 @@ class GhostInvoker:
 
     @staticmethod
     def _assess_finding(ghost_finding: GhostFinding,
-                       oracle_results: Dict) -> Dict[str, str]:
+                       oracle_results: Dict) -> Dict[str, Any]:
         """Assess whether Ghost's finding is semantically justified.
 
         Args:

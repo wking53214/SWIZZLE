@@ -1,11 +1,9 @@
 """Tests for CI/CD pipeline integration."""
 
-import pytest
-from datetime import datetime
 
 from swizzle.integration.cicd_integration import (
     TestResult, PerformanceMetric, GateDecision, PerformanceThresholdManager,
-    CIDDIntegrationEngine, get_cicd_engine, reset_cicd_engine,
+    get_cicd_engine, reset_cicd_engine,
 )
 from swizzle.integration.unified_index import get_unified_index, reset_unified_index
 from swizzle.integration.decision_engine import get_decision_engine, reset_decision_engine
@@ -181,7 +179,8 @@ class TestCIDDIntegrationEngine:
             TestResult(test_id=f"t{i}", test_name=f"test_{i}", passed=True, duration_seconds=1.0)
             for i in range(10)
         ]
-        results.append(TestResult(test_id="t_fail", test_name="test_fail", passed=False, duration_seconds=1.0, error_message="Assertion failed"))
+        results.append(TestResult(test_id="t_fail", test_name="test_fail", passed=False,
+                                  duration_seconds=1.0, error_message="Assertion failed"))
 
         decision = engine.evaluate_test_gate("unit_tests", results)
 

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
 
 from swizzle.lab import attack
 from swizzle.lab.differential import classify, compare

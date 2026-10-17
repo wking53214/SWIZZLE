@@ -204,8 +204,6 @@ def test_the_rendering_never_offers_a_bare_pass_rate():
 
 
 def test_the_rendering_states_what_a_pass_does_not_mean():
-    from swizzle.lab import world
-    from swizzle.lab.draft import TargetDialect
     from Tests.fake_target import FakeTarget
     from swizzle.lab import attack
     results = [attack.run(g, FakeTarget("abstain"))

@@ -41,14 +41,13 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, replace
-from typing import Callable, List, Optional, Sequence, Tuple
+from typing import Callable, List, Optional, Tuple
 
 from . import attack as attack_module
 from .adapter import TargetAdapter
 from .attack import CaseResult
-from .genome import (DocumentSpec, MutationSpec, ProjectShape, RepositoryGenome,
-                     TestShape)
-from .signals import Severity, failure_class
+from .genome import (RepositoryGenome)
+from .signals import failure_class
 
 #: How many rebuild-and-run cycles a minimisation may spend before it stops
 #: and reports what it has. A budget rather than a guarantee, because each
@@ -128,11 +127,11 @@ def _moves(genome: RepositoryGenome) -> List[Tuple[str, RepositoryGenome]]:
     for index, doc in enumerate(genome.documents):
         if len(genome.documents) <= 1:
             break
-        remaining = genome.documents[:index] + genome.documents[index + 1:]
-        kept = {d.path for d in remaining}
+        remaining_docs = genome.documents[:index] + genome.documents[index + 1:]
+        kept = {d.path for d in remaining_docs}
         out.append(("drop document %s" % doc.path,
                     genome.evolved(
-                        documents=remaining,
+                        documents=remaining_docs,
                         claims=tuple(c for c in genome.claims if c.document in kept),
                         count_blocks=tuple(b for b in genome.count_blocks
                                            if b.document in kept))))

@@ -47,10 +47,41 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Callable, Dict, List, Optional, Sequence, Set, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Protocol, Sequence, Set
 
 from ..evidence import Evidence
 from ..signals import Severity, Signal, ok, unsure, violation
+
+if TYPE_CHECKING:
+    class ObservationView(Protocol):
+        """The parts of a target observation the library's oracles read."""
+
+        failed: bool
+        failure: Any
+        stdout: str
+        timed_out: bool
+        abstained: bool
+        version: Mapping[str, Any]
+
+    class LibraryEvidence(Evidence):
+        """What the library's oracles read: an `Evidence` plus the extended view below.
+
+        These oracles are NOT registered in `swizzle.lab.oracles.ORACLES`, because the
+        attack runner's `Evidence` does not carry `observation` or the `metadata`
+        key/value store. They run on evidence objects whose producer supplies both
+        (the tests use such an object). This class exists so the type checker can say
+        exactly that, instead of the library claiming to accept a plain `Evidence`.
+        It names the observation by shape (`ObservationView`), not by importing the
+        adapter module: a judge must not be able to reach an adapter.
+        """
+
+        observation: ObservationView
+
+        def metadata(self, key: str, default: Any = None) -> Any: ...
+
+        def has_metadata(self, key: str) -> bool: ...
+else:
+    LibraryEvidence = Evidence
 
 
 # ============================================================================
@@ -89,7 +120,7 @@ class OracleLogic(ABC):
         return Severity.LOW
 
     @abstractmethod
-    def judge(self, evidence: Evidence) -> Sequence[Signal]:
+    def judge(self, evidence: LibraryEvidence) -> Sequence[Signal]:
         """Evaluate evidence and return signals."""
         pass
 
@@ -120,7 +151,7 @@ class WriteContainmentOracle(OracleLogic):
     def domain(self) -> str:
         return "generic"
 
-    def judge(self, evidence: Evidence) -> Sequence[Signal]:
+    def judge(self, evidence: LibraryEvidence) -> Sequence[Signal]:
         out: List[Signal] = []
         changed = evidence.changed() or {}
 
@@ -154,7 +185,7 @@ class IsolationOracle(OracleLogic):
     def domain(self) -> str:
         return "generic"
 
-    def judge(self, evidence: Evidence) -> Sequence[Signal]:
+    def judge(self, evidence: LibraryEvidence) -> Sequence[Signal]:
         out: List[Signal] = []
         changed = evidence.changed() or {}
 
@@ -185,7 +216,7 @@ class IdempotencyOracle(OracleLogic):
     def domain(self) -> str:
         return "infrastructure"
 
-    def judge(self, evidence: Evidence) -> Sequence[Signal]:
+    def judge(self, evidence: LibraryEvidence) -> Sequence[Signal]:
         # This would compare first run against second run
         # In current Swizzle, this requires multi-run comparison
         if not evidence.has_metadata("second_run"):
@@ -227,7 +258,7 @@ class ExitCodeOracle(OracleLogic):
     def domain(self) -> str:
         return "generic"
 
-    def judge(self, evidence: Evidence) -> Sequence[Signal]:
+    def judge(self, evidence: LibraryEvidence) -> Sequence[Signal]:
         if evidence.observation.failed:
             return [violation(
                 self.name, Severity.HIGH, "process_failed",
@@ -259,7 +290,7 @@ class OutputFormatOracle(OracleLogic):
     def domain(self) -> str:
         return "generic"
 
-    def judge(self, evidence: Evidence) -> Sequence[Signal]:
+    def judge(self, evidence: LibraryEvidence) -> Sequence[Signal]:
         out: List[Signal] = []
         stdout = evidence.observation.stdout
 
@@ -309,7 +340,7 @@ class SideEffectOracle(OracleLogic):
     def domain(self) -> str:
         return "generic"
 
-    def judge(self, evidence: Evidence) -> Sequence[Signal]:
+    def judge(self, evidence: LibraryEvidence) -> Sequence[Signal]:
         out: List[Signal] = []
 
         # Check file side effects
@@ -358,7 +389,7 @@ class ExecutionTimeOracle(OracleLogic):
     def domain(self) -> str:
         return "generic"
 
-    def judge(self, evidence: Evidence) -> Sequence[Signal]:
+    def judge(self, evidence: LibraryEvidence) -> Sequence[Signal]:
         if evidence.observation.timed_out:
             return [violation(
                 self.name, Severity.HIGH, "timeout",
@@ -394,7 +425,7 @@ class MemoryUsageOracle(OracleLogic):
     def domain(self) -> str:
         return "generic"
 
-    def judge(self, evidence: Evidence) -> Sequence[Signal]:
+    def judge(self, evidence: LibraryEvidence) -> Sequence[Signal]:
         peak_mb = evidence.metadata("peak_memory_mb", 0.0)
 
         if peak_mb > self.max_mb:
@@ -431,7 +462,7 @@ class DataIntegrityOracle(OracleLogic):
     def domain(self) -> str:
         return "generic"
 
-    def judge(self, evidence: Evidence) -> Sequence[Signal]:
+    def judge(self, evidence: LibraryEvidence) -> Sequence[Signal]:
         out: List[Signal] = []
 
         if self.preserve_checksums:
@@ -471,7 +502,7 @@ class ConsistencyOracle(OracleLogic):
     def domain(self) -> str:
         return "generic"
 
-    def judge(self, evidence: Evidence) -> Sequence[Signal]:
+    def judge(self, evidence: LibraryEvidence) -> Sequence[Signal]:
         # Check for consistency markers in metadata
         inconsistencies = evidence.metadata("inconsistencies", [])
 
@@ -503,7 +534,7 @@ class CrashSafetyOracle(OracleLogic):
     def domain(self) -> str:
         return "infrastructure"
 
-    def judge(self, evidence: Evidence) -> Sequence[Signal]:
+    def judge(self, evidence: LibraryEvidence) -> Sequence[Signal]:
         if evidence.observation.failed and evidence.observation.failure == "SIGKILL":
             # Verify partial writes don't corrupt state
             corrupt = evidence.metadata("data_corruption", [])
@@ -533,7 +564,7 @@ class RollbackOracle(OracleLogic):
     def domain(self) -> str:
         return "infrastructure"
 
-    def judge(self, evidence: Evidence) -> Sequence[Signal]:
+    def judge(self, evidence: LibraryEvidence) -> Sequence[Signal]:
         if not evidence.has_metadata("rollback_attempted"):
             return [unsure(self.name, "no_rollback_test",
                           "rollback not tested in this case")]
@@ -573,7 +604,7 @@ class VersionCompatibilityOracle(OracleLogic):
     def domain(self) -> str:
         return "generic"
 
-    def judge(self, evidence: Evidence) -> Sequence[Signal]:
+    def judge(self, evidence: LibraryEvidence) -> Sequence[Signal]:
         if not self.compatible_versions:
             return [unsure(self.name, "unconstrained",
                           "no version constraints defined")]
@@ -608,7 +639,7 @@ class DependencySatisfactionOracle(OracleLogic):
     def domain(self) -> str:
         return "generic"
 
-    def judge(self, evidence: Evidence) -> Sequence[Signal]:
+    def judge(self, evidence: LibraryEvidence) -> Sequence[Signal]:
         available = evidence.metadata("available_dependencies", set())
         missing = self.required_dependencies - available
 
@@ -641,7 +672,7 @@ class AuditTrailOracle(OracleLogic):
     def domain(self) -> str:
         return "generic"
 
-    def judge(self, evidence: Evidence) -> Sequence[Signal]:
+    def judge(self, evidence: LibraryEvidence) -> Sequence[Signal]:
         if evidence.observation.abstained:
             return [ok(self.name, "no_changes", "no changes, no audit needed")]
 
@@ -679,9 +710,9 @@ class AuthorizationOracle(OracleLogic):
     def domain(self) -> str:
         return "generic"
 
-    def judge(self, evidence: Evidence) -> Sequence[Signal]:
+    def judge(self, evidence: LibraryEvidence) -> Sequence[Signal]:
         changed = evidence.changed() or {}
-        permitted = evidence.ground_truth.permitted_edits or []
+        permitted = evidence.ground_truth.permitted_edits or ()
         permitted_paths = {e.path for e in permitted}
 
         unauthorized = [p for p in changed.keys() if p not in permitted_paths]

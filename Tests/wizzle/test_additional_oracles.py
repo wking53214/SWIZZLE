@@ -8,11 +8,11 @@ and strengthen oracle discrimination ability.
 import pytest
 import tempfile
 from pathlib import Path
-from .additional_oracles import (
+from swizzle.wizzle.additional_oracles import (
     SeverityOracle, TopologyOracle, RegressionRiskOracle,
     TestCoverageOracle, BehavioralCompatibilityOracle, HistoricalUsageOracle
 )
-from .epistemic_model import IntentKind
+from swizzle.wizzle.epistemic_model import IntentKind
 
 
 class TestSeverityOracle:
@@ -283,11 +283,8 @@ class TestHistoricalUsageOracle:
 
             # Initialize minimal git repo
             import subprocess
-            subprocess.run(
-                f"cd {repo_path} && git init",
-                shell=True,
-                capture_output=True
-            )
+            subprocess.run(["git", "init"], cwd=repo_path, capture_output=True,
+                           timeout=60, check=True)
 
             result = HistoricalUsageOracle.analyze(repo_path)
 

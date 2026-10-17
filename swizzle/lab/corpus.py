@@ -30,6 +30,7 @@ anything the next time the code changes.
 from __future__ import annotations
 
 import json
+import logging
 import os
 import platform
 import subprocess
@@ -37,12 +38,13 @@ import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from .attack import CaseResult
-from .fitness import corroboration
 from .genome import RepositoryGenome
 from .minimize import Minimisation
+
+log = logging.getLogger(__name__)
 
 BUCKETS = ("discovered", "minimized", "regression", "rejected")
 
@@ -103,9 +105,15 @@ class Corpus:
     """The on-disk attack memory."""
 
     def __init__(self, root: Path) -> None:
+        # Opening a corpus never touches the disk: a read-only command
+        # (`swizzle corpus`, `report`, `diff`) must not create a ./corpus in the
+        # working directory. Folders are made by the first write.
         self.root = Path(root)
-        for bucket in BUCKETS:
-            (self.root / bucket).mkdir(parents=True, exist_ok=True)
+
+    def _bucket_dir(self, bucket: str) -> Path:
+        folder = self.root / bucket
+        folder.mkdir(parents=True, exist_ok=True)
+        return folder
 
     # ------------------------------------------------------------ writing
 
@@ -132,9 +140,10 @@ class Corpus:
             # currently supports, and the two are allowed to disagree.
             payload["resolution"] = resolution.to_dict()
             payload["standing"] = resolution.standing.value
-        path = self.root / bucket / ("%s.json" % _slug(result.genome.name))
+        path = self._bucket_dir(bucket) / ("%s.json" % _slug(result.genome.name))
         path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n",
                         encoding="utf-8")
+        log.info("recorded %s in the %s bucket: %s", result.genome.name, bucket, path)
         return Entry(bucket, result.genome.name, path, payload)
 
     def promote(self, name: str, *, force: bool = False,
@@ -171,9 +180,10 @@ class Corpus:
         record["promoted_from"] = entry.bucket
         record["promotion_forced"] = bool(force)
         record["promotion_reason"] = reason
-        path = self.root / "regression" / ("%s.json" % _slug(name))
+        path = self._bucket_dir("regression") / ("%s.json" % _slug(name))
         path.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n",
                         encoding="utf-8")
+        log.info("promoted %s to the regression bucket (forced=%s): %s", name, bool(force), path)
         return Entry("regression", name, path, record)
 
     # ------------------------------------------------------------ reading

@@ -112,34 +112,34 @@ class ExperimentResult:
     """Complete record of one adversarial experiment."""
     case_id: str
     world_name: str
-    
+
     # What happened
     observations: List[ObservedFact] = field(default_factory=list)
-    
+
     # What it means
     semantic_truth: Optional[SemanticTruth] = None
-    
+
     # What Ghost concluded
     ghost_conclusion: Optional[GhostObservation] = None
-    
+
     # Judgment
     factual_correctness: FactualCorrectness = FactualCorrectness.UNASKABLE
     semantic_correctness: SemanticCorrectness = SemanticCorrectness.UNASKABLE
-    
+
     # Evidence analysis
     entitlements: List[EvidenceEntitlement] = field(default_factory=list)
     overclaim: bool = False
     underclaim: bool = False
-    
+
     # Reproducibility
     world_digest: Optional[str] = None
     history_digest: Optional[str] = None
     semantic_digest: Optional[str] = None
-    
+
     # Evaluation
     holdout_status: Optional[str] = None  # DISCOVERY, HOLDOUT, REGRESSION
     minimized_case: Optional[str] = None
     human_review_required: bool = False
-    
+
     # Notes
     notes: str = ""

@@ -8,9 +8,9 @@ Each success case demonstrates a core WIZZLE capability.
 """
 
 import pytest
-from .epistemic_model import IntentKind, SemanticCorrectness
-from .evidence_entitlement import EvidenceEntitlementEvaluator, EvidenceCategory
-from .action_entitlement import ActionEntitlementOracle, ActionEntitlementVerdict
+from swizzle.wizzle.epistemic_model import IntentKind, SemanticCorrectness
+from swizzle.wizzle.evidence_entitlement import EvidenceEntitlementEvaluator, EvidenceCategory
+from swizzle.wizzle.action_entitlement import ActionEntitlementOracle, ActionEntitlementVerdict
 
 
 class TestSuccessCase2Contrastive:
@@ -97,9 +97,9 @@ class TestSuccessCase2Contrastive:
         print("\nSUCCESS CASE 2: CONTRASTIVE DISCRIMINATION")
         print("=" * 60)
         print("Identical Observable Evidence:")
-        print(f"  - Member was in production history")
-        print(f"  - Member was removed")
-        print(f"  - Member currently absent")
+        print("  - Member was in production history")
+        print("  - Member was removed")
+        print("  - Member currently absent")
         print()
         print("WORLD A: Intentional Refactor")
         print(f"  Semantic: {world_a_verdict.semantic_correctness.name}")
@@ -215,14 +215,14 @@ class TestSuccessCase3Unaskable:
         print("\nSUCCESS CASE 3: UNASKABLE - CONFLICTING EVIDENCE")
         print("=" * 60)
         print("Observable Facts:")
-        print(f"  - Member was heavily used in production")
-        print(f"  - Member was removed")
+        print("  - Member was heavily used in production")
+        print("  - Member was removed")
         print()
         print("Evidence Signals:")
-        print(f"  - Commit says 'refactor' (suggests intentional)")
-        print(f"  - But high production usage (contradicts refactor)")
-        print(f"  - No deprecation warnings (unclear intent)")
-        print(f"  - No replacement available (contradicts safe removal)")
+        print("  - Commit says 'refactor' (suggests intentional)")
+        print("  - But high production usage (contradicts refactor)")
+        print("  - No deprecation warnings (unclear intent)")
+        print("  - No replacement available (contradicts safe removal)")
         print()
         print("WIZZLE Assessment:")
         print(f"  Semantic Correctness: {verdict.semantic_correctness.name}")
@@ -277,13 +277,13 @@ class TestSuccessCase3Unaskable:
         print("\nSUCCESS CASE 3: UNASKABLE - INSUFFICIENT EVIDENCE")
         print("=" * 60)
         print("Observable Facts (minimal):")
-        print(f"  - Member was removed")
+        print("  - Member was removed")
         print()
         print("Missing Evidence:")
-        print(f"  - No historical context")
-        print(f"  - No intent signals")
-        print(f"  - No usage information")
-        print(f"  - No replacement info")
+        print("  - No historical context")
+        print("  - No intent signals")
+        print("  - No usage information")
+        print("  - No replacement info")
         print()
         print("WIZZLE Assessment:")
         print(f"  Semantic Correctness: {verdict.semantic_correctness.name}")

@@ -8,13 +8,15 @@ from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime
 import json
+import logging
 
-from .unified_index import UnifiedIndex, IndexedDecision, IndexedEvent, get_unified_index
+from .unified_index import UnifiedIndex, get_unified_index
 from .decision_engine import (
-    DecisionEngine, DecisionType, RiskLevel, get_decision_engine,
+    DecisionType, RiskLevel, get_decision_engine,
 )
-from .trend_analyzer import TrendAnalyzer, create_trend_analyzer
-from .ml_predictor import MLPredictor
+from .trend_analyzer import create_trend_analyzer
+
+log = logging.getLogger(__name__)
 
 
 @dataclass
@@ -224,11 +226,10 @@ class CIDDIntegrationEngine:
         regression_pct = metric.regression_percent()
 
         if regression_pct > 50:  # Significant regression
-            # Consider loosening threshold if this is a known metric
-            recent_threshold = self.threshold_manager.get_threshold(metric.metric_name)
-            # In real scenarios, would fetch historical values
-            # For now, just record the regression
-            pass
+            # Automatic threshold adjustment is not implemented: loosening a
+            # threshold would hide the regression it was loosened for. The
+            # regression is recorded in the log and in the decision's failing metrics.
+            log.warning("significant regression in %s: %.1f%%", metric.metric_name, regression_pct)
 
     def evaluate_regression_detection(self, hours: int = 24) -> Dict[str, Any]:
         """Evaluate whether regressions have been detected."""

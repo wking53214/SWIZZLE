@@ -47,7 +47,7 @@ class MutationCatalog:
 
     def cases_by_severity(self) -> Dict[str, List[MutationCase]]:
         """Group cases by severity."""
-        by_severity = {}
+        by_severity: Dict[str, List[MutationCase]] = {}
         for case in self.cases.values():
             if case.severity not in by_severity:
                 by_severity[case.severity] = []
@@ -137,7 +137,8 @@ DEFAULT_MUTATION_CATALOG.add_case(MutationCase(
     id="prose_inside_maintained_block",
     hypothesis="prose inside opt-in block is deleted during rewrite",
     repository_mutations={
-        "README.md": "# Title\n\n<!-- ghost_buster:test-count -->\nAuthor wrote this sentence here.\n5\n<!-- /ghost_buster:test-count -->\n\n# Footer",
+        "README.md": ("# Title\n\n<!-- ghost_buster:test-count -->\nAuthor wrote this sentence here.\n5\n"
+                      "<!-- /ghost_buster:test-count -->\n\n# Footer"),
     },
     expected_outcome="author prose inside block must not be deleted",
     severity="CRITICAL",

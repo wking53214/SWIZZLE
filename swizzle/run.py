@@ -15,6 +15,7 @@ one.
 
 from __future__ import annotations
 
+import logging
 import tempfile
 from dataclasses import replace
 from pathlib import Path
@@ -24,6 +25,8 @@ from .invoke import InvocationFailed, scan
 from .schema import Outcome, Proof, Verdict, Warp
 from .summon import SummonFailed, summon
 from .verdict import judge, placed_findings
+
+log = logging.getLogger(__name__)
 
 
 def run_warp(warp: Warp, workspace: Path,
@@ -96,6 +99,7 @@ def prove(warp: Warp, root: Path, control: bool = False) -> Proof:
     taking a costume off can move the code to an import path the warp's own
     proof does not know.
     """
+    log.debug("proving warp %s%s", warp.name, " (control)" if control else "")
     runner = warp.prove
     if control and warp.control is not None and warp.control.prove is not None:
         runner = warp.control.prove

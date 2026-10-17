@@ -48,9 +48,8 @@ from . import mutators as mutator_registry
 from .adapter import TargetAdapter
 from .attack import CaseResult
 from .fitness import Fitness
-from .genome import (AttackCategory, ClaimSpec, ClaimStyle, CountBlockSpec,
-                     DocumentKind, DocumentSpec, MutationSpec, Phase,
-                     RepositoryGenome, TestShape)
+from .genome import (ClaimStyle, CountBlockSpec,
+                     DocumentKind, MutationSpec, RepositoryGenome)
 from .signals import Severity
 
 
@@ -387,7 +386,8 @@ def evolve(seeds: Sequence[RepositoryGenome], adapter: TargetAdapter, *,
     started = time.perf_counter()
     stats: Dict[str, MutatorStats] = {name: MutatorStats()
                                       for name in mutator_registry.registry()}
-    evaluated: Dict[str, CaseResult] = {}
+    # None records a genome whose run raised: it counts against the budget but has no result.
+    evaluated: Dict[str, Optional[CaseResult]] = {}
     first_seen: Dict[str, int] = {}
     rediscovered: List[str] = []
     seed_names = {g.name for g in seeds}
@@ -399,7 +399,7 @@ def evolve(seeds: Sequence[RepositoryGenome], adapter: TargetAdapter, *,
         try:
             result = attack_module.run(genome, adapter, timeout=timeout)
         except Exception:
-            evaluated[digest] = None            # type: ignore[assignment]
+            evaluated[digest] = None
             return None
         evaluated[digest] = result
         index = len(evaluated)

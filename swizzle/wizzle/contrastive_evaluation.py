@@ -13,7 +13,7 @@ from typing import Dict, List, Any, Tuple
 from pathlib import Path
 
 from .evaluator import Evaluator
-from .epistemic_model import IntentKind, SemanticTruth, SemanticCorrectness
+from .epistemic_model import IntentKind, SemanticTruth
 
 
 @dataclass

@@ -5,6 +5,7 @@ This script generates full git histories for adversarial test cases,
 demonstrating where Ghost's conclusions exceed what evidence justifies.
 """
 
+import shutil
 import sys
 import subprocess
 from pathlib import Path
@@ -34,7 +35,7 @@ def build_scenario(scenario_class, output_dir: Path) -> Path:
 
     # Clean if exists
     if repo_path.exists():
-        subprocess.run(f"rm -rf {repo_path}", shell=True, check=True)
+        shutil.rmtree(repo_path)
 
     # Initialize generator and build
     gen = HistoryGenerator(repo_path, seed=42)
@@ -47,17 +48,19 @@ def build_scenario(scenario_class, output_dir: Path) -> Path:
 
     # Show final state
     log_output = subprocess.run(
-        f"cd {repo_path} && git log --oneline",
-        shell=True,
+        ["git", "log", "--oneline"],
+        cwd=repo_path,
         capture_output=True,
-        text=True
+        text=True,
+        timeout=60,
+        check=True,
     ).stdout
-    print(f"\nFinal git log:")
+    print("\nFinal git log:")
     for line in log_output.strip().split('\n'):
         print(f"  {line}")
 
     # Show file structure
-    print(f"\nFinal repository structure:")
+    print("\nFinal repository structure:")
     for py_file in repo_path.glob("*.py"):
         print(f"  - {py_file.name}")
 
@@ -97,7 +100,7 @@ def main():
     print("\n" + "=" * 60)
     print(f"SUCCESS: Built {len(repos)} scenario repositories")
     print("=" * 60)
-    print(f"\nGenerated corpus:")
+    print("\nGenerated corpus:")
     for i, repo in enumerate(repos, 1):
         print(f"  {i}. {repo.name}")
 

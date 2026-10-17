@@ -115,8 +115,8 @@ def _judge_defect(warp: Warp, placed: List[Placed], proof: Proof) -> Outcome:
             warp=warp.name, verdict=Verdict.MISNAMED, proof=proof,
             findings=tuple(placed),
             account=("said %s; the true name is `%s` at %s:%s"
-                     % (", ".join("`%s` at %s:%s" % (d, f, l or "-")
-                                  for d, f, l in near[:3]),
+                     % (", ".join("`%s` at %s:%s" % (d, f, line or "-")
+                                  for d, f, line in near[:3]),
                         true_name.detector, true_name.file,
                         true_name.line_start or "-")),
         )

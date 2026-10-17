@@ -12,10 +12,13 @@ found is None, never a guess.
 
 from __future__ import annotations
 
+import logging
 import re
 import tomllib
 from pathlib import Path
 from typing import Dict, Optional
+
+log = logging.getLogger(__name__)
 
 _SHA = re.compile(r"^[0-9a-f]{40}$")
 
@@ -57,7 +60,8 @@ def git_commit(path: Path) -> Optional[str]:
                 parts = line.split()
                 if len(parts) == 2 and parts[1] == ref and _SHA.match(parts[0]):
                     return parts[0]
-    except (OSError, ValueError):
+    except (OSError, ValueError) as exc:
+        log.debug("could not read the commit of %s: %s", path, exc)
         return None
     return None
 

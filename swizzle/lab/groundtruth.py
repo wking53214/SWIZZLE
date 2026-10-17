@@ -39,7 +39,7 @@ bought.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, Mapping, Sequence, Tuple
+from typing import Any, Dict, Mapping, Tuple
 
 from .draft import ClaimPlacement, PermittedEdit, ProtectedRegion, WorldDraft, sha256
 
@@ -101,7 +101,7 @@ class GroundTruth:
         return {
             "case": self.case,
             "hypothesis": self.hypothesis,
-            "claims": [vars(c) for c in self.claims],
+            "claims": [_claim_dict(c) for c in self.claims],
             "permitted_files": sorted(self.permitted_files),
             "permitted_edits": [vars(e) for e in self.permitted_edits],
             "permitted_mutation_kinds": sorted(self.permitted_mutation_kinds),
@@ -115,6 +115,14 @@ class GroundTruth:
             "facts": dict(self.facts),
             "construction": list(self.construction),
         }
+
+
+def _claim_dict(claim: Any) -> Dict[str, Any]:
+    """A claim placement as plain JSON data (its witness is an object, so it is flattened)."""
+    out = dict(vars(claim))
+    if out.get("witness") is not None:
+        out["witness"] = out["witness"].to_dict()
+    return out
 
 
 class ContradictoryGroundTruth(ValueError):

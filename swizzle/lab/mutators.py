@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import random
 from dataclasses import dataclass
+from types import MappingProxyType
 from typing import Any, Callable, Dict, Mapping, Sequence, Tuple
 
 from .draft import WorldDraft
@@ -64,7 +65,7 @@ _REGISTRY: Dict[str, Mutator] = {}
 
 def mutator(name: str, *, version: int, category: AttackCategory,
             phase: Phase = Phase.BUILD, summary: str,
-            params: Mapping[str, str] = (), requires: Tuple[str, ...] = ()):
+            params: Mapping[str, str] = MappingProxyType({}), requires: Tuple[str, ...] = ()):
     def register(fn):
         if name in _REGISTRY:
             raise ValueError("two mutators named %s" % name)
@@ -83,7 +84,7 @@ def get(name: str) -> Mutator:
     try:
         return _REGISTRY[name]
     except KeyError:
-        raise KeyError("no mutator called %r; `swizzle mutators` lists them" % name)
+        raise KeyError("no mutator called %r; `swizzle mutators` lists them" % name) from None
 
 
 def apply_all(draft: WorldDraft, specs: Sequence, phase: Phase) -> None:
@@ -1076,7 +1077,7 @@ def put_a_moving_number_in_the_finding(draft, params, rng):
     directory = draft.genome.tests.directory
     body = ['"""A few more tests. The most ordinary change a repository makes."""',
             ""]
-    for index in range(added):
+    for _ in range(added):
         body += ["", "def test_extra_%02d():", "    assert True"]
     text = "\n".join(body).replace("%02d", "%02d") + "\n"
     rendered = []

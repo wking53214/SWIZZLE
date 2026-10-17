@@ -107,7 +107,10 @@ class IntegrationOrchestrator:
             "architecture-rules.json": self.swizzle_architecture.to_json(),
         }
         if self.triage_ledger:
-            bundle["triage-training-data.json"] = self.triage_ledger.export_for_swizzle_oracle_training()
+            # The ledger exports a dict; every other bundle member is JSON text, and
+            # publish_swizzle_integration_bundle writes each member with write_text.
+            bundle["triage-training-data.json"] = json.dumps(
+                self.triage_ledger.export_for_swizzle_oracle_training(), indent=2, sort_keys=True)
         return bundle
 
     def publish_ghost_integration_bundle(self, target_dir: Path) -> None:

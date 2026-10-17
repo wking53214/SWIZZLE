@@ -10,7 +10,7 @@ from __future__ import annotations
 import pytest
 
 from swizzle.lab.fitness import CAP, Fitness, confirmed, corroboration, score
-from swizzle.lab.signals import (FAILURE_CLASSES, Judgement, Severity, failure_class,
+from swizzle.lab.signals import (FAILURE_CLASSES, Severity, failure_class,
                                  ok, unsure, violation)
 
 
@@ -49,7 +49,7 @@ def test_the_scalar_agrees_with_the_ordering():
              score([v(Severity.CRITICAL)])]
     scalars = [c.scalar() for c in cases]
     assert scalars == sorted(scalars)
-    for left, right in zip(cases, cases[1:]):
+    for left, right in zip(cases, cases[1:], strict=False):
         assert (left < right) == (left.scalar() < right.scalar())
 
 
@@ -89,5 +89,5 @@ def test_every_mapped_kind_belongs_to_exactly_one_class():
     seen = set()
     for name, kinds in FAILURE_CLASSES.items():
         for kind in kinds:
-            assert kind not in seen, "%s is in two classes" % kind
+            assert kind not in seen, "%s is in two classes (%s)" % (kind, name)
             seen.add(kind)

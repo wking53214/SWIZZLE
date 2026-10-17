@@ -27,3 +27,38 @@ def test_every_package_with_an_init_is_declared_for_the_wheel():
 
 def test_the_packages_the_governor_command_imports_are_declared():
     assert {"swizzle.governor", "swizzle.integration", "swizzle.production"} <= _declared()
+
+
+def test_the_wheel_ships_no_test_files_and_every_declared_package(tmp_path):
+    """Build the wheel from a copy of the tree and read its contents."""
+    import shutil
+    import subprocess
+    import sys
+    import zipfile
+
+    import pytest
+    pytest.importorskip("setuptools")
+    source = tmp_path / "src"
+    source.mkdir()
+    shutil.copytree(ROOT / "swizzle", source / "swizzle",
+                    ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+    for name in ("pyproject.toml", "README.md", "LICENSE", "NOTICE"):
+        shutil.copy(ROOT / name, source / name)
+    out = tmp_path / "wheel"
+    done = subprocess.run([sys.executable, "-m", "pip", "wheel", "--no-deps", "--no-build-isolation",
+                           "--wheel-dir", str(out), str(source)],
+                          capture_output=True, text=True, timeout=600)
+    assert done.returncode == 0, done.stderr[-2000:]
+    (wheel,) = list(out.glob("swizzle-*.whl"))
+    names = zipfile.ZipFile(wheel).namelist()
+    # swizzle/integration/test_track.py is a library module (an experiment tracker whose class is
+    # called TestTrack), not a pytest file; it is the one allowed name.
+    tests = [n for n in names if (Path(n).name.startswith("test_") or "/tests/" in n.lower())
+             and n != "swizzle/integration/test_track.py"]
+    assert tests == [], "test files ship in the wheel: %s" % tests
+    top = {n.split("/")[0] for n in names}
+    assert "swizzle" in top and not any(t in top for t in ("Tests", "tools", "fixtures", "corpus"))
+    for package in _declared():
+        folder = package.replace(".", "/") + "/"
+        # swizzle/lab has no __init__.py (it is a namespace folder inside the package), so ask for any module.
+        assert any(n.startswith(folder) and n.endswith(".py") for n in names), package

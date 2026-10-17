@@ -5,29 +5,35 @@ import subprocess
 import sys
 from pathlib import Path
 
-def run(cmd, check=True):
-    """Run command and return output."""
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+def run(argv, check=True):
+    """Run an argv list (no shell) and return its output.
+
+    Pass a list such as ``["git", "log"]``. A string is rejected rather than
+    handed to a shell.
+    """
+    if isinstance(argv, str):
+        raise TypeError("run() takes an argv list, not a shell string")
+    result = subprocess.run(argv, capture_output=True, text=True, timeout=60)
     if check and result.returncode != 0:
-        print(f"ERROR: {cmd}")
+        print(f"ERROR: {argv}")
         print(result.stderr)
         sys.exit(1)
     return result.stdout.strip()
 
 def reconstruct_phantom_and_medium():
     """Rebuild the PHANTOM and MEDIUM scenario histories."""
-    
+
     repo = Path(".")
-    
+
     # We're starting from a clean state with only the merge commit
     # We need to reconstruct the historical commits
-    
+
     # Since we can't rewrite published history, we'll create a
     # HISTORIES directory with git format-patch dumps of the scenarios
-    
+
     histories_dir = repo / "histories"
     histories_dir.mkdir(exist_ok=True)
-    
+
     # Create documentation of what SHOULD have happened
     phantom_doc = histories_dir / "phantom-history.md"
     phantom_doc.write_text("""# PHANTOM Scenario History
@@ -77,7 +83,7 @@ The historical commits are missing. WIZZLE needs these to be executable and veri
 
 Rebuild the history deterministically using a history generator.
 """)
-    
+
     print(f"Created {phantom_doc}")
     return histories_dir
 

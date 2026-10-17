@@ -17,12 +17,12 @@ is not a good result, it is the absence of a measurement.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
+from typing import Any, Dict, Mapping, Optional, Sequence
 
 from .attack import CaseResult
 from .genome import AttackCategory
 from .minimize import Minimisation
-from .signals import Judgement, Severity, failure_class
+from .signals import Severity, failure_class
 
 #: Failure classes that mean the target changed something it should not have.
 UNSAFE = ("unauthorised_mutation", "escape")
@@ -41,9 +41,10 @@ class Rate:
         return None if self.denominator == 0 else self.numerator / self.denominator
 
     def render(self) -> str:
-        if self.denominator == 0:
+        value = self.value
+        if value is None:
             return "n/a (no %s)" % self.what
-        return "%.0f%% (%d of %d %s)" % (100 * self.value, self.numerator,
+        return "%.0f%% (%d of %d %s)" % (100 * value, self.numerator,
                                          self.denominator, self.what)
 
     def to_dict(self) -> Dict[str, Any]:

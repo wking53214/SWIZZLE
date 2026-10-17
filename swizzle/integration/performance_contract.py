@@ -8,7 +8,6 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 from pathlib import Path
 import json
-from datetime import datetime
 
 
 @dataclass
@@ -143,11 +142,13 @@ class PerformanceReport:
 
                 if time_change > threshold_percent:
                     case_regressions.append(
-                        f"Wall time increased {time_change:.1f}% ({baseline.metrics.wall_time_seconds:.2f}s -> {recent.metrics.wall_time_seconds:.2f}s)"
+                        f"Wall time increased {time_change:.1f}% "
+                        f"({baseline.metrics.wall_time_seconds:.2f}s -> {recent.metrics.wall_time_seconds:.2f}s)"
                     )
                 if memory_change > threshold_percent:
                     case_regressions.append(
-                        f"Memory usage increased {memory_change:.1f}% ({baseline.metrics.peak_memory_mb:.1f}MB -> {recent.metrics.peak_memory_mb:.1f}MB)"
+                        f"Memory usage increased {memory_change:.1f}% "
+                        f"({baseline.metrics.peak_memory_mb:.1f}MB -> {recent.metrics.peak_memory_mb:.1f}MB)"
                     )
 
             if case_regressions:

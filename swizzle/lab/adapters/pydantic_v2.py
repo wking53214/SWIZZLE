@@ -29,11 +29,12 @@ THE FOUR THINGS SPECIFIC TO PYDANTIC V2 MIGRATIONS
 
 from __future__ import annotations
 
+import importlib.metadata
 import json
 import re
 import sys
 from pathlib import Path
-from typing import Any, Dict, Mapping, Optional, Sequence
+from typing import Dict, Mapping, Optional
 
 from ..adapter import Observation, TargetAdapter, TargetUnavailable
 from ..draft import TargetDialect
@@ -79,10 +80,10 @@ class PydanticV2MigratorAdapter(TargetAdapter):
         # Verify libcst is available for AST transformation
         try:
             import libcst  # noqa: F401
-        except ImportError:
+        except ImportError as exc:
             raise TargetUnavailable(
                 "libcst not found. Install with: pip install libcst pydantic"
-            )
+            ) from exc
         self._version: Optional[Dict[str, str]] = None
 
     # ------------------------------------------------------------ dialect
@@ -119,9 +120,8 @@ class PydanticV2MigratorAdapter(TargetAdapter):
                 pydantic_version = "not_installed"
 
         try:
-            import libcst
-            libcst_version = libcst.__version__
-        except (ImportError, AttributeError):
+            libcst_version = importlib.metadata.version("libcst")
+        except importlib.metadata.PackageNotFoundError:
             libcst_version = "unknown"
 
         self._version = {
@@ -155,12 +155,16 @@ class PydanticV2MigratorAdapter(TargetAdapter):
         ledger_path = root / MIGRATION_LEDGER
         ledger_path.write_text(json.dumps(ledger, indent=2))
 
+        # One mapping per file, in the shape the evidence layer reads
+        # (`finding["evidence"]["file"]`); the dict by pattern is kept for the notes.
+        reported = tuple({"detector": pattern, "evidence": {"file": path}}
+                         for pattern, files in findings.items() for path in files)
         return Observation(
             target=self.name,
             mode="scan",
             version=self.version(),
             invocations=(),
-            findings=findings,
+            findings=reported,
             abstained=True,  # Scan doesn't modify
             memory=_read_memory(root),
             notes=f"Found {len(findings)} Pydantic v1 patterns across {sum(len(f) for f in findings.values())} files",
@@ -383,7 +387,7 @@ def _add_migration_markers(original: str, transformed: str) -> str:
     in_diff = False
     marker_count = 0
 
-    for i, (orig_line, trans_line) in enumerate(zip(original_lines, transformed_lines)):
+    for orig_line, trans_line in zip(original_lines, transformed_lines, strict=False):
         if orig_line != trans_line:
             if not in_diff:
                 result_lines.append(V2_MARKER_OPEN + f" (block {marker_count})")

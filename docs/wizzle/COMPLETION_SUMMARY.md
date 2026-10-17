@@ -1,5 +1,7 @@
 # WIZZLE Phase 2: Work Completion Summary
 
+> Historical snapshot. The WIZZLE test files named below now live in `Tests/wizzle/` (they moved out of the package so they do not ship in the wheel); counts here are from when the snapshot was written and are not kept current.
+
 ## Overview
 
 WIZZLE 2.0 has successfully progressed from a static test fixture to an executable epistemic adversary system. The work demonstrates the core mandate: generate scenarios where historical evidence is technically correct but semantic conclusions may be unjustified.

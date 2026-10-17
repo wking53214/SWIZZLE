@@ -4,7 +4,6 @@ Each handler implements the action for a decision type, updating the
 appropriate integration models when decisions are executed.
 """
 
-from typing import Dict, Any
 from datetime import datetime
 
 from swizzle.integration.decision_engine import AutomatedDecision, DecisionType, get_decision_engine
@@ -23,7 +22,7 @@ class DecisionHandlers:
         finding_type_map = {
             "dated_claim": FindingType.DATED_CLAIM,
             "prose_deleted": FindingType.PROSE_DELETED,
-            "boundary_violated": FindingType.BOUNDARY_VIOLATED,
+            "boundary_violated": FindingType.WRITE_OUTSIDE_BOUNDARY,
         }
 
         pattern = FalsePositivePattern(
@@ -57,7 +56,7 @@ class DecisionHandlers:
         finding_type_map = {
             "dated_claim": FindingType.DATED_CLAIM,
             "prose_deleted": FindingType.PROSE_DELETED,
-            "boundary_violated": FindingType.BOUNDARY_VIOLATED,
+            "boundary_violated": FindingType.WRITE_OUTSIDE_BOUNDARY,
         }
 
         # Create training datapoint for oracle

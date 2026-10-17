@@ -4,14 +4,15 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import os
 import sys
 from pathlib import Path
-from typing import List, Sequence
+from typing import List, Sequence, Union
 
 from . import __version__
 from . import sources as src
-from .invoke import InvocationFailed, git_available, locate_ghost_tools, resolve_ghost_tools
+from .invoke import InvocationFailed, git_available, resolve_ghost_tools
 from .report import as_dicts, render
 from .run import prove, run_all
 from .schema import Verdict, Warp
@@ -39,6 +40,23 @@ def _selected(pattern: str | None) -> List[Warp]:
     return [w for w in warps if pattern in w.name or pattern in w.targets]
 
 
+def _configure_logging(verbose: int) -> None:
+    """Diagnostics go to stderr, never stdout: stdout is the report, and callers parse it."""
+    level_name = os.environ.get("SWIZZLE_LOG_LEVEL", "").strip().upper()
+    level = {0: None, 1: logging.INFO}.get(verbose, logging.DEBUG)
+    if level_name and isinstance(getattr(logging, level_name, None), int):
+        level = getattr(logging, level_name)
+    if level is None:
+        return
+    handler = logging.StreamHandler(sys.stderr)
+    handler.setFormatter(logging.Formatter("swizzle: %(levelname)s %(name)s: %(message)s"))
+    root = logging.getLogger("swizzle")
+    root.handlers = [h for h in root.handlers if not isinstance(h, logging.StreamHandler)
+                     or isinstance(h, logging.NullHandler)]
+    root.addHandler(handler)
+    root.setLevel(level)
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="swizzle",
@@ -49,6 +67,12 @@ def main(argv: Sequence[str] | None = None) -> int:
                     "then proves independently whether it did.")
     parser.add_argument("--version", action="version",
                         version="swizzle %s" % __version__)
+    parser.add_argument("-v", "--verbose", action="count", default=0,
+                        help="log diagnostics to stderr (-v: progress, -vv: every subprocess); "
+                             "$SWIZZLE_LOG_LEVEL (e.g. DEBUG) does the same")
+    parser.add_argument("--contract", action="store_true",
+                        help="print the compatibility contract (JSON) a caller such "
+                             "as Warden can assert against, then exit 0")
     sub = parser.add_subparsers(dest="command")
 
     listing = sub.add_parser("list", help="the catalogue")
@@ -140,6 +164,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     lab_cli.add_parsers(sub)
 
     args = parser.parse_args(argv)
+    _configure_logging(args.verbose)
+    if args.contract:
+        from .contract import render as render_contract
+        try:
+            print(render_contract())
+        except BrokenPipeError:
+            _detach_stdout()
+        return 0
     if args.command is None:
         parser.print_help()
         return 0
@@ -156,7 +188,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         handler = handlers[args.command]
     else:
         from .lab import cli as lab_cli
-        handler = lambda a: lab_cli.handle(a.command, a)
+        def handler(a):
+            return lab_cli.handle(a.command, a)
     try:
         return handler(args)
     except BrokenPipeError:
@@ -195,7 +228,8 @@ def _governor(args) -> int:
     from .governor.scenarios import SCENARIOS
     if args.list:
         for sc in SCENARIOS:
-            print("%-34s [%s] %s\n    defended by: %s" % (sc.name, sc.severity, sc.hypothesis, sc.layers or "not recorded"))
+            print("%-34s [%s] %s\n    defended by: %s"
+                  % (sc.name, sc.severity, sc.hypothesis, sc.layers or "not recorded"))
             if sc.feature:
                 print("    needs a Warden that has: %s (assumed from version %s, or probed in Warden itself)"
                       % (sc.feature, sc.since))
@@ -411,13 +445,14 @@ def _assay(args) -> int:
         if ghost_tools is None:
             sources["ghost_tools"] = ghost_info["path"] or ghost_how
     compared: List[dict] = []
+    cards: List[ts.Scorecard] = []
+    result: Union[ts.Comparison, ts.Scorecard]
     try:
         if args.ghost:
             import shutil
             from .lab.cli import _adapter_for
             scratch: List[Path] = []
             try:
-                cards = []
                 for g in args.ghost:
                     checkout = _adapter_for(g, scratch).checkout
                     compared.append({"given": g, **src.describe(checkout, "--ghost")})
@@ -449,7 +484,8 @@ def _assay(args) -> int:
                       "missing detector"
                       % (caught, modes, args.floor, candidate.possible_catches() - caught))
     else:
-        floor_note = "FLOOR NOT MET: Ghost caught %d of %d known failure modes, floor is %d" % (caught, modes, args.floor)
+        floor_note = ("FLOOR NOT MET: Ghost caught %d of %d known failure modes, floor is %d"
+                      % (caught, modes, args.floor))
     if args.json:
         payload = (result.to_dict() if isinstance(result, ts.Scorecard)
                    else {"baseline": cards[0].to_dict(), "candidate": cards[1].to_dict(),

@@ -1,10 +1,10 @@
 """Tests for ActionEntitlementOracle."""
 
 import pytest
-from .action_entitlement import (
+from swizzle.wizzle.action_entitlement import (
     ActionEntitlementOracle, ActionEntitlementVerdict, ActionRisk
 )
-from .epistemic_model import SemanticCorrectness
+from swizzle.wizzle.epistemic_model import SemanticCorrectness
 
 
 def test_entitled_requires_semantic_justification():
@@ -18,7 +18,7 @@ def test_entitled_requires_semantic_justification():
     )
 
     assert detail.verdict == ActionEntitlementVerdict.NOT_ENTITLED
-    assert ActionEntitlementOracle.SEMANTIC_REQUIREMENTS.get(SemanticCorrectness.OVERCLAIMED) == False
+    assert ActionEntitlementOracle.SEMANTIC_REQUIREMENTS.get(SemanticCorrectness.OVERCLAIMED) is False
 
 
 def test_entitled_with_all_requirements_met():

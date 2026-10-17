@@ -4,14 +4,13 @@ import sys
 import json
 from pathlib import Path
 from .evaluator import Evaluator
-from .epistemic_model import IntentKind, SemanticTruth, GhostObservation
 
 def cmd_inspect(repo_path: str):
     """Inspect a repository."""
     repo = Path(repo_path)
     evaluator = Evaluator(repo)
     results = evaluator.run_oracles()
-    
+
     print("=== Repository Inspection ===\n")
     print("Current State Oracle Results:")
     current = results["current_state"]
@@ -19,7 +18,7 @@ def cmd_inspect(repo_path: str):
     print(f"  Production members: {current.get('members_in_production', [])}")
     print(f"  Test members: {current.get('members_in_tests', [])}")
     print(f"  Both: {current.get('members_in_both', [])}")
-    
+
     print("\nHistory Oracle Results:")
     history = results["history"]
     print(f"  Inferred intent: {history.get('inferred_intent')}")

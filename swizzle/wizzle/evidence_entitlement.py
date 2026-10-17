@@ -21,8 +21,8 @@ Example:
 
 from enum import Enum, auto
 from dataclasses import dataclass, field
-from typing import Set, List, Optional, Dict
-from .epistemic_model import IntentKind, SemanticCorrectness, EvidenceProvenance
+from typing import Any, Set, List, Dict
+from .epistemic_model import IntentKind, SemanticCorrectness
 
 
 class EvidenceCategory(Enum):
@@ -86,7 +86,7 @@ class EvidenceEntitlementEvaluator:
     """Determine if conclusions are justified by evidence."""
 
     # Evidence requirements for different conclusions
-    ENTITLEMENT_RULES = {
+    ENTITLEMENT_RULES: Dict[str, Dict[str, Any]] = {
         "REMOVED_FROM_LIBRARY": {
             "required": [
                 EvidenceCategory.MEMBER_PRODUCTION_HISTORY,

@@ -19,7 +19,7 @@ Real Ghost must be invoked separately for meaningful experiments.
 """
 
 from dataclasses import dataclass
-from typing import List, Dict, Any
+from typing import Dict, Any
 from pathlib import Path
 
 from .ghost_invoker import GhostFinding, GhostAnalysis

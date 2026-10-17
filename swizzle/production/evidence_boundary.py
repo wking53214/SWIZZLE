@@ -2,7 +2,7 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 class EvidenceLane(str, Enum):
     TARGET_CLAIM = "TARGET_CLAIM"
@@ -19,7 +19,7 @@ class LaneEvidence:
 
 class EvidenceBoundary:
     def __init__(self):
-        self._lanes = {lane: [] for lane in EvidenceLane}
+        self._lanes: Dict[EvidenceLane, List[LaneEvidence]] = {lane: [] for lane in EvidenceLane}
     def record_target_claim(self, summary, payload=None, producer="target"):
         self._lanes[EvidenceLane.TARGET_CLAIM].append(
             LaneEvidence(EvidenceLane.TARGET_CLAIM, summary, payload or {}, producer, False))

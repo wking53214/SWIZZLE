@@ -33,6 +33,7 @@ THE TWO HONESTY RULES, AGAIN
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
 import shutil
@@ -43,7 +44,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Tuple
 
-from .invoke import InvocationFailed, scan
+from .invoke import scan
+
+log = logging.getLogger(__name__)
 
 REGISTRY = Path("assay_production") / "registry.json"
 
@@ -230,10 +233,12 @@ def check_answer_key(root: Path) -> KeyProof:
     script = Path(root) / "verify_manifest.py"
     if not script.is_file():
         return KeyProof(False, "verify_manifest.py is missing", "verify_manifest.py is missing")
+    log.debug("proving the answer key: %s", script)
     try:
         done = subprocess.run((sys.executable, str(script)), cwd=str(root),
                               capture_output=True, text=True, timeout=300)
     except (OSError, subprocess.TimeoutExpired) as exc:
+        log.warning("the answer key verifier did not run: %s", exc)
         why = "verify_manifest.py could not run: %s" % exc
         return KeyProof(False, why, why)
     tail = (done.stdout.strip().splitlines() or [""])[-1]

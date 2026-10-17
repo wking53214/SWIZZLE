@@ -96,8 +96,8 @@ Implements the closed-loop improvement cycle between Swizzle and Ghost Tools.
 
 | Module | Key Classes | Purpose |
 |--------|-------------|---------|
-| `decision_engine.py` | `DecisionEngine`, `AutomatedDecision`, `DecisionPolicy` | Autonomous decision making with ML confidence |
-| `ml_predictor.py` | `MLPredictor`, `PredictionCache` | ML-based confidence scoring |
+| `decision_engine.py` | `DecisionEngine`, `AutomatedDecision`, `DecisionPolicy` | Autonomous decision making with history-adjusted confidence |
+| `frequency_predictor.py` | `FrequencyPredictor`, `PredictionCache` | Confidence from historical success rates (counting, not ML); `ml_predictor.py` keeps the old names as aliases |
 | `decision_handlers.py` | `DecisionHandlers` | Handle decision outcomes |
 
 ### Event System
@@ -207,7 +207,7 @@ Lab (Testing)
 Integration (Continuous Improvement)
   ├─ loop_orchestrator.py ─→ arbiter.py
   ├─ decision_engine.py ─→ event_system.py
-  ├─ ml_predictor.py (feedback loop)
+  ├─ frequency_predictor.py (feedback loop)
   └─ trend_analyzer.py (analytics)
 
 Wizzle (Governance)

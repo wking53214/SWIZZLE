@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import random
 
-import pytest
 
 from swizzle.lab import coverage, search
 from swizzle.lab.mutators import registry

@@ -3,13 +3,9 @@
 Validates decision creation, risk assessment, auto-approval, and execution.
 """
 
-import pytest
-from pathlib import Path
-from datetime import datetime
 
 from swizzle.integration.decision_engine import (
-    DecisionEngine, DecisionPolicy, DecisionType, RiskLevel, ConfidenceSource,
-    AutomatedDecision, ConfidenceScore, get_decision_engine, reset_decision_engine,
+    DecisionPolicy, DecisionType, RiskLevel, get_decision_engine, reset_decision_engine,
 )
 from swizzle.integration.decision_handlers import setup_decision_handlers
 from swizzle.integration.event_system import (

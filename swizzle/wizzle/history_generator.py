@@ -4,13 +4,11 @@ Each generator creates a deterministic git history that demonstrates
 a specific epistemic failure or edge case in forensics detection.
 """
 
-import subprocess
-import tempfile
 import hashlib
 from pathlib import Path
 from dataclasses import dataclass
 from typing import List, Optional, Dict
-from .epistemic_model import IntentKind
+from ._proc import CommandFailed, git
 
 @dataclass
 class CommitSpec:
@@ -21,32 +19,36 @@ class CommitSpec:
 
 class HistoryGenerator:
     """Generate adversarial git histories deterministically."""
-    
+
     def __init__(self, repo_path: Path, seed: int = 42):
         self.repo_path = repo_path
         self.seed = seed
         self._run_git = self._make_git_runner()
-    
+
     def _make_git_runner(self):
         """Create a function that runs git commands in this repo."""
-        def run(cmd: str, check: bool = True) -> str:
-            full_cmd = f"cd {self.repo_path} && {cmd}"
-            result = subprocess.run(full_cmd, shell=True, capture_output=True, text=True)
+        def run(*args: str, check: bool = True) -> str:
+            """Run ``git <args>`` in the repo: argv, cwd and timeout, no shell."""
+            try:
+                result = git(self.repo_path, *args)
+            except CommandFailed as exc:
+                raise RuntimeError(f"Git command failed: git {' '.join(args)}\n{exc}") from exc
             if check and result.returncode != 0:
-                raise RuntimeError(f"Git command failed: {cmd}\n{result.stderr}")
+                raise RuntimeError(
+                    f"Git command failed: git {' '.join(args)}\n{result.stderr}")
             return result.stdout.strip()
         return run
-    
+
     def init_repo(self):
         """Initialize an empty git repository."""
         self.repo_path.mkdir(parents=True, exist_ok=True)
-        self._run_git("git init", check=False)
-        self._run_git('git config user.email "test@wizzle.local"')
-        self._run_git('git config user.name "Wizzle Generator"')
-    
+        self._run_git("init")
+        self._run_git("config", "user.email", "test@wizzle.local")
+        self._run_git("config", "user.name", "Wizzle Generator")
+
     def create_commits(self, specs: List[CommitSpec]) -> List[str]:
         """Create a sequence of commits from specifications.
-        
+
         Returns list of commit hashes in order.
         """
         commits = []
@@ -56,26 +58,26 @@ class HistoryGenerator:
                 file_path = self.repo_path / path
                 file_path.parent.mkdir(parents=True, exist_ok=True)
                 file_path.write_text(content)
-            
+
             # Stage and commit
-            self._run_git("git add -A")
+            self._run_git("add", "-A")
             msg = spec.message
             if spec.intent_signal:
                 msg += f"\n\n[INTENT: {spec.intent_signal}]"
-            self._run_git(f'git commit -m "{msg}"')
-            
+            self._run_git("commit", "-m", msg)
+
             # Get commit hash
-            commit_hash = self._run_git("git rev-parse HEAD")
+            commit_hash = self._run_git("rev-parse", "HEAD")
             commits.append(commit_hash)
-        
+
         return commits
-    
+
     def get_history_digest(self) -> str:
         """Compute a digest of the repository's git history.
-        
+
         This allows reproducing the exact scenario.
         """
-        log = self._run_git("git log --format=%H%s --all")
+        log = self._run_git("log", "--format=%H%s", "--all")
         return hashlib.sha256(log.encode()).hexdigest()
 
 class PhantomScenario:

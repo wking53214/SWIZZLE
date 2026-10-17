@@ -12,7 +12,7 @@ Event types:
 - oracle_training_improved: Oracle accuracy improved
 """
 
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List, Callable, Any, Optional
 from datetime import datetime

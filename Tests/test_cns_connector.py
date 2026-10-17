@@ -26,7 +26,7 @@ NAMES = ("alpha_warp", "beta_warp", "gamma_warp")
 
 
 def proofs(holds=(True, True, True), kind="executed", names=NAMES):
-    return [(n, Proof(h, kind, "account of %s" % n)) for n, h in zip(names, holds)]
+    return [(n, Proof(h, kind, "account of %s" % n)) for n, h in zip(names, holds, strict=True)]
 
 
 def attacks(*statuses, severity="high"):

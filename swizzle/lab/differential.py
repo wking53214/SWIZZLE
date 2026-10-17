@@ -22,13 +22,13 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Mapping, Sequence, Tuple
 
 from . import attack as attack_module
 from .adapter import TargetAdapter
 from .attack import CaseResult
 from .genome import RepositoryGenome
-from .signals import Severity, failure_class
+from .signals import failure_class
 
 OUTCOMES = ("fixed", "regressed", "unchanged", "worsened", "improved",
             "not_measured")

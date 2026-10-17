@@ -15,7 +15,6 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence
 from .attack import CaseResult
 from .fitness import corroboration
 from .minimize import Minimisation
-from .signals import Judgement, Severity, failure_class
 
 WIDTH = 74
 
@@ -149,7 +148,7 @@ def summary_table(results: Sequence[CaseResult]) -> str:
 
 
 def machine_report(results: Sequence[CaseResult],
-                   minimisations: Mapping[str, Minimisation] = (),
+                   minimisations: Optional[Mapping[str, Minimisation]] = None,
                    scorecard: Optional[Mapping[str, Any]] = None) -> str:
     """Stable JSON. The key set does not change between runs."""
     minimisations = dict(minimisations or {})

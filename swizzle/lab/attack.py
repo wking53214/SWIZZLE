@@ -21,20 +21,23 @@ run per case to learn something SWIZZLE decided itself.
 
 from __future__ import annotations
 
+import logging
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Mapping, Optional, Sequence, Tuple
+from typing import Any, Dict, Mapping, Optional, Tuple
 
 from . import world
-from .adapter import Observation, TargetAdapter, TargetUnavailable
+from .adapter import Observation, TargetAdapter
 from .evidence import Evidence, read_tree
 from .fitness import Fitness, confirmed, corroboration, score
 from .genome import Phase, RepositoryGenome
 from .groundtruth import GroundTruth, of as ground_truth_of
 from .oracles import judge_all
 from .sandbox import Sandbox
-from .signals import Judgement, Severity, Signal
+from .signals import Judgement, Signal
+
+log = logging.getLogger(__name__)
 
 #: Where the exported result state is put inside the sandbox.
 RESULT_DIR = "result"
@@ -119,6 +122,7 @@ def run(genome: RepositoryGenome, adapter: TargetAdapter, *,
             % genome.name)
 
     started = time.perf_counter()
+    log.info("attacking with case %s (timeout %ss)", genome.name, timeout)
     dialect = adapter.dialect()
     draft = world.build(genome, dialect)
     truth = ground_truth_of(draft)
@@ -143,17 +147,15 @@ def run(genome: RepositoryGenome, adapter: TargetAdapter, *,
         # -- the same mistake `self_edits` exists to undo for during-tests
         # mutations, which is why it is avoided here rather than repaired.
         primed: Optional[Observation] = None
-        priming_note = ""
         if any(m.phase is Phase.AFTER_BASELINE for m in genome.mutations):
             primed = adapter.prime_baseline(root, sandbox, timeout=timeout)
-            if primed is None:
-                priming_note = (
-                    "the target keeps nothing between runs, so its memory "
-                    "cannot be attacked here")
-            elif primed.failed:
-                broken = "the priming run failed: %s" % primed.failure
-            else:
-                broken = _apply_after_baseline(draft, root, sandbox)
+            # primed is None: the target keeps nothing between runs. That is
+            # said by the identity oracle (it receives `primed` below), not here.
+            if primed is not None:
+                if primed.failed:
+                    broken = "the priming run failed: %s" % primed.failure
+                else:
+                    broken = _apply_after_baseline(draft, root, sandbox) or ""
 
         before = read_tree(root)
         outside_before = _outside(sandbox)

@@ -6,10 +6,9 @@ those findings. Swizzle's verified false positives improve Ghost's filtering.
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Tuple, Optional
+from typing import Any, Dict, List, Tuple, Optional
 from pathlib import Path
 import json
-from datetime import datetime
 
 
 class FindingType(str, Enum):
@@ -75,7 +74,7 @@ class FeedbackReport:
 
     def patterns_by_type(self) -> Dict[FindingType, List[FalsePositivePattern]]:
         """Group patterns by finding type."""
-        by_type = {}
+        by_type: Dict[FindingType, List[FalsePositivePattern]] = {}
         for pattern in self.false_positive_patterns.values():
             if pattern.finding_type not in by_type:
                 by_type[pattern.finding_type] = []
@@ -103,12 +102,12 @@ class FeedbackReport:
             for ftype, counts in by_type.items()
         }
 
-    def filter_effectiveness(self) -> Dict[str, float]:
+    def filter_effectiveness(self) -> Dict[str, Dict[str, Any]]:
         """How much does filtering reduce false positives?
 
         For each pattern, returns (before_fp_rate, after_fp_rate, reduction_percent).
         """
-        effectiveness = {}
+        effectiveness: Dict[str, Dict[str, Any]] = {}
         for pattern_id, pattern in self.false_positive_patterns.items():
             # Count how many training datapoints this pattern would filter
             relevant = [dp for dp in self.oracle_training_data.values()
@@ -138,7 +137,7 @@ class FeedbackReport:
 
     def export_for_swizzle_oracle_update(self) -> str:
         """Export training data for Swizzle to use in oracle calibration."""
-        training_data = {}
+        training_data: Dict[str, List[Dict[str, Any]]] = {}
         for dp in self.oracle_training_data.values():
             finding_type = dp.finding_type.value
             if finding_type not in training_data:

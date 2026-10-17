@@ -9,10 +9,9 @@ priming run and the after-baseline phase rather than only the judging.
 """
 from __future__ import annotations
 
-import pytest
 
 from swizzle.lab import attack, world
-from swizzle.lab.genome import AttackCategory, MutationSpec, Phase
+from swizzle.lab.genome import MutationSpec, Phase
 from swizzle.lab.signals import Judgement, Severity, failure_class
 from Tests import lab_cases
 from Tests.fake_target import FakeTarget
@@ -55,7 +54,6 @@ def test_the_deferred_edit_lands_between_the_two_runs():
 def test_a_target_with_no_memory_is_not_scored_for_failing_the_question():
     """A tool that keeps nothing between runs has not failed a memory test;
     it has never been asked one. The case says so rather than pretending."""
-    from swizzle.lab.draft import TargetDialect
 
     class Amnesiac(FakeTarget):
         def dialect(self):
@@ -116,8 +114,6 @@ def test_a_loss_the_target_replaced_with_something_new_is_inconclusive():
     """A tool that stops being able to see something and REPORTS that has
     done the right thing, in wording nobody can anticipate. Scoring it as a
     failure would be this oracle grading English."""
-    result = attack.run(_moved(), FakeTarget("abstain", reports="modules",
-                                             identity="path"))
     # The move both loses an identity and gains one, which is exactly the
     # ambiguous shape. The oracle must not call that a violation on its own.
     ambiguous = attack.run(

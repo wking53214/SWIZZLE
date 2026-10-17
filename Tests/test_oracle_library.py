@@ -22,11 +22,12 @@ Tests organized by oracle type with:
 
 from __future__ import annotations
 
+import inspect
+import sys
 import unittest
-from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
-from unittest.mock import Mock, patch
+from typing import Dict, Mapping, Sequence, Tuple
+from unittest.mock import Mock
 
-from swizzle.lab.evidence import Evidence
 from swizzle.lab.signals import Judgement, Severity, Signal
 from swizzle.lab.oracles import judge_all, ORACLES
 from swizzle.lab import oracles as oracles_module
@@ -522,12 +523,16 @@ class TestOracleIndependence(unittest.TestCase):
         """No oracle should import from adapters module."""
         # This is enforced by the __init__.py docstring comment
         # Check that each oracle module doesn't reference adapters
-        forbidden_imports = ["from ..adapters", "from .adapters"]
+        forbidden_imports = ["from ..adapters", "from .adapters", "swizzle.lab.adapters"]
         for oracle_name, oracle_fn in ORACLES.items():
             module = oracle_fn.__module__
             # Just verify oracle modules are in oracles package
             self.assertIn("oracles", module,
                          f"Oracle {oracle_name} is not in oracles package")
+            source = inspect.getsource(sys.modules[module])
+            for forbidden in forbidden_imports:
+                self.assertNotIn(forbidden, source,
+                                 f"Oracle {oracle_name} ({module}) imports {forbidden!r}")
 
     def test_all_oracles_return_sequences(self):
         """All oracles should return sequences of signals."""

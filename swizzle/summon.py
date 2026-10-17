@@ -15,11 +15,14 @@ does not depend on the machine having a git identity configured.
 
 from __future__ import annotations
 
+import logging
 import shutil
 import subprocess
 from pathlib import Path
 
 from .schema import Warp
+
+log = logging.getLogger(__name__)
 
 
 class SummonFailed(RuntimeError):
@@ -71,10 +74,12 @@ def _inside(root: Path, target: Path) -> bool:
 
 
 def _git(root: Path, *args: str) -> None:
+    log.debug("git %s in %s", " ".join(args), root)
     try:
         done = subprocess.run(("git",) + args, cwd=root, capture_output=True,
                               text=True, timeout=60)
     except (OSError, subprocess.TimeoutExpired) as exc:
+        log.warning("git %s did not run in %s: %s", args[0], root, exc)
         raise SummonFailed("git %s: %s" % (args[0], exc)) from exc
     if done.returncode != 0:
         raise SummonFailed("git %s failed: %s"

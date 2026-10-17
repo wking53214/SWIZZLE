@@ -32,6 +32,8 @@ def test_independent_result_does_not_change_with_target_claim(tmp_path):
     evaluator = Evaluator(root)
     observations = evaluator.run_all_oracles()
 
+    warrant_before = evaluator.independent_warrant(observations)
+
     low = evaluator.evaluate_observation(
         GhostObservation("PHANTOM", "REMOVED_FROM_LIBRARY", "MINOR"),
         observations,
@@ -43,6 +45,7 @@ def test_independent_result_does_not_change_with_target_claim(tmp_path):
 
     # The claim comparison may change; the independently established warrant
     # must not.
-    assert evaluator.independent_warrant(observations) == (
-        evaluator.independent_warrant(observations)
-    )
+    assert evaluator.independent_warrant(observations) == warrant_before
+    # Each claim was judged as made, and neither judgement changed the other.
+    assert low.ghost_conclusion.severity == "MINOR"
+    assert high.ghost_conclusion.severity == "CRITICAL"

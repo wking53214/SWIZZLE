@@ -10,11 +10,11 @@ This script simulates Ghost findings on all scenarios and reports:
 import json
 import sys
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Dict, Any
 
-from .ghost_simulator import GhostSimulator
-from .evaluator import Evaluator
-from .epistemic_model import IntentKind, SemanticCorrectness
+from swizzle.wizzle.ghost_simulator import GhostSimulator
+from swizzle.wizzle.evaluator import Evaluator
+from swizzle.wizzle.epistemic_model import IntentKind
 
 
 def run_scenario_evaluation(scenario_path: Path, intent: IntentKind) -> Dict[str, Any]:
@@ -28,7 +28,7 @@ def run_scenario_evaluation(scenario_path: Path, intent: IntentKind) -> Dict[str
     evaluator = Evaluator(scenario_path)
     oracle_results = evaluator.run_oracles()
 
-    print(f"\nOracle Assessment:")
+    print("\nOracle Assessment:")
     print(f"  Inferred intent: {oracle_results.get('history', {}).get('inferred_intent')}")
     print(f"  Confidence: {oracle_results.get('history', {}).get('confidence', 0):.2%}")
 
@@ -37,21 +37,21 @@ def run_scenario_evaluation(scenario_path: Path, intent: IntentKind) -> Dict[str
         scenario_path, oracle_results, intent
     )
 
-    print(f"\nGhost Finding:")
+    print("\nGhost Finding:")
     print(f"  Category: {report['ghost_finding']['category']}")
     print(f"  Severity: {report['ghost_finding']['severity']}")
     print(f"  Confidence: {report['ghost_finding']['confidence']:.1%}")
 
-    print(f"\nWIZZLE Verdict:")
+    print("\nWIZZLE Verdict:")
     print(f"  Semantic correctness: {report['verdict']['semantic_correctness']}")
     print(f"  Factual correctness: {report['verdict']['factual_correctness']}")
 
     if report['verdict']['overclaimed']:
-        print(f"  ⚠️  OVERCLAIMED - Ghost exceeded evidence entitlement")
+        print("  ⚠️  OVERCLAIMED - Ghost exceeded evidence entitlement")
     elif report['verdict']['underclaimed']:
-        print(f"  ⚠️  UNDERCLAIMED - Ghost was too conservative")
+        print("  ⚠️  UNDERCLAIMED - Ghost was too conservative")
     else:
-        print(f"  ✓ JUSTIFIED - Ghost's conclusion is appropriate")
+        print("  ✓ JUSTIFIED - Ghost's conclusion is appropriate")
 
     return report
 
@@ -98,7 +98,7 @@ def main():
 
             if report['would_catch_overclaim']:
                 overclaims_caught += 1
-                print(f"  🎯 CAUGHT OVERCLAIM!")
+                print("  🎯 CAUGHT OVERCLAIM!")
 
         except Exception as e:
             print(f"  ❌ Error evaluating scenario: {e}")
@@ -121,7 +121,7 @@ def main():
             verdict = report["verdict"]["semantic_correctness"]
             verdicts[verdict] = verdicts.get(verdict, 0) + 1
 
-    print(f"\nVerdict Breakdown:")
+    print("\nVerdict Breakdown:")
     for verdict, count in sorted(verdicts.items()):
         print(f"  {verdict}: {count}")
 

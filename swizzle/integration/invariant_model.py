@@ -120,7 +120,8 @@ DEFAULT_INVARIANTS = InvariantLibrary(
 DEFAULT_INVARIANTS.add_invariant(Invariant(
     id="no_write_outside_boundary",
     name="No writes outside repository boundary",
-    description="All file writes must remain within the repository root. Symlinks or path traversal must not escape it.",
+    description=("All file writes must remain within the repository root. "
+                 "Symlinks or path traversal must not escape it."),
     scope=InvariantScope.REPOSITORY,
     severity=InvariantSeverity.CRITICAL,
     applies_to=["ghost_tools", "swizzle"],

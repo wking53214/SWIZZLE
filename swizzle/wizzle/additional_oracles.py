@@ -10,9 +10,9 @@ These oracles strengthen discrimination ability by analyzing:
 Each oracle operates independently and cannot access Ghost's conclusions.
 """
 
-from typing import Dict, Any, Set, List
+from typing import Dict, Any
 from pathlib import Path
-from .epistemic_model import SemanticCorrectness
+from ._proc import git
 
 
 class SeverityOracle:
@@ -32,7 +32,7 @@ class SeverityOracle:
     def analyze(oracle_results: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze justified severity level."""
 
-        result = {
+        result: Dict[str, Any] = {
             "oracle": "SeverityOracle",
             "justified_severity": "UNKNOWN",
             "justification": [],
@@ -105,7 +105,7 @@ class TopologyOracle:
     def analyze(repo_path: Path) -> Dict[str, Any]:
         """Analyze dependency topology."""
 
-        result = {
+        result: Dict[str, Any] = {
             "oracle": "TopologyOracle",
             "dependency_graph": {},
             "affected_files": [],
@@ -174,7 +174,7 @@ class RegressionRiskOracle:
     def analyze(oracle_results: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze regression risk."""
 
-        result = {
+        result: Dict[str, Any] = {
             "oracle": "RegressionRiskOracle",
             "regression_risk": "UNKNOWN",
             "risk_score": 0.5,  # 0.0 (no risk) to 1.0 (high risk)
@@ -186,9 +186,6 @@ class RegressionRiskOracle:
         history = oracle_results.get("history", {})
 
         # Extract evidence
-        was_in_production = bool(
-            history.get("evidence", {}).get("message_analysis", {})
-        )
         currently_in_tests = bool(current_state.get("members_in_tests"))
 
         # Risk factors
@@ -231,7 +228,7 @@ class TestCoverageOracle:
     def analyze(repo_path: Path, oracle_results: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze test coverage."""
 
-        result = {
+        result: Dict[str, Any] = {
             "oracle": "TestCoverageOracle",
             "test_files_count": 0,
             "test_imports_member": False,
@@ -283,7 +280,7 @@ class BehavioralCompatibilityOracle:
     def analyze(repo_path: Path) -> Dict[str, Any]:
         """Analyze behavioral compatibility."""
 
-        result = {
+        result: Dict[str, Any] = {
             "oracle": "BehavioralCompatibilityOracle",
             "has_migration_path": False,
             "has_deprecation_notice": False,
@@ -346,7 +343,7 @@ class HistoricalUsageOracle:
     def analyze(repo_path: Path) -> Dict[str, Any]:
         """Analyze historical usage patterns."""
 
-        result = {
+        result: Dict[str, Any] = {
             "oracle": "HistoricalUsageOracle",
             "member_age": "UNKNOWN",
             "usage_recency": "UNKNOWN",
@@ -356,12 +353,15 @@ class HistoricalUsageOracle:
         }
 
         try:
-            import subprocess
-
-            # Get commit history
-            cmd = f"cd {repo_path} && git log --format=%s --reverse 2>/dev/null || echo ''"
-            proc = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-            commits = proc.stdout.strip().split('\n') if proc.returncode == 0 else []
+            # Get commit history. A git failure is a failed measurement, not an
+            # empty history: it is reported through "error" and zero confidence.
+            proc = git(repo_path, "log", "--format=%s", "--reverse")
+            if proc.returncode != 0:
+                result["error"] = "git log exited %d: %s" % (
+                    proc.returncode, proc.stderr.strip())
+                result["confidence"] = 0.0
+                return result
+            commits = [c for c in proc.stdout.strip().split('\n') if c]
 
             if not commits:
                 result["member_age"] = "UNKNOWN"

@@ -3,7 +3,7 @@
 Acts as referee: accepts or rejects improvements based on validation.
 """
 
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, List, Any
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -79,7 +79,7 @@ class Arbiter:
         self.repo_name = repo_name
         self.verdicts: Dict[str, ValidationVerdict] = {}
         self.acceptance_threshold = 0.0  # Min weighted score to accept
-        self.critical_metrics = set()  # Metrics that must improve
+        self.critical_metrics: set[str] = set()  # Metrics that must improve
         self.acceptance_rate = 0.0
 
     def set_acceptance_threshold(self, threshold: float) -> None:

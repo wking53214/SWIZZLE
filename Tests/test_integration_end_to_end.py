@@ -5,21 +5,20 @@ Tests that both tools work together correctly via the shared integration model.
 
 import json
 import pytest
-from pathlib import Path
 from datetime import datetime
 
 from swizzle.integration.orchestrator import IntegrationOrchestrator
-from swizzle.integration.invariant_model import DEFAULT_INVARIANTS, Invariant, InvariantScope
+from swizzle.integration.invariant_model import DEFAULT_INVARIANTS
 from swizzle.integration.triage_ledger import (
     TriageLedger, TriageEntry, Decision, Severity, import_ghost_casefile
 )
-from swizzle.integration.mutation_transfer import DEFAULT_MUTATION_CATALOG, MutationCase
+from swizzle.integration.mutation_transfer import DEFAULT_MUTATION_CATALOG
 from swizzle.integration.performance_contract import (
     DEFAULT_PERFORMANCE_REPORT, PerformanceRun, PerformanceMetric
 )
 from swizzle.integration.architecture_audit import SWIZZLE_AUDIT, GHOST_AUDIT, ArchitectureViolation
 from swizzle.integration.feedback_loop import (
-    DEFAULT_FEEDBACK_REPORT, FalsePositivePattern, FindingType, OracleTrainingDatapoint
+    DEFAULT_FEEDBACK_REPORT, FindingType, OracleTrainingDatapoint
 )
 
 
@@ -53,7 +52,7 @@ class TestIntegrationInvariantModel:
 
     def test_invariant_applies_to_both_tools(self):
         """Verify invariants apply to both Swizzle and Ghost."""
-        for inv_id, inv in DEFAULT_INVARIANTS.invariants.items():
+        for inv in DEFAULT_INVARIANTS.invariants.values():
             assert "ghost_tools" in inv.applies_to or "swizzle" in inv.applies_to
 
 
@@ -153,7 +152,7 @@ class TestIntegrationMutationTransfer:
         cases = json.loads(ghost_format)
 
         assert len(cases) >= 3
-        for case_id, case in cases.items():
+        for case in cases.values():
             assert "hypothesis" in case
             assert "mutations" in case
             assert isinstance(case["mutations"], dict)
@@ -164,7 +163,7 @@ class TestIntegrationMutationTransfer:
         cases = json.loads(swizzle_format)
 
         assert len(cases) >= 3
-        for case_id, case in cases.items():
+        for case in cases.values():
             assert "hypothesis" in case
             assert "mutations" in case
 
@@ -486,12 +485,12 @@ class TestIntegrationPerformance:
     def test_orchestrator_export_performance(self, benchmark, tmp_path):
         """Orchestrator.export_all() should complete in < 100ms."""
         orch = IntegrationOrchestrator(tmp_path / "perf_test")
-        result = benchmark(orch.export_all)
+        benchmark(orch.export_all)
 
     def test_invariant_export_performance(self, benchmark):
         """Invariant export should complete in < 50ms."""
-        result = benchmark(DEFAULT_INVARIANTS.to_json)
+        benchmark(DEFAULT_INVARIANTS.to_json)
 
     def test_mutation_export_performance(self, benchmark):
         """Mutation export should complete in < 50ms."""
-        result = benchmark(DEFAULT_MUTATION_CATALOG.export_for_ghost_mutation_suite)
+        benchmark(DEFAULT_MUTATION_CATALOG.export_for_ghost_mutation_suite)

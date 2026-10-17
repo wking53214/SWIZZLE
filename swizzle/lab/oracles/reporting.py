@@ -63,6 +63,8 @@ def judge(evidence: Evidence) -> Sequence[Signal]:
 
 
 def _report_for(evidence: Evidence, document: str, line: int) -> Optional[Mapping[str, object]]:
+    if evidence.scan is None:
+        return None
     for finding in evidence.scan.findings:
         claim = finding.get("swizzle_claim")
         if claim and claim.get("line") == line and _same_document(str(claim.get("document", "")), document):

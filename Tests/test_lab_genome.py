@@ -12,9 +12,7 @@ import json
 
 import pytest
 
-from swizzle.lab.genome import (SCHEMA_VERSION, AttackCategory, ClaimSpec,
-                                ClaimStyle, CountBlockSpec, DocumentKind,
-                                DocumentSpec, MutationSpec, Phase,
+from swizzle.lab.genome import (SCHEMA_VERSION, MutationSpec, Phase,
                                 RepositoryGenome)
 from Tests import lab_cases
 

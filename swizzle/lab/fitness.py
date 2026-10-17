@@ -35,7 +35,7 @@ without ever letting it compete with a case where something was damaged.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Iterable, Mapping, Sequence, Tuple
+from typing import Dict, Mapping, Sequence, Tuple
 
 from .signals import Judgement, Severity, Signal, failure_class
 
@@ -129,7 +129,7 @@ def score(signals: Sequence[Signal]) -> Fitness:
     for signal in signals:
         if signal.judgement is Judgement.VIOLATION:
             counts[int(signal.severity)] += 1
-    return Fitness(tuple(counts))              # type: ignore[arg-type]
+    return Fitness((counts[0], counts[1], counts[2], counts[3], counts[4]))
 
 
 def corroboration(signals: Sequence[Signal]) -> Mapping[str, int]:

@@ -4,17 +4,15 @@ Validates event creation, streaming, handlers, and hooks.
 """
 
 import json
-import pytest
-from pathlib import Path
 from datetime import datetime
 
 from swizzle.integration.event_system import (
-    Event, EventType, EventSeverity, EventBus, get_event_bus, reset_event_bus,
+    Event, EventType, EventSeverity, get_event_bus, reset_event_bus,
     create_triage_event, create_violation_event, create_regression_event,
     create_false_positive_event, create_mutation_event, create_oracle_event,
 )
 from swizzle.integration.event_handlers import (
-    EventHandlerRegistry, get_handler_registry, reset_handlers, setup_event_handlers
+    get_handler_registry, reset_handlers, setup_event_handlers
 )
 from swizzle.integration.hooks import HookManager
 

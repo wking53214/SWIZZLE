@@ -23,13 +23,13 @@ from __future__ import annotations
 
 import random
 import time
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from dataclasses import dataclass
+from typing import List, Optional, Sequence, Tuple
 
 from . import attack as attack_module
 from . import search
 from .adapter import TargetAdapter
-from .genome import AttackCategory, RepositoryGenome
+from .genome import RepositoryGenome
 from .signals import Judgement, failure_class
 from .standing import Observation, ProbeResult, unprobed
 
@@ -231,7 +231,7 @@ def _grown(genome: RepositoryGenome) -> RepositoryGenome:
     SIZE of the world made.
     """
     from dataclasses import replace
-    from .genome import DocumentSpec, FilesystemShape, TestShape
+    from .genome import DocumentSpec
     documents = genome.documents or ()
     extra = DocumentSpec(path="CONTRIBUTING.md", title="Contributing",
                          prose=("Run the suite before opening a pull request.",
