@@ -7,6 +7,10 @@ name: tests
 # ghost_tools is checked out beside this repository so the end-to-end tests
 # run too. They skip cleanly when it is absent, which is deliberate: SWIZZLE
 # has to be testable without dragging the subject of the measurement in.
+#
+# The cns extra is installed so that Tests/test_cns_connector.py and
+# Tests/test_cns_adapter.py run here instead of skipping. SWIZZLE itself does
+# not need CNS; Tests/test_cns_independence.py proves that with CNS blocked.
 
 on:
   push:
@@ -54,7 +58,7 @@ jobs:
 
       - name: Install
         working-directory: swizzle
-        run: pip install -e ".[dev]"
+        run: pip install -e ".[dev,cns]"
 
       - name: Test
         working-directory: swizzle

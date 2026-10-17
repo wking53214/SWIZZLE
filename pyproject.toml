@@ -35,6 +35,8 @@ swizzle = "swizzle.cli:main"
 # pytest-benchmark provides the `benchmark` fixture that
 # Tests/test_integration_end_to_end.py::TestIntegrationPerformance uses.
 dev = ["pytest>=8", "pytest-benchmark"]
+# The CNS gate contract, for swizzle.cns_adapter's ProofGate and AttackGate. Optional: SWIZZLE runs without it.
+cns = ["cns @ git+https://github.com/wking53214/CNS.git@v1.8.0"]
 
 [tool.setuptools]
 packages = [
@@ -44,6 +46,9 @@ packages = [
     "swizzle.lab.oracles",
     "swizzle.lab.adapters",
     "swizzle.wizzle",
+    "swizzle.governor",
+    "swizzle.integration",
+    "swizzle.production",
 ]
 
 [tool.pytest.ini_options]
