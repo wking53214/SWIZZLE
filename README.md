@@ -29,7 +29,7 @@ Optimizes for: *the smallest reproducible repository state in which an autonomou
 
 `swizzle.cns_adapter` connects SWIZZLE to CNS in both directions. It is **optional**: SWIZZLE
 imports and runs without CNS, declares no runtime dependency, and imports `cns` only when a gate
-is constructed. Install the pinned contract with `pip install 'swizzle[cns]'` (CNS v1.8.0); without it a
+is constructed. Install the pinned contract with `pip install 'swizzle[cns]'` (CNS v1.9.0); without it a
 gate raises `CnsNotInstalled`, which names that command. CNS is never modified by this package.
 
 - `translate_verdict` (unchanged) maps one warp `Verdict` to a `cns.gate` outcome, or to an advisory

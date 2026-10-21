@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parents[1]
 BLOCK = "import sys; sys.modules['cns'] = None; sys.modules['cns.gate'] = None; "
 BLOCK += "sys.modules['cns.attack'] = None\n"
 
-EXTRA = 'cns = ["cns @ git+https://github.com/wking53214/CNS.git@v1.8.0"]'
+EXTRA = 'cns = ["cns @ git+https://github.com/wking53214/CNS.git@v1.9.0"]'
 
 
 def _run(code: str) -> subprocess.CompletedProcess[str]:
