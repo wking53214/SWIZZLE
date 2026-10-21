@@ -1,9 +1,9 @@
 # Implementation status
 
 Header refreshed for SWIZZLE 0.8.4. CI's tested set is now ghost_tools
-`aa72c38294acac1da4c32a2752f0db58e2b07248` (1.10.3), ASSAY `54248beb5a36600f69de7c816cb2271dda20a879` (0.11.2, ASSAY's `main`
+`c2ada82d2f6c0404074a668ba749c7872743aad9` (1.10.5), ASSAY `54248beb5a36600f69de7c816cb2271dda20a879` (0.11.2, ASSAY's `main`
 with its `cns` extra at CNS v1.9.0) and
-Warden `36e98433f4928b7d12905f02b56e55ee1943b56e` (0.13.4); see `.github/workflows/tests.yml`.
+Warden `1636e1a21f124eedbf6e158db95dc75344f4308d` (0.13.7); see `.github/workflows/tests.yml`.
 
 The measurements below are **dated 2026-10-17**: SWIZZLE 0.8.0 measured against ghost_tools
 `dd1b8039a9b32fe41cfa2823228ab3a03c394d0f` (version 1.9.1), ASSAY `4da3919f19a04cb59b45c6d07d55229c923e5126` (0.10.0)
