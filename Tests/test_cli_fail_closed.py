@@ -92,6 +92,53 @@ def test_naming_the_default_path_explicitly_still_requires_it_to_exist(tmp_path,
     assert code == 2 and "does not exist" in err
 
 
+# Every command that reads the corpus refuses a folder the caller named wrongly, with the same reason `corpus` gives.
+CORPUS_READERS = {
+    "history": ["history"],
+    "knowledge": ["knowledge"],
+    "handoff-list": ["handoff", "list"],
+    "handoff-propose": ["handoff", "propose"],
+    "report": ["report", "--bucket", "regression"],
+    "diff": ["diff", "--ghost", "a", "--ghost", "b"],
+    "standing": ["standing"],
+    "holdout": ["holdout"],
+}
+
+
+@pytest.mark.parametrize("command", sorted(CORPUS_READERS))
+@pytest.mark.parametrize("name", ["missing", "no/such/deep/path"])
+def test_every_corpus_reader_refuses_a_named_directory_that_does_not_exist(tmp_path, capsys, command, name):
+    code, out, err = _main([*CORPUS_READERS[command], "--corpus-dir", str(tmp_path / name)], capsys)
+    assert code == 2, (code, out, err)
+    assert "does not exist" in err and "--corpus-dir" in err
+    assert out == ""
+    assert not (tmp_path / name).exists()
+
+
+@pytest.mark.parametrize("command", sorted(CORPUS_READERS))
+def test_every_corpus_reader_refuses_a_named_path_that_is_a_file(tmp_path, capsys, command):
+    target = tmp_path / "f"
+    target.write_text("x")
+    code, out, err = _main([*CORPUS_READERS[command], "--corpus-path", str(target)], capsys)
+    assert code == 2 and out == ""
+    assert "not a directory" in err
+
+
+@pytest.mark.parametrize("command", ["history", "handoff-list"])
+def test_corpus_readers_still_read_an_existing_empty_directory_as_empty(tmp_path, capsys, command):
+    code, out, err = _main([*CORPUS_READERS[command], "--corpus-dir", str(tmp_path), "--json"], capsys)
+    assert code == 0, err
+    assert json.loads(out) in ([], {})
+
+
+@pytest.mark.parametrize("command", ["history", "handoff-list"])
+def test_corpus_readers_let_the_default_location_be_absent(tmp_path, monkeypatch, capsys, command):
+    monkeypatch.chdir(tmp_path)
+    code, out, err = _main(CORPUS_READERS[command], capsys)
+    assert code == 0, err
+    assert list(tmp_path.iterdir()) == [], "a read-only command created: %s" % list(tmp_path.iterdir())
+
+
 def test_bare_swizzle_is_a_usage_error(capsys):
     code, out, err = _main([], capsys)
     assert code == 2

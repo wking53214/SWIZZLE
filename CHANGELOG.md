@@ -9,17 +9,35 @@ all read it back through the installed package metadata (`swizzle/_version.py`).
 Dates are taken from the git history. Where the history carries no release, the change is listed
 under the first version that contains it.
 
-## [Unreleased]
+## [0.8.2] - 2026-10-21
 
 ### Changed
-- CI tested set moved to the siblings that carry the `--contract` check: WARDEN `9d9a71d1bc3195f0abd9aee8fe553cc09838b684`
-  (Warden 0.13.2, was 0.12.0 at `2cf0eec`), ghost_tools `5d7a38638b12a75b25c84ab3652e4774acb9aa10` (1.10.1, was 1.10.0)
+- CI tested set moved to the siblings that carry the `--contract` check: WARDEN `580f659336818b4a5a2c0ca235d2344012536426`
+  (Warden 0.13.3, was 0.12.0 at `2cf0eec`), ghost_tools `5d7a38638b12a75b25c84ab3652e4774acb9aa10` (1.10.1, was 1.10.0)
   and ASSAY `7b781cf9cb2bbc3748aaff4343d778c64dc20d8c` (0.11.1, was 0.11.0). The comments next to each pin give the true
   version. The README sentence naming the tested set is updated.
-- CI installs `numpy==2.5.4` and `matplotlib==3.11.2` (the versions Warden's CI uses) before the ASSAY-dependent tests and
-  steps, because ASSAY 0.11.1 exits 1 on a skipped claim and its verifier skips claims without them.
+- CI installs numpy and matplotlib before the ASSAY-dependent tests and steps, because ASSAY 0.11.1 exits 1 on a skipped
+  claim and its verifier skips claims without them: `matplotlib==3.11.2` everywhere, `numpy==2.4.6` on Python 3.11 and
+  `numpy==2.5.4` on 3.12 and 3.13, selected by environment markers.
 - `Tests/test_ci_config.py` now also checks that the pins' version comments and the README's tested set agree, and that
-  numpy and matplotlib are installed in every job that runs the suite.
+  every job that runs the suite installs numpy and matplotlib at exact versions, with exactly one numpy pin applying on
+  each Python the job uses and that numpy release supporting that Python.
+
+### Fixed
+- CI regression: an unmarked `pip install numpy==2.5.4` in every matrix job could not install on Python 3.11 (numpy 2.5
+  requires Python 3.12 or newer), so the 3.11 job lacked numpy and `Tests/test_assay.py` failed (`swizzle assay` exit 2).
+  numpy is now pinned per interpreter. The test that asserted the exact install string, and so locked the bug in, now
+  asserts the policy instead.
+- Every command that reads the corpus now exits 2 with the reason when the folder named with `--corpus-dir` does not
+  exist, is not a directory or cannot be read, through one shared check. Only `corpus` did before; `history`,
+  `knowledge`, `handoff list` and `handoff propose`, `report --bucket`, `diff` (without `--seeds`), `standing` (without a
+  case) and `holdout` (without `--freeze`) exited 0 and printed an empty result. The default location may still be absent.
+- `swizzle handoff list` no longer creates `./handoff/`: opening a `Handoff` touches nothing and the folders are made
+  by the first write. It also no longer ignores `--corpus-dir`: unless `--handoff-path` is given, lessons live in
+  `handoff/` inside the named corpus folder (with the default corpus the location is still `./handoff`).
+  `Tests/test_no_surprise_writes.py` covers it.
+- `docs/IMPLEMENTATION_STATUS.md` header: the stale SWIZZLE and Warden versions are refreshed, and the 2026-10-17
+  measurements are labelled as dated.
 
 ## [0.8.1] - 2026-10-17
 

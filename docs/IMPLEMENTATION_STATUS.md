@@ -1,11 +1,14 @@
 # Implementation status
 
-Refreshed 2026-10-17. SWIZZLE 0.8.0, measured against ghost_tools
-`dd1b8039a9b32fe41cfa2823228ab3a03c394d0f` (version 1.9.1; the commit CI pinned at 0.8.0, since moved, see CHANGELOG 0.8.1),
-ASSAY `4da3919f19a04cb59b45c6d07d55229c923e5126` (0.10.0) and Warden
-`2cf0eeccf839f88d624deb133fe1cb4b16a99009` (0.12.0).
+Header refreshed for SWIZZLE 0.8.2. CI's tested set is now ghost_tools
+`5d7a38638b12a75b25c84ab3652e4774acb9aa10` (1.10.1), ASSAY `7b781cf9cb2bbc3748aaff4343d778c64dc20d8c` (0.11.1) and
+Warden `580f659336818b4a5a2c0ca235d2344012536426` (0.13.3); see `.github/workflows/tests.yml`.
 
-Everything under "Current state" below was re-measured on that date. Every
+The measurements below are **dated 2026-10-17**: SWIZZLE 0.8.0 measured against ghost_tools
+`dd1b8039a9b32fe41cfa2823228ab3a03c394d0f` (version 1.9.1), ASSAY `4da3919f19a04cb59b45c6d07d55229c923e5126` (0.10.0)
+and Warden `2cf0eeccf839f88d624deb133fe1cb4b16a99009` (0.12.0). They were not re-run against the tested set above.
+
+Everything under "Current state" below was re-measured on 2026-10-17 (the dated measurement above). Every
 section after it ("What was already present" onward) is a dated record of the
 laboratory's construction and its first measurements against Ghost 1.7.0 to
 1.7.3 (2026-09-12). Those measurements were **not** re-run against newer Ghost
@@ -22,7 +25,7 @@ present behaviour of Ghost.
 | Laboratory mutators | 28 | `swizzle mutators` |
 | Seed attack cases | 25 | `swizzle seed` |
 | Governor scenarios (attacks on Warden) | 28 | `swizzle governor --list` |
-| Tests collected | 1308 with this change set | `python -m pytest --collect-only -q` (counts are not written in the README; they drift) |
+| Tests collected | 1308 at the 2026-10-17 measurement (0.8.0) | `python -m pytest --collect-only -q` (counts are not written in the README; they drift) |
 
 **The seed catalogue against ghost_tools 1.9.1** (`swizzle attack`, 25 cases,
 0 broken runs, 0 critical):

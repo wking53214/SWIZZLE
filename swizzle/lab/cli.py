@@ -36,8 +36,8 @@ from .sandbox import Sandbox, purge
 DEFAULT_CORPUS = Path("corpus")
 
 _CORPUS_HELP = ("the attack-memory folder (default: ./corpus). It is created only when "
-                "a command records something; --corpus-path is the older spelling. `corpus` "
-                "exits 2 for a folder you name that does not exist")
+                "a command records something; --corpus-path is the older spelling. Every command "
+                "that reads it exits 2 for a folder you name that does not exist")
 
 
 def _named_corpus_problem(args) -> str | None:
@@ -56,6 +56,19 @@ def _named_corpus_problem(args) -> str | None:
         return "--corpus-dir %s is not a directory." % path
     if not os.access(path, os.R_OK | os.X_OK):
         return "--corpus-dir %s cannot be read." % path
+    return None
+
+
+def _refuse_named_corpus(args) -> int | None:
+    """Exit code 2 (after saying why on standard error) when a named corpus folder is unusable, else None.
+
+    One check shared by every command that READS the corpus, so none of them can report an empty result for a
+    folder the caller named wrongly. Commands that create the folder by recording something do not call it.
+    """
+    problem = _named_corpus_problem(args)
+    if problem:
+        print("swizzle: %s" % problem, file=sys.stderr)
+        return 2
     return None
 
 
@@ -155,7 +168,9 @@ def add_parsers(sub) -> None:
     hand.add_argument("action", choices=("propose", "list", "approve", "fixed"))
     hand.add_argument("lesson", nargs="?", default="", metavar="ID")
     _corpus_arg(hand)
-    hand.add_argument("--handoff-path", type=Path, default=Path("handoff"))
+    hand.add_argument("--handoff-path", type=Path, default=None, metavar="DIR",
+                      help="where the lessons live (default: ./handoff, or handoff/ inside the folder "
+                           "named with --corpus-dir). Read-only actions never create it")
     hand.add_argument("--json", action="store_true")
 
     diff = sub.add_parser("diff", help="compare two revisions of the target")
@@ -608,10 +623,9 @@ def _reproduce(args) -> int:
 
 @_register("corpus")
 def _corpus(args) -> int:
-    problem = _named_corpus_problem(args)
-    if problem:
-        print("swizzle: %s" % problem, file=sys.stderr)
-        return 2
+    refused = _refuse_named_corpus(args)
+    if refused:
+        return refused
     store = Corpus(args.corpus_path)
     if args.promote:
         try:
@@ -644,10 +658,24 @@ def _corpus(args) -> int:
 
 # ----------------------------------------------------------------- handoff
 
+def _handoff_root(args) -> Path:
+    """Where the lessons live: --handoff-path, else inside the corpus folder the caller named, else ./handoff."""
+    if args.handoff_path is not None:
+        return args.handoff_path
+    if args.corpus_path is DEFAULT_CORPUS:
+        return Path("handoff")
+    return args.corpus_path / "handoff"
+
+
 @_register("handoff")
 def _handoff(args) -> int:
     from .handoff import Handoff, lessons_from
-    store = Handoff(args.handoff_path)
+    reads_corpus = args.action in ("propose", "list")
+    if reads_corpus:
+        refused = _refuse_named_corpus(args)
+        if refused:
+            return refused
+    store = Handoff(_handoff_root(args))
     if args.action == "propose":
         entries = Corpus(args.corpus_path).entries("discovered") + \
             Corpus(args.corpus_path).entries("minimized")
@@ -691,6 +719,10 @@ def _diff(args) -> int:
     if len(args.ghost) != 2:
         print("swizzle: give --ghost twice, baseline first", file=sys.stderr)
         return 2
+    if not args.seeds:
+        refused = _refuse_named_corpus(args)
+        if refused:
+            return refused
     scratch: List[Path] = []
     try:
         baseline = _adapter_for(args.ghost[0], scratch)
@@ -747,6 +779,10 @@ def _report(args) -> int:
             print(metrics.render(card))
         print(coverage.render(coverage.matrix()))
         return 0
+    if args.bucket:
+        refused = _refuse_named_corpus(args)
+        if refused:
+            return refused
     try:
         adapter = _adapter(args)
     except TargetUnavailable as exc:
@@ -768,6 +804,10 @@ def _report(args) -> int:
 
 @_register("standing")
 def _standing(args) -> int:
+    if not args.case:                       # every archived case: the corpus is the only source
+        refused = _refuse_named_corpus(args)
+        if refused:
+            return refused
     try:
         adapter = _adapter(args)
     except TargetUnavailable as exc:
@@ -903,6 +943,10 @@ def _newest(entries):
 @_register("holdout")
 def _holdout(args) -> int:
     from .holdout import Holdout, render, sample
+    if not args.freeze:                     # freezing writes the folder, so it may create it
+        refused = _refuse_named_corpus(args)
+        if refused:
+            return refused
     held = Holdout(args.corpus_path)
 
     if args.freeze:
@@ -944,6 +988,9 @@ def _holdout(args) -> int:
 @_register("history")
 def _history(args) -> int:
     from .history import History, render
+    refused = _refuse_named_corpus(args)
+    if refused:
+        return refused
     ledger = History(args.corpus_path / "standings.json")
     if args.returned:
         histories = ledger.returned()
@@ -967,6 +1014,9 @@ def _history(args) -> int:
 def _knowledge(args) -> int:
     from .knowledge import Store, render
     from .mutators import registry
+    refused = _refuse_named_corpus(args)
+    if refused:
+        return refused
     revision = ""
     try:
         revision = str(dict(_adapter(args).version()).get("commit", ""))

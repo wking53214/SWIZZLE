@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import re
+import shlex
 import tomllib
 from pathlib import Path
+
+from packaging.requirements import Requirement
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = (ROOT / ".github" / "workflows" / "tests.yml").read_text(encoding="utf-8")
@@ -110,13 +113,59 @@ def test_the_tested_set_is_the_one_the_readme_names():
 def test_the_tested_set_is_the_current_known_good_one():
     """Guards against the pins silently sliding back to a Warden that predates the SWIZZLE --contract check."""
     job = _job("tests")
-    assert _pin_versions(job) == {"ghost_tools": "1.10.1", "ASSAY": "0.11.1", "WARDEN": "0.13.2"}
-    assert "ref: 9d9a71d1bc3195f0abd9aee8fe553cc09838b684" in job
+    assert _pin_versions(job) == {"ghost_tools": "1.10.1", "ASSAY": "0.11.1", "WARDEN": "0.13.3"}
+    assert "ref: 580f659336818b4a5a2c0ca235d2344012536426" in job
     assert "ref: 5d7a38638b12a75b25c84ab3652e4774acb9aa10" in job
     assert "ref: 7b781cf9cb2bbc3748aaff4343d778c64dc20d8c" in job
 
 
+# The oldest CPython each numpy release supports (its Requires-Python). numpy 2.5.x dropped 3.11, so an
+# unmarked `numpy==2.5.4` cannot be installed by the 3.11 matrix job; that is the regression this guards.
+NUMPY_MIN_PYTHON = {"2.4.6": (3, 11), "2.5.4": (3, 12)}
+
+
+def _interpreters(job: str) -> list[str]:
+    """The Python versions a job runs on: its matrix, or the single version it sets up."""
+    matrix = re.search(r"python-version: \[([^\]]*)\]", job)
+    if matrix:
+        return [v.strip(' "') for v in matrix.group(1).split(",")]
+    single = re.findall(r'python-version: "([0-9.]+)"', job)
+    assert len(single) == 1, "cannot tell which Python this job uses: %r" % single
+    return single
+
+
+def _verifier_requirements(job: str) -> list[Requirement]:
+    """The requirements installed by the step that installs ASSAY's verifier dependencies."""
+    match = re.search(r"name: Install ASSAY's verifier dependencies\n\s+run: pip install (.*)\n", job)
+    assert match, "the job has no step installing ASSAY's verifier dependencies"
+    return [Requirement(token) for token in shlex.split(match.group(1))]
+
+
 def test_every_job_that_runs_the_suite_installs_the_assay_verifier_dependencies():
-    # ASSAY 0.11.1 exits 1 on a skipped claim, and it skips claims without numpy and matplotlib.
+    """ASSAY 0.11.1 exits 1 on a skipped claim, and it skips claims without numpy and matplotlib.
+
+    The policy, not a string: every job that runs the ASSAY-dependent tests installs numpy and matplotlib, each
+    pinned to one exact version, and on every Python that job runs, exactly one numpy pin applies and that
+    version supports that Python.
+    """
     for name in ("tests", "siblings-latest"):
-        assert "pip install numpy==2.5.4 matplotlib==3.11.2" in _job(name), name
+        job = _job(name)
+        requirements = _verifier_requirements(job)
+        assert {r.name for r in requirements} == {"numpy", "matplotlib"}, name
+        for requirement in requirements:
+            specs = list(requirement.specifier)
+            assert len(specs) == 1 and specs[0].operator == "==", "%s: %s is not an exact pin" % (name, requirement)
+        for python in _interpreters(job):
+            env = {"python_version": python}
+            applicable = [r for r in requirements if r.marker is None or r.marker.evaluate(env)]
+            by_name: dict[str, list[Requirement]] = {}
+            for requirement in applicable:
+                by_name.setdefault(requirement.name, []).append(requirement)
+            assert set(by_name) == {"numpy", "matplotlib"}, "%s on %s installs %s" % (name, python, sorted(by_name))
+            for pins in by_name.values():
+                assert len(pins) == 1, "%s on %s has conflicting pins: %s" % (name, python, [str(p) for p in pins])
+            version = next(iter(by_name["numpy"][0].specifier)).version
+            assert version in NUMPY_MIN_PYTHON, "teach NUMPY_MIN_PYTHON about numpy %s" % version
+            assert tuple(int(x) for x in python.split(".")) >= NUMPY_MIN_PYTHON[version], (
+                "%s: numpy %s cannot be installed on Python %s" % (name, version, python)
+            )

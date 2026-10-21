@@ -86,7 +86,11 @@ class Handoff:
     """The on-disk record of lessons and what became of them."""
 
     def __init__(self, root: Path) -> None:
+        # Opening a Handoff never touches the disk, so `handoff list` cannot create a folder. The folders
+        # are made by the first write.
         self.root = Path(root)
+
+    def _ensure_folders(self) -> None:
         for folder in _FOLDERS:
             (self.root / folder).mkdir(parents=True, exist_ok=True)
 
@@ -100,6 +104,7 @@ class Handoff:
             return {}
 
     def _save(self, ledger: Mapping[str, str]) -> None:
+        self._ensure_folders()
         (self.root / _LEDGER).write_text(
             json.dumps(dict(ledger), indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
@@ -145,6 +150,7 @@ class Handoff:
         self._save(ledger)
 
     def _write(self, folder: str, lesson: Lesson) -> None:
+        self._ensure_folders()
         path = self.root / folder / ("%s.json" % lesson.id)
         path.write_text(json.dumps(lesson.to_dict(), indent=2, sort_keys=True) + "\n",
                         encoding="utf-8")

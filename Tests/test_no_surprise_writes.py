@@ -32,6 +32,9 @@ def _listing(folder: Path):
     ("prove", "--only", "sql_through"),
     ("corpus",),
     ("corpus", "--bucket", "regression", "--json"),
+    ("handoff", "list"),
+    ("handoff", "list", "--json"),
+    ("history",),
     ("seed",),
     ("mutators",),
     ("--contract",),
@@ -81,3 +84,31 @@ def test_the_default_location_is_documented_and_is_the_current_directory():
     assert DEFAULT_CORPUS == Path("corpus")
     text = (ROOT / "README.md").read_text(encoding="utf-8")
     assert "--corpus-dir" in text and "./corpus" in text
+
+
+def test_handoff_list_reads_the_named_corpus_folder_and_writes_nothing(tmp_path):
+    """`handoff list` used to create ./handoff and ignore --corpus-dir."""
+    from swizzle.lab.handoff import Handoff, Lesson
+
+    work = tmp_path / "work"
+    work.mkdir()
+    named = tmp_path / "memory"
+    named.mkdir()
+    Handoff(named / "handoff").propose([Lesson("abc123abc123", "missed_current_claim", "HIGH", "plain", "case", {})])
+    before = _listing(named)
+    done = _swizzle(work, "handoff", "list", "--corpus-dir", str(named))
+    assert done.returncode == 0, done.stderr
+    assert "abc123abc123" in done.stdout and "pending" in done.stdout
+    assert _listing(named) == before
+    assert _listing(work) == []
+
+
+def test_handoff_propose_writes_inside_the_named_corpus_folder_not_the_working_directory(tmp_path):
+    work = tmp_path / "work"
+    work.mkdir()
+    named = tmp_path / "memory"
+    named.mkdir()
+    done = _swizzle(work, "handoff", "propose", "--corpus-dir", str(named))
+    assert done.returncode == 0, done.stderr
+    assert _listing(work) == []
+    assert (named / "handoff" / "pending").is_dir()
