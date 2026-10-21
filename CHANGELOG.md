@@ -11,6 +11,27 @@ under the first version that contains it.
 
 ## [Unreleased]
 
+## [0.8.5] - 2026-10-21
+
+### Changed
+- CI tested set: Warden moved from `36e98433f4928b7d12905f02b56e55ee1943b56e` (0.13.4) to
+  `1636e1a21f124eedbf6e158db95dc75344f4308d` (0.13.7, not tagged), and ghost_tools from
+  `aa72c38294acac1da4c32a2752f0db58e2b07248` (1.10.3) to `c2ada82d2f6c0404074a668ba749c7872743aad9` (1.10.5). ASSAY stays
+  `54248beb5a36600f69de7c816cb2271dda20a879` (0.11.2) and the CNS pin stays the `v1.9.0` tag. The workflow comments, the
+  README CI paragraph, the `docs/IMPLEMENTATION_STATUS.md` header and `Tests/test_ci_config.py` name the new set
+  (`test_the_tested_set_is_the_current_known_good_one` asserted the old versions and SHAs and now asserts the new ones; nothing else
+  about it changed).
+- `libcst==1.9.0` is added to the `dev` extra. `Tests/test_typing_regressions.py::test_the_pydantic_scan_reports_one_mapping_per_file`
+  imports libcst with `pytest.importorskip` and had been skipped everywhere because nothing installed it. It now runs and
+  passes (the test is unchanged). With the siblings at the pinned set the suite is 1360 passed, 0 skipped on Python 3.11, 3.12
+  and 3.13. A new test in `Tests/test_ci_config.py` fails if libcst stops being pinned in the dev extra.
+- `docs/IMPLEMENTATION_STATUS.md` "Current state" is re-measured on 2026-10-21 against ghost_tools 1.10.5 (it was
+  2026-10-17, ghost_tools 1.9.1): 12 warps (12 of 12 proofs hold), 28 mutators, 25 seed cases, 28 governor scenarios, and the seed
+  catalogue against Ghost (25 cases, 0 broken, 0 critical, 10 reproduce, 8 HIGH and 2 LOW, corroboration 0 of 10) are the
+  same; the test count is 1360 (it was 1308). The file says which commands were run and that no ASSAY or governor pairing
+  number is recorded.
+- Version 0.8.5 (`pyproject.toml`, the `swizzle_version` example in `docs/CONTRACT.md`, the `docs/IMPLEMENTATION_STATUS.md` header).
+
 ## [0.8.4] - 2026-10-21
 
 ### Changed
