@@ -9,6 +9,18 @@ all read it back through the installed package metadata (`swizzle/_version.py`).
 Dates are taken from the git history. Where the history carries no release, the change is listed
 under the first version that contains it.
 
+## [Unreleased]
+
+### Changed
+- CI tested set moved to the siblings that carry the `--contract` check: WARDEN `9d9a71d1bc3195f0abd9aee8fe553cc09838b684`
+  (Warden 0.13.2, was 0.12.0 at `2cf0eec`), ghost_tools `5d7a38638b12a75b25c84ab3652e4774acb9aa10` (1.10.1, was 1.10.0)
+  and ASSAY `7b781cf9cb2bbc3748aaff4343d778c64dc20d8c` (0.11.1, was 0.11.0). The comments next to each pin give the true
+  version. The README sentence naming the tested set is updated.
+- CI installs `numpy==2.5.4` and `matplotlib==3.11.2` (the versions Warden's CI uses) before the ASSAY-dependent tests and
+  steps, because ASSAY 0.11.1 exits 1 on a skipped claim and its verifier skips claims without them.
+- `Tests/test_ci_config.py` now also checks that the pins' version comments and the README's tested set agree, and that
+  numpy and matplotlib are installed in every job that runs the suite.
+
 ## [0.8.1] - 2026-10-17
 
 A cleanup pass on the 0.8.0 hardening, driven by an independent re-audit.

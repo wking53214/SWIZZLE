@@ -87,3 +87,36 @@ def test_every_action_is_pinned_by_full_commit_sha_with_its_tag_in_a_comment():
         assert re.fullmatch(r"[0-9a-f]{40}", ref), "%s is not pinned to a full commit SHA" % action
         assert re.fullmatch(r"v\d+(\.\d+){2}", (comment or "").strip()), (
             "%s has no release tag in its comment (got %r)" % (name, comment))
+
+
+def _pin_versions(job: str) -> dict:
+    """{repository: version named in the pin's comment}, for the sibling checkouts of one job."""
+    found = {}
+    for repository, comment in re.findall(r"repository: (\S+)\n\s+ref: [0-9a-f]{40}\s+# (.*)", job):
+        match = re.search(r"\b(\d+\.\d+\.\d+)\b", comment)
+        assert match, "the pin for %s names no version: %r" % (repository, comment)
+        found[repository.split("/")[-1]] = match.group(1)
+    return found
+
+
+def test_the_tested_set_is_the_one_the_readme_names():
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    versions = _pin_versions(_job("tests"))
+    assert set(versions) == {"ghost_tools", "ASSAY", "WARDEN"}
+    for name, version in versions.items():
+        assert "%s %s" % (name, version) in readme, "README does not name the tested %s %s" % (name, version)
+
+
+def test_the_tested_set_is_the_current_known_good_one():
+    """Guards against the pins silently sliding back to a Warden that predates the SWIZZLE --contract check."""
+    job = _job("tests")
+    assert _pin_versions(job) == {"ghost_tools": "1.10.1", "ASSAY": "0.11.1", "WARDEN": "0.13.2"}
+    assert "ref: 9d9a71d1bc3195f0abd9aee8fe553cc09838b684" in job
+    assert "ref: 5d7a38638b12a75b25c84ab3652e4774acb9aa10" in job
+    assert "ref: 7b781cf9cb2bbc3748aaff4343d778c64dc20d8c" in job
+
+
+def test_every_job_that_runs_the_suite_installs_the_assay_verifier_dependencies():
+    # ASSAY 0.11.1 exits 1 on a skipped claim, and it skips claims without numpy and matplotlib.
+    for name in ("tests", "siblings-latest"):
+        assert "pip install numpy==2.5.4 matplotlib==3.11.2" in _job(name), name
