@@ -11,10 +11,25 @@ under the first version that contains it.
 
 ## [Unreleased]
 
+## [0.8.3] - 2026-10-21
+
+Merges `origin/main` into the production-status branch: the other session's CNS v1.9.0 move and its numpy and
+matplotlib install for ASSAY's answer key, reconciled with this branch's pin policy.
+
 ### Changed
+- Merged `origin/main` (`b9b1186`: `cb5b2f9` "Move the CNS pin from v1.8.0 to v1.9.0" and `6567fb0` "CI: install numpy
+  and matplotlib for ASSAY's answer key") with a real merge commit. The CNS pin stays a full commit, never the tag URL
+  (pip treats the tag URL and the commit URL as two sources): the `cns` extra, `Tests/test_cns_independence.py`, the
+  README and this log name `da18e411743d4e3b0e783105394d845fb1c16746` (CNS v1.9.0). The other session's bare
+  `pip install numpy matplotlib` is not taken: CI keeps its per-interpreter exact pins (`numpy==2.4.6` below Python
+  3.12, `numpy==2.5.4` from 3.12, `matplotlib==3.11.2`), because numpy 2.5.4 does not exist for Python 3.11. Its intent
+  is kept and now recorded in the workflow comment: since ASSAY #21 an ASSAY claim that cannot run (the solvar cleanup
+  specimen needs both libraries) is a failure, not a skip.
+  `Tests/test_cns_independence.py::test_the_cns_extra_is_pinned_to_the_v1_9_0_commit` is renamed from `..._v1_8_0_...`.
 - CI tested set: ASSAY moved from `7b781cf9cb2bbc3748aaff4343d778c64dc20d8c` (0.11.1, a commit that is now off ASSAY's
-  `main`) to `b6b1ccf1feb39993e50d38b875cd52ff0bd38039` (0.11.2), the squash-merge commit of the ASSAY work on its
-  `main`; its tree is byte-identical to that work's branch head `023589f`. ghost_tools moved from
+  `main`) through `b6b1ccf1feb39993e50d38b875cd52ff0bd38039` (0.11.2, the squash-merge commit of the ASSAY work, tree
+  identical to that work's branch head `023589f`) to `01c713a316dc0513d30e566fffe4d94536888e81` (still 0.11.2; ASSAY's
+  `main` with its own `cns` extra moved to the same CNS v1.9.0 commit). ghost_tools moved from
   `5d7a38638b12a75b25c84ab3652e4774acb9aa10` (1.10.1) to `aa72c38294acac1da4c32a2752f0db58e2b07248` (1.10.3); the full
   suite, the four CI report steps, ruff and mypy pass with it on Python 3.11, 3.12 and 3.13. Warden stays at
   `36e98433f4928b7d12905f02b56e55ee1943b56e` (0.13.4). The README, `docs/IMPLEMENTATION_STATUS.md` and

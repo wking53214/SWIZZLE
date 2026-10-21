@@ -90,7 +90,7 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
         with:
           repository: wking53214/ASSAY
-          ref: b6b1ccf1feb39993e50d38b875cd52ff0bd38039  # ASSAY 0.11.2 (tested set; the squash-merge commit of the ASSAY work on its main, tree identical to its branch head 023589f; 9 commits past its stray v0.10.0 tag, not a release)
+          ref: 01c713a316dc0513d30e566fffe4d94536888e81  # ASSAY 0.11.2 (tested set; ASSAY's main with its cns extra at CNS v1.9.0; 10 commits past its stray v0.10.0 tag, not a release)
           path: ASSAY
 
       # The governor under attack. The attacks and the live tests in

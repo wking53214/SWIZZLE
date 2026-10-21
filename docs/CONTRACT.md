@@ -11,7 +11,7 @@ $ python -m swizzle.cli --contract
   "contract": 1,
   "invocation": ["python", "-m", "swizzle.cli"],
   "name": "swizzle",
-  "swizzle_version": "0.8.2"
+  "swizzle_version": "0.8.3"
 }
 ```
 
