@@ -11,6 +11,19 @@ under the first version that contains it.
 
 ## [Unreleased]
 
+## [0.8.4] - 2026-10-21
+
+### Changed
+- The CNS pin is spelled as the tag: the `cns` extra is now
+  `cns @ git+https://github.com/wking53214/CNS.git@v1.9.0`, which peels to
+  `da18e411743d4e3b0e783105394d845fb1c16746`. It was that full commit. Every repository in the circuit now spells the
+  pin the same way, because pip treats a tag URL and a commit URL as two sources. The README and the workflow header
+  say so. `Tests/test_cns_independence.py` and `Tests/test_ci_config.py` asserted the commit spelling and now assert the
+  tag spelling (each test is renamed from `..._commit` to `..._tag`).
+- CI tested set: ASSAY moved from `01c713a316dc0513d30e566fffe4d94536888e81` to `54248beb5a36600f69de7c816cb2271dda20a879`
+  (still 0.11.2; ASSAY's `main`). The ASSAY ref in `.github/workflows/tests.yml`, `Tests/test_ci_config.py` and
+  `docs/IMPLEMENTATION_STATUS.md` name it.
+
 ## [0.8.3] - 2026-10-21
 
 Merges `origin/main` into the production-status branch: the other session's CNS v1.9.0 move and its numpy and

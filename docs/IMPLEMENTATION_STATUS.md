@@ -1,6 +1,6 @@
 # Implementation status
 
-Header refreshed for SWIZZLE 0.8.3. CI's tested set is now ghost_tools
+Header refreshed for SWIZZLE 0.8.4. CI's tested set is now ghost_tools
 `aa72c38294acac1da4c32a2752f0db58e2b07248` (1.10.3), ASSAY `54248beb5a36600f69de7c816cb2271dda20a879` (0.11.2, ASSAY's `main`
 with its `cns` extra at CNS v1.9.0) and
 Warden `36e98433f4928b7d12905f02b56e55ee1943b56e` (0.13.4); see `.github/workflows/tests.yml`.
