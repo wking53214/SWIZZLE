@@ -21,9 +21,9 @@ ROOT = Path(__file__).resolve().parents[1]
 BLOCK = "import sys; sys.modules['cns'] = None; sys.modules['cns.gate'] = None; "
 BLOCK += "sys.modules['cns.attack'] = None\n"
 
-#: The v1.8.0 tag, pinned by its full commit (the pin policy: a SHA, with the tag in a comment).
-EXTRA = ('cns = ["cns @ git+https://github.com/wking53214/CNS.git@5252ceebe98185f7be81212d988055ccf9884568"]'
-         '  # v1.8.0')
+#: The v1.9.0 tag, pinned by its full commit (the pin policy: a SHA, with the tag in a comment).
+EXTRA = ('cns = ["cns @ git+https://github.com/wking53214/CNS.git@da18e411743d4e3b0e783105394d845fb1c16746"]'
+         '  # v1.9.0')
 
 
 def _run(code: str) -> subprocess.CompletedProcess[str]:

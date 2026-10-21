@@ -39,8 +39,8 @@ swizzle = "swizzle.cli:main"
 # wheel that Tests/test_packaging.py inspects.
 dev = ["pytest>=8", "pytest-benchmark", "ruff>=0.6", "mypy>=1.10", "setuptools>=68"]
 # The CNS gate contract, for swizzle.cns_adapter's ProofGate and AttackGate. Optional: SWIZZLE runs without it.
-# Pinned to a full commit (the v1.8.0 tag), so the contract cannot move under a build.
-cns = ["cns @ git+https://github.com/wking53214/CNS.git@5252ceebe98185f7be81212d988055ccf9884568"]  # v1.8.0
+# Pinned to a full commit (the v1.9.0 tag), so the contract cannot move under a build.
+cns = ["cns @ git+https://github.com/wking53214/CNS.git@da18e411743d4e3b0e783105394d845fb1c16746"]  # v1.9.0
 
 [tool.setuptools]
 packages = [

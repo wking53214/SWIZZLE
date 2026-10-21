@@ -106,6 +106,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       # ASSAY's verifier needs numpy and matplotlib: without them it skips claims and, since 0.11.1, exits 1.
+      # Its answer key runs every claim it can, and since ASSAY #21 a claim it cannot run (the solvar cleanup
+      # specimen needs both) is a failure, not a skip.
       # Needed wherever an ASSAY-dependent test or step runs. numpy is pinned to an exact version per
       # interpreter by environment markers, because numpy 2.5.x requires Python 3.12 or newer (the newest
       # numpy pip can install on 3.11 is 2.4.6). A single unmarked pin cannot install on every matrix Python.
