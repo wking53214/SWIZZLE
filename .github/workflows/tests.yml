@@ -56,9 +56,11 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      # numpy and matplotlib are for ASSAY's answer key: it runs every claim it can, and since ASSAY #21 a claim
+      # it cannot run (the solvar cleanup specimen needs both) is a failure, not a skip.
       - name: Install
         working-directory: swizzle
-        run: pip install -e ".[dev,cns]"
+        run: pip install -e ".[dev,cns]" numpy matplotlib
 
       - name: Test
         working-directory: swizzle
