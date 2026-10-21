@@ -82,7 +82,7 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
         with:
           repository: wking53214/ghost_tools
-          ref: 5d7a38638b12a75b25c84ab3652e4774acb9aa10  # ghost_tools 1.10.1 (tested set; 16 commits past its stray v0.10.0 tag, not a release)
+          ref: aa72c38294acac1da4c32a2752f0db58e2b07248  # ghost_tools 1.10.3 (tested set; 24 commits past its stray v0.10.0 tag, not a release)
           path: ghost_tools
 
       # ASSAY's answer key makes Tests/test_assay.py's live tests
@@ -90,7 +90,7 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
         with:
           repository: wking53214/ASSAY
-          ref: 7b781cf9cb2bbc3748aaff4343d778c64dc20d8c  # ASSAY 0.11.1 (tested set; 14 commits past its stray v0.10.0 tag, not a release)
+          ref: b6b1ccf1feb39993e50d38b875cd52ff0bd38039  # ASSAY 0.11.2 (tested set; the squash-merge commit of the ASSAY work on its main, tree identical to its branch head 023589f; 9 commits past its stray v0.10.0 tag, not a release)
           path: ASSAY
 
       # The governor under attack. The attacks and the live tests in

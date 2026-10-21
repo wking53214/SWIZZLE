@@ -113,10 +113,10 @@ def test_the_tested_set_is_the_one_the_readme_names():
 def test_the_tested_set_is_the_current_known_good_one():
     """Guards against the pins silently sliding back to a Warden that predates the SWIZZLE --contract check."""
     job = _job("tests")
-    assert _pin_versions(job) == {"ghost_tools": "1.10.1", "ASSAY": "0.11.1", "WARDEN": "0.13.4"}
+    assert _pin_versions(job) == {"ghost_tools": "1.10.3", "ASSAY": "0.11.2", "WARDEN": "0.13.4"}
     assert "ref: 36e98433f4928b7d12905f02b56e55ee1943b56e" in job
-    assert "ref: 5d7a38638b12a75b25c84ab3652e4774acb9aa10" in job
-    assert "ref: 7b781cf9cb2bbc3748aaff4343d778c64dc20d8c" in job
+    assert "ref: aa72c38294acac1da4c32a2752f0db58e2b07248" in job
+    assert "ref: b6b1ccf1feb39993e50d38b875cd52ff0bd38039" in job
 
 
 # The oldest CPython each numpy release supports (its Requires-Python). numpy 2.5.x dropped 3.11, so an
