@@ -52,6 +52,15 @@ def test_the_live_tests_have_what_they_need_to_run():
     assert 'pip install -e ".[dev,cns]"' in job
 
 
+def test_libcst_is_pinned_in_the_dev_extra_so_the_pydantic_scan_test_runs():
+    """Tests/test_typing_regressions.py imports libcst and skips without it; CI installs `.[dev,cns]`."""
+    data = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    requirements = [Requirement(r) for r in data["project"]["optional-dependencies"]["dev"]]
+    libcst = [r for r in requirements if r.name == "libcst"]
+    assert len(libcst) == 1, "libcst must be declared once in the dev extra"
+    assert re.fullmatch(r"==\d+\.\d+\.\d+", str(libcst[0].specifier)), "libcst must be pinned to an exact version"
+
+
 def test_matrix_covers_311_312_313():
     versions = re.search(r'python-version: \[([^\]]*)\]', _job("tests")).group(1)
     assert [v.strip(' "') for v in versions.split(",")] == ["3.11", "3.12", "3.13"]

@@ -37,7 +37,13 @@ swizzle = "swizzle.cli:main"
 # Tests/test_integration_end_to_end.py::TestIntegrationPerformance uses.
 # ruff and mypy are the static gates CI runs (see [tool.ruff] and [tool.mypy] below); setuptools builds the
 # wheel that Tests/test_packaging.py inspects.
-dev = ["pytest>=8", "pytest-benchmark", "ruff>=0.6", "mypy>=1.10", "setuptools>=68"]
+# libcst is the transformer swizzle.lab.adapters.pydantic_v2 needs; Tests/test_typing_regressions.py
+# (test_the_pydantic_scan_reports_one_mapping_per_file) imports it, and without it that test is skipped,
+# so the suite would report a skip on every interpreter. It is pinned to an exact version, like the numpy
+# and matplotlib pins in CI, because the test drives libcst's parser and a moving version would make the
+# result depend on the day it was installed. 1.9.0 is the newest release; it ships wheels for CPython
+# 3.11, 3.12 and 3.13 and has no required dependencies beyond pyyaml and typing-extensions.
+dev = ["pytest>=8", "pytest-benchmark", "ruff>=0.6", "mypy>=1.10", "setuptools>=68", "libcst==1.9.0"]
 # The CNS gate contract, for swizzle.cns_adapter's ProofGate and AttackGate. Optional: SWIZZLE runs without it.
 # Pinned to the v1.9.0 tag, which every repository in the circuit spells the same way (pip treats a tag URL and a
 # commit URL as two sources, and CNS's seat_pins check compares the text). The tag peels to da18e411743d4e3b0e783105394d845fb1c16746.
