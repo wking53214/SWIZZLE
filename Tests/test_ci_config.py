@@ -113,8 +113,8 @@ def test_the_tested_set_is_the_one_the_readme_names():
 def test_the_tested_set_is_the_current_known_good_one():
     """Guards against the pins silently sliding back to a Warden that predates the SWIZZLE --contract check."""
     job = _job("tests")
-    assert _pin_versions(job) == {"ghost_tools": "1.10.1", "ASSAY": "0.11.1", "WARDEN": "0.13.3"}
-    assert "ref: 580f659336818b4a5a2c0ca235d2344012536426" in job
+    assert _pin_versions(job) == {"ghost_tools": "1.10.1", "ASSAY": "0.11.1", "WARDEN": "0.13.4"}
+    assert "ref: 36e98433f4928b7d12905f02b56e55ee1943b56e" in job
     assert "ref: 5d7a38638b12a75b25c84ab3652e4774acb9aa10" in job
     assert "ref: 7b781cf9cb2bbc3748aaff4343d778c64dc20d8c" in job
 

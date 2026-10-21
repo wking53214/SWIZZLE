@@ -9,6 +9,16 @@ all read it back through the installed package metadata (`swizzle/_version.py`).
 Dates are taken from the git history. Where the history carries no release, the change is listed
 under the first version that contains it.
 
+## [Unreleased]
+
+### Changed
+- CI tested set: WARDEN moved from `580f659336818b4a5a2c0ca235d2344012536426` (Warden 0.13.3) to
+  `36e98433f4928b7d12905f02b56e55ee1943b56e` (Warden 0.13.4). Warden 0.13.4 requires instrument roots to be git
+  checkouts with a readable version and refuses site-packages roots; the CI checkout is a git checkout, so the governor
+  attacks, `--contract` and the Warden-dependent tests run against it unchanged. ghost_tools
+  `5d7a38638b12a75b25c84ab3652e4774acb9aa10` (1.10.1) and ASSAY `7b781cf9cb2bbc3748aaff4343d778c64dc20d8c` (0.11.1) stay.
+  The README, `docs/IMPLEMENTATION_STATUS.md` and `Tests/test_ci_config.py` name the new tested set.
+
 ## [0.8.2] - 2026-10-21
 
 ### Changed
