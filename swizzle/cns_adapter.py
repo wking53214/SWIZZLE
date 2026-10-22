@@ -148,7 +148,7 @@ def translate_verdict(
 # names a checkout install and the pinned git URL, never a bare PyPI name.
 INSTALL_HINT = (
     "pip install -e '.[cns]' from a SWIZZLE checkout, or, for CNS alone, "
-    "pip install \"cns @ git+https://github.com/wking53214/CNS.git@v1.9.0\""
+    "pip install \"cns @ git+https://github.com/wking53214/CNS.git@v2.0.0\""
 )
 
 #: What ``subject`` is set to when the caller does not name the judged content.

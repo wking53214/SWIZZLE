@@ -21,9 +21,9 @@ ROOT = Path(__file__).resolve().parents[1]
 BLOCK = "import sys; sys.modules['cns'] = None; sys.modules['cns.gate'] = None; "
 BLOCK += "sys.modules['cns.attack'] = None\n"
 
-#: The v1.9.0 tag spelling, the one every repository in the circuit uses (the commit it peels to is in the comment).
-EXTRA = ('cns = ["cns @ git+https://github.com/wking53214/CNS.git@v1.9.0"]'
-         '  # v1.9.0 = da18e411743d4e3b0e783105394d845fb1c16746')
+#: The v2.0.0 tag spelling, the one every repository in the circuit uses (the commit it peels to is in the comment).
+EXTRA = ('cns = ["cns @ git+https://github.com/wking53214/CNS.git@v2.0.0"]'
+         '  # v2.0.0 = b13e5d2f9e0e4291725f82794b89117c3d840ac1')
 
 
 def _run(code: str) -> subprocess.CompletedProcess[str]:
@@ -123,12 +123,12 @@ def test_the_package_declares_no_runtime_dependency():
     assert "cns" in _pyproject()["project"]["optional-dependencies"]
 
 
-def test_the_cns_extra_is_pinned_to_the_v1_9_0_tag():
+def test_the_cns_extra_is_pinned_to_the_v2_0_0_tag():
     text = (ROOT / "pyproject.toml").read_text()
     assert EXTRA in text.splitlines()
     (spec,) = _pyproject()["project"]["optional-dependencies"]["cns"]
     assert re.fullmatch(
-        r"cns @ git\+https://github\.com/wking53214/CNS\.git@v1\.9\.0", spec
+        r"cns @ git\+https://github\.com/wking53214/CNS\.git@v2\.0\.0", spec
     ), spec
 
 
