@@ -29,8 +29,11 @@ The arbiter and the loop orchestrator live in `swizzle/integration/` (not copied
 
 `swizzle.cns_adapter` connects SWIZZLE to CNS in both directions. It is **optional**: SWIZZLE
 imports and runs without CNS, declares no runtime dependency, and imports `cns` only when a gate
-is constructed. Install the pinned contract with `pip install 'swizzle[cns]'` (CNS v1.9.0); without it a
-gate raises `CnsNotInstalled`, which names that command. CNS is never modified by this package.
+is constructed. Install the pinned contract (CNS v1.9.0) from a checkout of this repository with
+`pip install -e '.[cns]'`, or just CNS with `pip install "cns @ git+https://github.com/wking53214/CNS.git@v1.9.0"`.
+The PyPI projects named `swizzle` and `cns` are unrelated to this stack, so install from the checkout or the git
+URL, never by bare name. Without CNS a gate raises `CnsNotInstalled`, which names those commands. CNS is never
+modified by this package.
 
 - `translate_verdict` (unchanged) maps one warp `Verdict` to a `cns.gate` outcome, or to an advisory
   record when CNS is absent. It is not a `Gate`, and it stamps every result `ALPHA`, though a warp

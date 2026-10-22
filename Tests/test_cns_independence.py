@@ -82,7 +82,7 @@ def test_a_gate_says_what_is_missing_at_construction_when_cns_is_blocked():
                 build()
             except CnsNotInstalled as exc:
                 assert isinstance(exc, ImportError)
-                assert "pip install 'swizzle[cns]'" in str(exc), str(exc)
+                assert "pip install -e '.[cns]'" in str(exc), str(exc)
             else:
                 raise SystemExit('built without cns')
         print('ok')

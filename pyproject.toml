@@ -91,7 +91,7 @@ warn_redundant_casts = true
 # Optional or sibling dependencies that are not installed with SWIZZLE and ship no
 # stubs. Each is imported lazily behind a try/except or inside a subprocess, so a
 # missing package is handled at run time, not hidden here:
-#   cns          the optional contract package (swizzle[cns]); the adapter raises CnsNotInstalled without it
+#   cns          the optional contract package (the `cns` extra); the adapter raises CnsNotInstalled without it
 #   ghost_buster the target under test (a sibling checkout, imported by path)
 #   warden       the governor under attack (imported only in a subprocess)
 #   libcst       the optional transformer used by the pydantic adapter

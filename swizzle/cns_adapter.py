@@ -144,7 +144,12 @@ def translate_verdict(
 # imported only when a gate is constructed, never when SWIZZLE is.
 # ---------------------------------------------------------------------------
 
-INSTALL_HINT = "pip install 'swizzle[cns]'"
+# Neither `swizzle` nor `cns` on PyPI is this project (they are unrelated packages), so the hint
+# names a checkout install and the pinned git URL, never a bare PyPI name.
+INSTALL_HINT = (
+    "pip install -e '.[cns]' from a SWIZZLE checkout, or, for CNS alone, "
+    "pip install \"cns @ git+https://github.com/wking53214/CNS.git@v1.9.0\""
+)
 
 #: What ``subject`` is set to when the caller does not name the judged content.
 DEFAULT_PROOF_SUBJECT = "swizzle-proofs"
