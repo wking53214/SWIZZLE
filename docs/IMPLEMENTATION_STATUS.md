@@ -1,9 +1,13 @@
 # Implementation status
 
-Header refreshed for SWIZZLE 0.8.5. CI's tested set is now ghost_tools
-`c2ada82d2f6c0404074a668ba749c7872743aad9` (1.10.5), ASSAY `54248beb5a36600f69de7c816cb2271dda20a879` (0.11.2, ASSAY's `main`
+Header refreshed for SWIZZLE 0.8.6. CI's tested set is now ghost_tools
+`2d03d8e19dc5937a6f45379c429d1a3afce4ab29` (1.10.6), ASSAY `54248beb5a36600f69de7c816cb2271dda20a879` (0.11.2, ASSAY's `main`
 with its `cns` extra at CNS v1.9.0) and
-Warden `1636e1a21f124eedbf6e158db95dc75344f4308d` (0.13.7); see `.github/workflows/tests.yml`.
+Warden `380894f0304ef40587dd29efd41b4ceccf94a5d3` (0.13.8); see `.github/workflows/tests.yml`.
+The dated measurements below were taken against the previous tested set (ghost_tools 1.10.5, Warden 0.13.7) and are
+**not** re-recorded for this one, with one check: `swizzle attack --ghost-tools` run again on 2026-10-22 against
+ghost_tools 1.10.6 gave the same result as against 1.10.5 (25 cases, 25 usable, 0 broken runs, 0 critical; 8 HIGH,
+2 LOW, 15 pass).
 
 The measurements below are **dated 2026-10-21**: the SWIZZLE 0.8.5 code (the commit before its version bump, which
 changes only the version string and the changelog) measured with `GHOST_TOOLS` at ghost_tools
