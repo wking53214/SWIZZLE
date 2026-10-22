@@ -88,7 +88,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                               "is an error (exit 2)")
 
     running = sub.add_parser("run", help="build, scan, score")
-    running.add_argument("--only", default=None, metavar="SUBSTRING")
+    running.add_argument("--only", default=None, metavar="SUBSTRING",
+                         help="warps whose name or target contains this "
+                              "(comma-separated); a name that matches nothing "
+                              "is an error (exit 2), with or without "
+                              "--fail-on-escape")
     running.add_argument("--ghost-tools", type=Path, default=None, metavar="PATH",
                          help="the ghost_tools checkout (default: importable, "
                               "then $GHOST_TOOLS, then a sibling directory). A "
@@ -332,6 +336,15 @@ def _prove(args) -> int:
 
 
 def _run(args) -> int:
+    only = args.only
+    parts = [p.strip() for p in only.split(",") if p.strip()] if only else [None]
+    warps: List[Warp] = []
+    for part in parts:
+        warps += [w for w in _selected(part) if w not in warps]
+    bad = _unknown_names(only, warps)
+    if bad:
+        print("swizzle: %s" % bad, file=sys.stderr)
+        return 2
     if not git_available():
         print("swizzle: git is not on PATH, and a warp is a repository.",
               file=sys.stderr)
@@ -364,7 +377,6 @@ def _run(args) -> int:
     # The JSON for `run` is a bare list, so the source goes to stderr there.
     print(src.line("ghost_tools", ghost_info), file=sys.stderr if args.json else sys.stdout)
 
-    warps = _selected(args.only)
     outcomes = run_all(warps, ghost_tools, keep=args.keep)
 
     if args.json:

@@ -89,6 +89,7 @@ A bare `swizzle` (no command) prints usage on standard error and exits 2, like a
 |---|---|---|---|
 | `governor` | every selected scenario was **held** | any scenario was **violated** (this outranks 2) | no scenario was violated, but at least one **did not run**; also a bad `--only` name or a bad `--warden` path |
 | `prove` | every proof holds | a proof failed | no proofs ran, or `--only` named nothing |
+| `run` | the report was produced (without `--fail-on-escape`, an escape is the finding, not an error) | only with `--fail-on-escape`: a warp escaped or a decoy was flagged | a warp could not be built, a bad `--ghost-tools` path, or a `--only` name that matches nothing (with or without `--fail-on-escape`; a typo in a gate never passes) |
 | `assay` | the key was scored (see the next paragraph) | Ghost caught fewer than `--floor N` failure modes, or a compared revision got worse | cannot score: bad `--assay` or `--ghost-tools` path, answer key not proven, a specimen could not be scored |
 
 A governor scenario is **held** only when Warden ran to the end and gave a readable decision (or, for the forged-grant scenario, refused in the expected way). If Warden crashed, timed out, printed nothing readable or gave no decision, the scenario is **not run** and says why in plain words. Unchanged files are not evidence: a crashed Warden leaves them unchanged too. The one-line summary counts held, violated and not run separately. `--json` prints only the JSON list on standard output; notes go to standard error.

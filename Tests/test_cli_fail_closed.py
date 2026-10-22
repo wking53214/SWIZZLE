@@ -152,3 +152,34 @@ def test_help_and_version_still_exit_zero(capsys):
             cli.main([flag])
         assert stop.value.code == 0
         capsys.readouterr()
+
+
+@pytest.mark.parametrize("extra", [[], ["--fail-on-escape"]])
+def test_run_refuses_an_unknown_only_name(extra, capsys):
+    """`run --only typo` used to print "0 warps" and exit 0, so a typo in a CI gate passed vacuously."""
+    code, out, err = _main(["run", "--only", "nosuchwarp", *extra], capsys)
+    assert code == 2
+    assert out == ""
+    assert "no warp matches 'nosuchwarp'" in err and "sql_through_a_name" in err
+
+
+@pytest.mark.parametrize("extra", [[], ["--fail-on-escape"]])
+def test_run_refuses_one_unknown_name_in_a_list(extra, capsys):
+    code, out, err = _main(["run", "--only", "sql_through_a_name,nosuchwarp", *extra], capsys)
+    assert code == 2 and out == ""
+    assert "no warp matches 'nosuchwarp'" in err
+
+
+def test_run_selects_a_comma_separated_list_like_prove(monkeypatch, capsys):
+    seen = {}
+
+    def fake_run_all(warps, ghost_tools, keep=None):
+        seen["names"] = [w.name for w in warps]
+        return []
+
+    monkeypatch.setattr(cli, "run_all", fake_run_all)
+    monkeypatch.setattr(cli, "render", lambda outcomes, warps: "")
+    monkeypatch.setattr(cli, "_is_ghost_tools", lambda path: True)
+    code, _, err = _main(["run", "--ghost-tools", ".", "--only", "sql_through_a_name,sql_behind_a_wrapper"], capsys)
+    assert code == 0, err
+    assert seen["names"] == ["sql_through_a_name", "sql_behind_a_wrapper"]
