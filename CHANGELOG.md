@@ -11,6 +11,32 @@ under the first version that contains it.
 
 ## [Unreleased]
 
+## [0.8.6] - 2026-10-22
+
+### Fixed
+- `swizzle run --only NAME` with a name that matches no warp printed "0 of 0" and exited 0, also with `--fail-on-escape`,
+  so a typo in a CI gate passed vacuously. `run` now applies the same unknown-name check as `prove` and `governor`: it
+  exits 2 with a message listing the valid names, with or without `--fail-on-escape`, before doing any work. `--only`
+  on `run` takes a comma-separated list the same way `prove` does. The README exit-code table gains a `run` row.
+- STACK.md called CNS private. CNS is public (the anonymous GitHub API reports `private: false`, and CI installs the
+  `cns` extra with no token). The line now says so; no other doc carried the claim, and a new test fails if one does.
+- The install hints told the reader to `pip install 'swizzle[cns]'` (README, and the `CnsNotInstalled` message). The PyPI
+  project named `swizzle` is unrelated (2.6.1, no `cns` extra), so that installed the wrong package, and `cns` on PyPI is
+  also unrelated. Both places now give `pip install -e '.[cns]'` from a checkout, or for CNS alone
+  `pip install "cns @ git+https://github.com/wking53214/CNS.git@v1.9.0"`. New tests in `Tests/test_docs_install_hints.py`
+  fail if any README, STACK, docs or source text tells the reader to install a bare PyPI name of this stack.
+  `Tests/test_cns_independence.py::test_a_gate_says_what_is_missing_at_construction_when_cns_is_blocked` asserted the old
+  hint text and now asserts the new one; nothing else about it changed.
+
+### Changed
+- CI tested set: Warden moved from `1636e1a21f124eedbf6e158db95dc75344f4308d` (0.13.7) to
+  `380894f0304ef40587dd29efd41b4ceccf94a5d3` (0.13.8, not tagged), and ghost_tools from
+  `c2ada82d2f6c0404074a668ba749c7872743aad9` (1.10.5) to `2d03d8e19dc5937a6f45379c429d1a3afce4ab29` (1.10.6). ASSAY stays
+  `54248beb5a36600f69de7c816cb2271dda20a879` (0.11.2) and the CNS pin stays the `v1.9.0` tag. The workflow comments, the
+  README CI paragraph, the `docs/IMPLEMENTATION_STATUS.md` header and `Tests/test_ci_config.py` name the new set
+  (`test_the_tested_set_is_the_current_known_good_one` asserted the old versions and SHAs and now asserts the new ones; nothing else
+  about it changed).
+
 ## [0.8.5] - 2026-10-21
 
 ### Changed
