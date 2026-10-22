@@ -11,6 +11,30 @@ under the first version that contains it.
 
 ## [Unreleased]
 
+## [0.8.7] - 2026-10-22
+
+### Changed
+- The CNS pin moves from the `v1.9.0` tag to the `v2.0.0` tag: the `cns` extra is now
+  `cns @ git+https://github.com/wking53214/CNS.git@v2.0.0  # v2.0.0 = b13e5d2f9e0e4291725f82794b89117c3d840ac1`
+  (the annotated tag object is `bb220f65d4629abc8073b976d1ea23f76d090e5e`). The README, the workflow header comment and
+  the `CnsNotInstalled` install hint carry the same spelling. The CI sibling pins are unchanged: ghost_tools
+  `2d03d8e19dc5937a6f45379c429d1a3afce4ab29`, ASSAY `54248beb5a36600f69de7c816cb2271dda20a879`, Warden
+  `380894f0304ef40587dd29efd41b4ceccf94a5d3`. The suite passed against the installed CNS 2.0.0 on Python 3.11, 3.12
+  and 3.13 with no skips. Tests that asserted the old tag spelling now assert the new one and nothing else about them
+  changed: `Tests/test_cns_independence.py` (the `EXTRA` line, and `test_the_cns_extra_is_pinned_to_the_v1_9_0_tag`,
+  renamed `..._v2_0_0_tag`), `Tests/test_ci_config.py` (`test_the_cns_extra_is_pinned_to_the_v1_9_0_tag`, renamed
+  `..._v2_0_0_tag`) and `Tests/test_docs_install_hints.py` (three install-line strings).
+- The README is rewritten to the final standard: What this is, How to install and run, evidence named for each item
+  under What works, What does not work and what is not proven, Known defects, What broke and how it was fixed (checked
+  against this changelog, the git history and the tests, each entry with its guard or "no test yet"), Self-hosting and
+  Ceilings code cannot fix. The statements about which git tags exist are removed because they go stale. The install
+  commands were run in a fresh virtual environment. New `Tests/test_readme_claims.py` holds the number of proofs and the
+  lint settings the README states, that every test the README cites exists, that every version in the ledger is a
+  changelog version, the promised sections and the banned words. `STACK.md` and `docs/` state no CNS version, so they
+  are unchanged.
+- Version 0.8.7 (`pyproject.toml`, the `swizzle_version` example in `docs/CONTRACT.md`, the `docs/IMPLEMENTATION_STATUS.md`
+  header).
+
 ## [0.8.6] - 2026-10-22
 
 ### Fixed
