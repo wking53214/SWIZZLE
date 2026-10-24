@@ -11,6 +11,36 @@ under the first version that contains it.
 
 ## [Unreleased]
 
+## [0.8.8] - 2026-10-24
+
+Fixes from the round-6 independent audit of the release set (2026-10-23 and 2026-10-24). Each item was reproduced
+before it was changed. One commit per step.
+
+### Fixed
+- Step 1: `Tests/test_wizzle_subprocess_safety.py::test_no_shell_true_anywhere_in_the_source` searched the source for the
+  text `shell=True`, so `kw = {"shell": True}; subprocess.run(c, **kw)` passed it. The test now parses every module in
+  `swizzle/` and `tools/` and rejects a `shell` keyword that is not the constant `False` (on any call), a dict with a
+  `shell` key that is not `False`, `**` into a subprocess call that cannot be shown to omit `shell`, and the calls that
+  always use a shell (`os.system`, `os.popen`, `subprocess.getoutput`, `subprocess.getstatusoutput`,
+  `asyncio.create_subprocess_shell`). Thirteen rejected spellings, five accepted ones and a mutated copy of
+  `swizzle/wizzle/_proc.py` in both spellings are tested. The new test replaces the old assertion in the same test; no
+  other test was edited. Limit: a call reached through `getattr`, `importlib` or `exec` is not followed.
+- Step 2: stale statements. The README, the workflow comments and `docs/IMPLEMENTATION_STATUS.md` called the CI sibling
+  pins the head of the siblings' `main` (they are the last set this repository's CI tested on its own; the whole-stack
+  check is the `stack` job in the CNS repository). The workflow comments also made statements about the siblings' tags;
+  those are removed. The README said the newer Warden checks were "assumed to arrive in 0.9.0"; it now says
+  `NEW_CHECKS_SINCE` is a version label used only when a probe does not show the check (the comment in
+  `swizzle/governor/scenarios.py` says the same; the value and the messages are unchanged). The self-hosting paragraph said
+  no fresh run was recorded and that no CNS status page existed; it now cites the CNS repository's
+  `docs/evidence/SELFHOSTING_2026-10-23.md` and what it recorded for this repository, with the numbers held by
+  `Tests/test_readme_claims.py`. `docs/IMPLEMENTATION_STATUS.md` re-counts its inventory (held by a test) and labels the
+  Ghost figures with the versions they were measured at; its collected-test count is now 1403.
+
+### Changed
+- Step 3: version 0.8.8 (`pyproject.toml`, the `swizzle_version` example in `docs/CONTRACT.md`), this entry, and the
+  README ledger entries for the two items above. The CI sibling pins and the CNS pin are unchanged.
+- No pre-existing test was edited to assert new behaviour. The one replaced assertion is in Step 1 (the shell check).
+
 ## [0.8.7] - 2026-10-22
 
 ### Changed
