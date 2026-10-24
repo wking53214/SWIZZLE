@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 import importlib.util
 import os
 import stat
@@ -175,10 +176,156 @@ def test_reconstruct_history_run_refuses_a_shell_string():
     assert reconstruct.run(["git", "--version"]).startswith("git version")
 
 
+# --- the shell check ---------------------------------------------------------------------------------------
+#
+# This is an AST check, not a search for the text "shell=True". A text search is passed by
+#     kw = {"shell": True}; subprocess.run(command, **kw)
+# because the words never sit together. The rules, applied to every call in swizzle/ and tools/:
+#   1. any call with a `shell` keyword whose value is not the constant False is an offender (any callee);
+#   2. any dict display with a "shell" key whose value is not the constant False is an offender;
+#   3. a `**` unpacking into a subprocess call is an offender unless it unpacks a dict display that is
+#      shown, key by key, to leave `shell` out (a `**` inside that display is held to the same rule);
+#   4. a call that always uses a shell (os.system, os.popen, subprocess.getoutput, getstatusoutput,
+#      asyncio.create_subprocess_shell) is an offender.
+# A "subprocess call" is a call to subprocess.run/call/check_call/check_output/Popen (or asyncio.create_subprocess_exec)
+# reached by `import subprocess`, `import subprocess as x`, `from subprocess import run [as y]` or a simple
+# `name = subprocess.run` assignment. Reaching it by getattr(), importlib or exec is not followed; that is a
+# limit of the check, and the source has no such call.
+
+_SUBPROCESS_CALLS = {"run", "call", "check_call", "check_output", "Popen", "create_subprocess_exec"}
+_ALWAYS_SHELL = {("subprocess", "getoutput"), ("subprocess", "getstatusoutput"), ("os", "system"), ("os", "popen"),
+                 ("asyncio", "create_subprocess_shell")}
+
+
+def _is_false(node: ast.expr) -> bool:
+    return isinstance(node, ast.Constant) and node.value is False
+
+
+def _dict_omits_shell(node: ast.expr) -> bool:
+    """True only for a dict display that provably has no `shell` key."""
+    if not isinstance(node, ast.Dict):
+        return False
+    for key, value in zip(node.keys, node.values, strict=True):
+        if key is None:                                   # a nested ** unpacking
+            if not _dict_omits_shell(value):
+                return False
+        elif not (isinstance(key, ast.Constant) and isinstance(key.value, str)):
+            return False                                  # a computed key could be "shell"
+        elif key.value == "shell":
+            return False
+    return True
+
+
+def shell_offences(source: str, label: str = "<source>") -> list[str]:
+    """Every place in ``source`` that could start a shell, as ``label:line: why``."""
+    tree = ast.parse(source)
+    modules: dict[str, str] = {}                          # local name -> module it names
+    functions: dict[str, tuple[str, str]] = {}            # local name -> (module, function)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                top = alias.name.split(".")[0]
+                modules[alias.asname or top] = alias.name if alias.asname else top
+        elif isinstance(node, ast.ImportFrom) and node.module and not node.level:
+            for alias in node.names:
+                functions[alias.asname or alias.name] = (node.module, alias.name)
+    for node in ast.walk(tree):                           # name = subprocess.run
+        if isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
+            ref = _resolve(node.value, modules, functions)
+            if ref is not None:
+                functions[node.targets[0].id] = ref
+
+    offences = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Dict):
+            for key, value in zip(node.keys, node.values, strict=True):
+                if (isinstance(key, ast.Constant) and key.value == "shell" and not _is_false(value)):
+                    offences.append("%s:%d: a dict with a shell key that is not False" % (label, node.lineno))
+        if not isinstance(node, ast.Call):
+            continue
+        ref = _resolve(node.func, modules, functions)
+        for kw in node.keywords:
+            if kw.arg == "shell" and not _is_false(kw.value):
+                offences.append("%s:%d: shell= is not the constant False" % (label, node.lineno))
+            elif kw.arg is None and ref is not None and ref[1] in _SUBPROCESS_CALLS and ref[0] in (
+                    "subprocess", "asyncio") and not _dict_omits_shell(kw.value):
+                offences.append("%s:%d: ** into %s.%s that cannot be shown to omit shell"
+                                % (label, node.lineno, ref[0], ref[1]))
+        if ref in _ALWAYS_SHELL:
+            offences.append("%s:%d: %s.%s always uses a shell" % (label, node.lineno, ref[0], ref[1]))
+    return sorted(set(offences))
+
+
+def _resolve(node: ast.expr, modules: dict[str, str], functions: dict[str, tuple[str, str]]):
+    """(module, function) for ``mod.func`` or a name imported or assigned from it, else None."""
+    if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name) and node.value.id in modules:
+        return modules[node.value.id], node.attr
+    if isinstance(node, ast.Name) and node.id in functions:
+        return functions[node.id]
+    return None
+
+
+def shell_offences_in(*folders: Path) -> list[str]:
+    found = []
+    for folder in folders:
+        for path in sorted(folder.rglob("*.py")):
+            found += shell_offences(path.read_text(encoding="utf-8"), str(path))
+    return found
+
+
 def test_no_shell_true_anywhere_in_the_source():
-    offenders = []
-    for folder in ("swizzle", "tools"):
-        for path in (ROOT / folder).rglob("*.py"):
-            if "shell=True" in path.read_text(encoding="utf-8"):
-                offenders.append(str(path.relative_to(ROOT)))
-    assert offenders == []
+    assert shell_offences_in(ROOT / "swizzle", ROOT / "tools") == []
+
+
+SHELL_SPELLINGS = {
+    "the literal": "import subprocess\nsubprocess.run('ls', shell=True)\n",
+    "a dict unpacked from a name": "import subprocess\nkw = {'shell': True}\nsubprocess.run('ls', **kw)\n",
+    "a dict display unpacked": "import subprocess\nsubprocess.run('ls', **{'shell': True})\n",
+    "an unpacked name that is not shown": "import subprocess\ndef f(kw):\n    return subprocess.Popen('ls', **kw)\n",
+    "a variable value": "import subprocess\nuse = True\nsubprocess.check_output('ls', shell=use)\n",
+    "an imported name": "from subprocess import run\nrun('ls', shell=True)\n",
+    "an aliased module": "import subprocess as sp\nsp.call('ls', shell=1)\n",
+    "an aliased function": "from subprocess import run as go\nkw = {}\ngo('ls', **kw)\n",
+    "an assigned function": "import subprocess\nrunner = subprocess.run\nrunner('ls', shell=True)\n",
+    "any other callee": "def helper(**kw): pass\nhelper(shell=True)\n",
+    "a shell key in any dict": "options = {'shell': True}\n",
+    "a call that is always a shell": "import os\nos.system('ls')\n",
+    "getoutput": "import subprocess\nsubprocess.getoutput('ls')\n",
+}
+
+
+@pytest.mark.parametrize("spelling", sorted(SHELL_SPELLINGS))
+def test_the_shell_check_rejects_every_spelling(spelling):
+    assert shell_offences(SHELL_SPELLINGS[spelling], "snippet"), spelling
+
+
+SAFE_SPELLINGS = {
+    "no shell keyword": "import subprocess\nsubprocess.run(['ls'], check=True)\n",
+    "the constant False": "import subprocess\nsubprocess.run(['ls'], shell=False)\n",
+    "a dict display without shell": "import subprocess\nsubprocess.run(['ls'], **{'cwd': '.', 'timeout': 5})\n",
+    "the word in text only": "NOTE = 'never pass shell=True'\n# shell=True is banned\n",
+    "unpacking into a call that is not a subprocess call": "def f(**k): pass\nkw = {}\nf(**kw)\n",
+}
+
+
+@pytest.mark.parametrize("spelling", sorted(SAFE_SPELLINGS))
+def test_the_shell_check_accepts_code_that_cannot_start_a_shell(spelling):
+    assert shell_offences(SAFE_SPELLINGS[spelling], "snippet") == []
+
+
+def test_a_mutated_copy_of_the_source_fails_the_scan_in_both_spellings(tmp_path):
+    """The real scan, pointed at a throwaway copy of a real module with a shell added each way."""
+    source = (ROOT / "swizzle" / "wizzle" / "_proc.py").read_text(encoding="utf-8")
+    assert shell_offences(source, "_proc.py") == []
+    literal = tmp_path / "literal"
+    literal.mkdir()
+    (literal / "mutant.py").write_text(source + "\n\ndef _mutant(c):\n    return subprocess.run(c, shell=True)\n")
+    unpacked = tmp_path / "unpacked"
+    unpacked.mkdir()
+    (unpacked / "mutant.py").write_text(
+        source + "\n\ndef _mutant(c):\n    kw = {'shell': True}\n    return subprocess.run(c, **kw)\n")
+    assert shell_offences_in(literal)
+    assert shell_offences_in(unpacked)
+    # the text search this replaced would have missed the second
+    assert "shell=True" in (literal / "mutant.py").read_text()
+    assert "shell=True" not in (unpacked / "mutant.py").read_text()
