@@ -1,15 +1,21 @@
 # Implementation status
 
-Header refreshed for SWIZZLE 0.8.7. CI's tested set is now ghost_tools
-`2d03d8e19dc5937a6f45379c429d1a3afce4ab29` (1.10.6), ASSAY `54248beb5a36600f69de7c816cb2271dda20a879` (0.11.2, ASSAY's `main`
-with its `cns` extra at CNS v1.9.0) and
-Warden `380894f0304ef40587dd29efd41b4ceccf94a5d3` (0.13.8); see `.github/workflows/tests.yml`.
-The dated measurements below were taken against the previous tested set (ghost_tools 1.10.5, Warden 0.13.7) and are
-**not** re-recorded for this one, with one check: `swizzle attack --ghost-tools` run again on 2026-10-22 against
-ghost_tools 1.10.6 gave the same result as against 1.10.5 (25 cases, 25 usable, 0 broken runs, 0 critical; 8 HIGH,
-2 LOW, 15 pass).
+Header refreshed for SWIZZLE 0.8.8 on 2026-10-24. What is re-measured and what is not:
 
-The measurements below are **dated 2026-10-21**: the SWIZZLE 0.8.5 code (the commit before its version bump, which
+- **Re-counted on 2026-10-24 with the 0.8.8 code** (Python 3.12, this repository only): the inventory table under
+  "Current state", including the number of tests collected, and `swizzle prove` (12 of 12 hold). The inventory counts
+  are held by `Tests/test_readme_claims.py::test_the_inventory_in_the_implementation_status_is_the_code_s`; the
+  collected-test count is not held by any test, because it changes with every test added.
+- **Not re-measured, and labelled with the versions they were measured at:** every figure about what Ghost does (the
+  seed catalogue results and the attack counts). Those were taken on 2026-10-21 against ghost_tools 1.10.5 (with
+  ASSAY 0.11.2 and Warden 0.13.7), plus one spot check on 2026-10-22 against ghost_tools 1.10.6 that gave the same
+  result (25 cases, 25 usable, 0 broken runs, 0 critical; 8 HIGH, 2 LOW, 15 pass). Nothing re-runs them on a schedule.
+- **What CI tests today** is the last set this repository's CI tested on its own: ghost_tools
+  `2d03d8e19dc5937a6f45379c429d1a3afce4ab29` (1.10.6), ASSAY `54248beb5a36600f69de7c816cb2271dda20a879` (0.11.2) and
+  Warden `380894f0304ef40587dd29efd41b4ceccf94a5d3` (0.13.8); see `.github/workflows/tests.yml`. Those pins are not
+  moved when a sibling moves; the whole-stack check is the `stack` job in the CNS repository.
+
+The Ghost measurements below are **dated 2026-10-21**: the SWIZZLE 0.8.5 code (the commit before its version bump, which
 changes only the version string and the changelog) measured with `GHOST_TOOLS` at ghost_tools
 `c2ada82d2f6c0404074a668ba749c7872743aad9` (version 1.10.5) on CPython 3.12. They were measured by running
 `swizzle prove`, `swizzle list`, `swizzle mutators`, `swizzle seed`, `swizzle governor --list`,
@@ -19,15 +25,16 @@ The previous measurement was dated 2026-10-17 (SWIZZLE 0.8.0, ghost_tools 1.9.1,
 `swizzle attack` reads a sibling's behaviour; the inventory counts and `swizzle prove` read this repository alone.
 The pairings `swizzle assay` and `swizzle governor` are run by CI on every push; no number from them is recorded here.
 
-Everything under "Current state" below was re-measured on 2026-10-21 (the dated measurement above); the figures came
-out the same as on 2026-10-17 except the test count, which grew from 1308 to 1360. Every
+The Ghost figures under "Current state" below were measured on 2026-10-21 (the dated measurement above); they came
+out the same as on 2026-10-17. The inventory table was re-counted on 2026-10-24 and its counts are the same as on
+2026-10-21; the collected-test count grew from 1360 to 1403. Every
 section after it ("What was already present" onward) is a dated record of the
 laboratory's construction and its first measurements against Ghost 1.7.0 to
 1.7.3 (2026-09-12). Those measurements were **not** re-run against newer Ghost
 releases except where "Current state" says so; read them as history, not as the
 present behaviour of Ghost.
 
-## Current state (2026-10-21)
+## Current state (Ghost figures 2026-10-21, inventory 2026-10-24)
 
 **Inventory** (counted from the code, not copied from an older document):
 
@@ -37,7 +44,7 @@ present behaviour of Ghost.
 | Laboratory mutators | 28 | `swizzle mutators` |
 | Seed attack cases | 25 | `swizzle seed` |
 | Governor scenarios (attacks on Warden) | 28 | `swizzle governor --list` |
-| Tests collected | 1360 at the 2026-10-21 measurement (0.8.5 code) | `python -m pytest --collect-only -q` (counts are not written in the README; they drift) |
+| Tests collected | 1403 at the 2026-10-24 measurement (0.8.8 code, Python 3.12; 1360 at 0.8.5) | `python -m pytest --collect-only -q` (counts are not written in the README; they drift) |
 
 **The seed catalogue against ghost_tools 1.10.5** (`swizzle attack`, 25 cases,
 0 broken runs, 0 critical):

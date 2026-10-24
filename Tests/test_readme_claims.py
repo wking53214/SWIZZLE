@@ -116,3 +116,83 @@ def test_the_ledger_and_the_defects_say_what_prevents_each_item_or_that_nothing_
     for entry in entries:
         assert "Guard" in entry or "no test yet" in entry or "No single guard" in entry, (
             "a ledger entry names no guard: %s" % entry[:80])
+
+
+# --- the self-hosting paragraph ------------------------------------------------------------------------------
+
+#: Copied from the CNS repository's docs/evidence/SELFHOSTING_2026-10-23.md (branch
+#: claude/horsemen-production-status-5wsndb until merged): the SWIZZLE rows of its two tables and its
+#: "Re-run after BURNISH 0.3.12" section. They are the numbers of one recorded run at commit 3f35dad, so they
+#: do not change when this repository does. If the evidence file is corrected, change them here and in the README.
+SELFHOSTING_EVIDENCE_FILE = "docs/evidence/SELFHOSTING_2026-10-23.md"
+SELFHOSTING_COMMIT = "3f35dad5568b590c2ee36e60533d50a35db94aa2"
+SELFHOSTING_VERSION = "0.8.7"
+SELFHOSTING_RUN_1_DECISION = "FINISH_REJECTED"
+SELFHOSTING_RUN_2_DECISION = "ACCEPT"
+SELFHOSTING_RUN_2_TESTS_PASSING = 1369
+SELFHOSTING_RUN_2_TESTS_SKIPPED = 10
+SELFHOSTING_DECLINED_CHECKS = ["mutate", "kernel", "structure", "tests", "project", "secrets", "correlate"]
+SELFHOSTING_GHOST_FINDINGS_STANDING = 215
+
+
+def test_the_self_hosting_paragraph_states_the_recorded_run_and_what_it_does_not_mean():
+    text = _section("### Self-hosting")
+    assert SELFHOSTING_EVIDENCE_FILE in text
+    assert "claude/horsemen-production-status-5wsndb" in text and "until that branch is merged" in text
+    assert SELFHOSTING_COMMIT in text and SELFHOSTING_VERSION in text
+    assert SELFHOSTING_RUN_1_DECISION in text and "Burnish 0.3.12" in text
+    assert re.search(r"\bended %s \(exit 0\)" % SELFHOSTING_RUN_2_DECISION, text)
+    assert "%d tests passing and %d skipped" % (
+        SELFHOSTING_RUN_2_TESTS_PASSING, SELFHOSTING_RUN_2_TESTS_SKIPPED) in text
+    assert "%d Ghost findings still standing" % SELFHOSTING_GHOST_FINDINGS_STANDING in text
+    assert "%d Ghost checks declined" % len(SELFHOSTING_DECLINED_CHECKS) in text
+    assert "(%s)" % ", ".join(SELFHOSTING_DECLINED_CHECKS) in text
+    # what the record does not mean
+    assert "no secrets or no weak tests" in text
+    assert "does not mean the %d standing findings are resolved" % SELFHOSTING_GHOST_FINDINGS_STANDING in text
+    assert "not the commits after it" in text
+    assert "names the finisher as Burnish 0.3.11 although 0.3.12 ran" in text
+
+
+def test_no_sentence_that_has_gone_stale_is_left_in_the_documents_or_the_workflow():
+    stale = ["no fresh run", "A fresh run is meant to be recorded", "no such page was there",
+             "assumed to arrive in 0.9.0", "the head of", "wave D main", "ASSAY's `main`", "ASSAY's main",
+             "tested set;", "(a tested set"]
+    documents = {"README.md": README}
+    for name in ("docs/IMPLEMENTATION_STATUS.md", "STACK.md", ".github/workflows/tests.yml"):
+        documents[name] = (ROOT / name).read_text(encoding="utf-8")
+    for name, text in documents.items():
+        for phrase in stale:
+            assert phrase not in text, "%s still says %r" % (name, phrase)
+
+
+def test_the_tested_set_is_described_as_what_this_repository_tested_not_as_the_siblings_heads():
+    workflow = (ROOT / ".github" / "workflows" / "tests.yml").read_text(encoding="utf-8")
+    sentence = "the last set this repository's CI tested on its own"
+    assert sentence in README
+    assert "`stack` job in the CNS repository" in README
+    pins = re.findall(r"ref: [0-9a-f]{40}\s+# (.*)", workflow)
+    assert len(pins) == 3
+    for comment in pins:
+        assert sentence in comment, comment
+    assert "the `stack` job in the CNS repository" in workflow
+
+
+def test_the_version_floor_is_described_as_a_label_not_a_measured_release():
+    from swizzle.governor.scenarios import NEW_CHECKS_SINCE
+    assert NEW_CHECKS_SINCE == "0.9.0"
+    assert "`NEW_CHECKS_SINCE` in `swizzle/governor/scenarios.py`, not a measured release boundary" in README
+    assert "nothing checks that Warden 0.9.0 really has those checks" in README
+
+
+def test_the_inventory_in_the_implementation_status_is_the_code_s():
+    """docs/IMPLEMENTATION_STATUS.md says how many warps, mutators, seed cases and scenarios there are."""
+    from swizzle.governor.scenarios import SCENARIOS
+    from swizzle.lab import catalogue as lab_catalogue
+    from swizzle.lab.mutators import registry
+    text = (ROOT / "docs" / "IMPLEMENTATION_STATUS.md").read_text(encoding="utf-8")
+    rows = {m.group(1): int(m.group(2)) for m in re.finditer(r"^\| (.+?) \| (\d+) \|", text, re.M)}
+    assert rows["Original warps (planted-defect proofs)"] == len(catalogue())
+    assert rows["Laboratory mutators"] == len(registry())
+    assert rows["Seed attack cases"] == len(lab_catalogue.by_name())
+    assert rows["Governor scenarios (attacks on Warden)"] == len(SCENARIOS)
