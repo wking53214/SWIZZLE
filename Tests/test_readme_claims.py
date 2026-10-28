@@ -129,8 +129,8 @@ SELFHOSTING_COMMIT = "3f35dad5568b590c2ee36e60533d50a35db94aa2"
 SELFHOSTING_VERSION = "0.8.7"
 SELFHOSTING_RUN_1_DECISION = "FINISH_REJECTED"
 SELFHOSTING_RUN_2_DECISION = "ACCEPT"
-SELFHOSTING_RUN_2_TESTS_PASSING = 1369
-SELFHOSTING_RUN_2_TESTS_SKIPPED = 10
+SELFHOSTING_RUN_2_RECORD_FILE = "SWIZZLE.run2.json"
+SELFHOSTING_RUN_2_RECORDS_DIRECTORY = "docs/evidence/selfhosting-records-2026-10-23/"
 SELFHOSTING_DECLINED_CHECKS = ["mutate", "kernel", "structure", "tests", "project", "secrets", "correlate"]
 SELFHOSTING_GHOST_FINDINGS_STANDING = 215
 
@@ -142,8 +142,11 @@ def test_the_self_hosting_paragraph_states_the_recorded_run_and_what_it_does_not
     assert SELFHOSTING_COMMIT in text and SELFHOSTING_VERSION in text
     assert SELFHOSTING_RUN_1_DECISION in text and "Burnish 0.3.12" in text
     assert re.search(r"\bended %s \(exit 0\)" % SELFHOSTING_RUN_2_DECISION, text)
-    assert "%d tests passing and %d skipped" % (
-        SELFHOSTING_RUN_2_TESTS_PASSING, SELFHOSTING_RUN_2_TESTS_SKIPPED) in text
+    run_2 = text[text.index("Run 2 ended"):text.index("The record also shows")]
+    assert "with a green suite" in run_2
+    assert SELFHOSTING_RUN_2_RECORD_FILE in run_2 and SELFHOSTING_RUN_2_RECORDS_DIRECTORY in run_2
+    assert not re.search(r"\b\d[\d,]*\s+(tests?|passed|passing|skipped)\b", run_2), (
+        "the run 2 sentence quotes a count; the counts are in the record, and a count here drifts")
     assert "%d Ghost findings still standing" % SELFHOSTING_GHOST_FINDINGS_STANDING in text
     assert "%d Ghost checks declined" % len(SELFHOSTING_DECLINED_CHECKS) in text
     assert "(%s)" % ", ".join(SELFHOSTING_DECLINED_CHECKS) in text
