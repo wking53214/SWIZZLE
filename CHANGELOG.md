@@ -11,6 +11,24 @@ under the first version that contains it.
 
 ## [Unreleased]
 
+## [0.8.9] - 2026-10-28
+
+Not tagged. One defect, found by self-hosting run 3 (2026-10-24). One commit per step.
+
+### Fixed
+- Step 1: the README's self-hosting paragraph said how many tests passed and were skipped in run 2. The suite has grown
+  since, so Burnish's drift check flagged the README as stating a count the tree contradicts, and the circuit's finisher
+  could not finish this repository. The sentence now says run 2 ended ACCEPT (exit 0) with a green suite and names
+  `SWIZZLE.run2.json` in the CNS repository's `docs/evidence/selfhosting-records-2026-10-23/` for the counts. The declined
+  Ghost checks and the standing findings are unchanged. Pre-existing test edited under the exact-behaviour rule:
+  `Tests/test_readme_claims.py::test_the_self_hosting_paragraph_states_the_recorded_run_and_what_it_does_not_mean` asserted
+  the old count text; it now asserts that the sentence names the record file and holds no bare count, and nothing else in
+  it changed. `Tests/test_ci_config.py::test_readme_does_not_hard_code_a_pass_count` still passes, unedited.
+
+### Changed
+- Step 2: version 0.8.9 (`pyproject.toml`, the `swizzle_version` example in `docs/CONTRACT.md`), this entry, and the
+  README ledger entry for the item above. Not tagged. The CI sibling pins and the CNS pin are unchanged.
+
 ## [0.8.8] - 2026-10-24
 
 Fixes from the round-6 independent audit of the release set (2026-10-23 and 2026-10-24). Each item was reproduced
