@@ -25,6 +25,10 @@ Not tagged. One defect, found by self-hosting run 3 (2026-10-24). One commit per
   the old count text; it now asserts that the sentence names the record file and holds no bare count, and nothing else in
   it changed. `Tests/test_ci_config.py::test_readme_does_not_hard_code_a_pass_count` still passes, unedited.
 
+- Step 3: the `dev` extra held `pytest>=8` with no upper bound, so CI (run 40785126388) installed pytest 9.2.0, whose
+  `Node` no longer has `_nodeid`, which pytest-benchmark 5.3.0 (the newest release) reads; the three tests that use the
+  `benchmark` fixture errored at setup. The extra is now `pytest>=8,<9.2`. No test was edited.
+
 ### Changed
 - Step 2: version 0.8.9 (`pyproject.toml`, the `swizzle_version` example in `docs/CONTRACT.md`), this entry, and the
   README ledger entry for the item above. Not tagged. The CI sibling pins and the CNS pin are unchanged.

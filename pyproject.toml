@@ -43,7 +43,9 @@ swizzle = "swizzle.cli:main"
 # and matplotlib pins in CI, because the test drives libcst's parser and a moving version would make the
 # result depend on the day it was installed. 1.9.0 is the newest release; it ships wheels for CPython
 # 3.11, 3.12 and 3.13 and has no required dependencies beyond pyyaml and typing-extensions.
-dev = ["pytest>=8", "pytest-benchmark", "ruff>=0.6", "mypy>=1.10", "setuptools>=68", "libcst==1.9.0"]
+# pytest is held below 9.2: pytest-benchmark 5.3.0 (the newest release) reads Node._nodeid, which pytest 9.2.0 no
+# longer has, so every test that uses the benchmark fixture errors at setup. pytest 9.1.1 with it was run green.
+dev = ["pytest>=8,<9.2", "pytest-benchmark", "ruff>=0.6", "mypy>=1.10", "setuptools>=68", "libcst==1.9.0"]
 # The CNS gate contract, for swizzle.cns_adapter's ProofGate and AttackGate. Optional: SWIZZLE runs without it.
 # Pinned to the v2.0.0 tag, which every repository in the circuit spells the same way (pip treats a tag URL and a
 # commit URL as two sources, and CNS's seat_pins check compares the text). The tag peels to b13e5d2f9e0e4291725f82794b89117c3d840ac1.
