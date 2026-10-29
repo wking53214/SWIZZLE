@@ -11,6 +11,23 @@ under the first version that contains it.
 
 ## [Unreleased]
 
+## [0.8.10] - 2026-10-29
+
+Not tagged. One change: the CNS pin moves to the `v2.1.0` tag. One commit per step.
+
+### Changed
+- Pin21 step 1: the `cns` extra is now
+  `cns @ git+https://github.com/wking53214/CNS.git@v2.1.0  # v2.1.0 = fde931ffa89aebec95647742256ad53033bd3d02`
+  (the annotated tag object is `0cc90472f7edc46c3bf40079e69fb03a06718e29`), from the `v2.0.0` tag. The README, the
+  workflow header comment, the `pyproject.toml` comment and the `CnsNotInstalled` install hint carry the same spelling.
+  The CI sibling pins (ghost_tools, ASSAY, WARDEN) are unchanged. Pre-existing tests edited under the exact-behaviour
+  rule, each asserting the old tag spelling and nothing else changed: `Tests/test_cns_independence.py` (the `EXTRA` line,
+  and `test_the_cns_extra_is_pinned_to_the_v2_0_0_tag`, renamed `..._v2_1_0_tag`), `Tests/test_ci_config.py`
+  (`test_the_cns_extra_is_pinned_to_the_v2_0_0_tag`, renamed `..._v2_1_0_tag`) and `Tests/test_docs_install_hints.py`
+  (three install-line strings). The README ledger line that cites the renamed guard follows the new name.
+- Pin21 step 2: version 0.8.10 (`pyproject.toml`, the `swizzle_version` example in `docs/CONTRACT.md`) and this entry.
+  Not tagged.
+
 ## [0.8.9] - 2026-10-28
 
 Not tagged. One defect, found by self-hosting run 3 (2026-10-24). One commit per step.
