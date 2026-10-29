@@ -32,7 +32,7 @@ name: tests
 # update the comment, and run the suite. Tests/test_ci_config.py fails if a pin
 # stops being a full SHA or if continue-on-error comes back on a blocking step.
 # The CNS pin is in pyproject.toml (the `cns` extra). It is the one exception to full-SHA pinning: it is spelled
-# as the tag `v2.0.0`, the spelling every repository in the circuit uses, because pip treats a tag URL and a
+# as the tag `v2.1.0`, the spelling every repository in the circuit uses, because pip treats a tag URL and a
 # commit URL as two sources and refuses a resolve that mixes them.
 
 on:

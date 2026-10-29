@@ -47,9 +47,9 @@ swizzle = "swizzle.cli:main"
 # longer has, so every test that uses the benchmark fixture errors at setup. pytest 9.1.1 with it was run green.
 dev = ["pytest>=8,<9.2", "pytest-benchmark", "ruff>=0.6", "mypy>=1.10", "setuptools>=68", "libcst==1.9.0"]
 # The CNS gate contract, for swizzle.cns_adapter's ProofGate and AttackGate. Optional: SWIZZLE runs without it.
-# Pinned to the v2.0.0 tag, which every repository in the circuit spells the same way (pip treats a tag URL and a
-# commit URL as two sources, and CNS's seat_pins check compares the text). The tag peels to b13e5d2f9e0e4291725f82794b89117c3d840ac1.
-cns = ["cns @ git+https://github.com/wking53214/CNS.git@v2.0.0"]  # v2.0.0 = b13e5d2f9e0e4291725f82794b89117c3d840ac1
+# Pinned to the v2.1.0 tag, which every repository in the circuit spells the same way (pip treats a tag URL and a
+# commit URL as two sources, and CNS's seat_pins check compares the text). The tag peels to fde931ffa89aebec95647742256ad53033bd3d02.
+cns = ["cns @ git+https://github.com/wking53214/CNS.git@v2.1.0"]  # v2.1.0 = fde931ffa89aebec95647742256ad53033bd3d02
 
 [tool.setuptools]
 packages = [
