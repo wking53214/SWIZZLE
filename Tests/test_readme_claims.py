@@ -199,3 +199,12 @@ def test_the_inventory_in_the_implementation_status_is_the_code_s():
     assert rows["Laboratory mutators"] == len(registry())
     assert rows["Seed attack cases"] == len(lab_catalogue.by_name())
     assert rows["Governor scenarios (attacks on Warden)"] == len(SCENARIOS)
+
+
+def test_stack_doc_names_the_five_circuit_repositories_and_not_the_old_seven():
+    """The circuit is five repositories since the owner ruling of 2026-10-29; STACK.md must not say seven."""
+    stack = (ROOT / "STACK.md").read_text(encoding="utf-8")
+    assert "Seven repositories" not in stack and "all seven" not in stack
+    assert "Five repositories" in stack
+    for name in ("ghost_tools", "SWIZZLE", "ASSAY", "Judge", "Warden"):
+        assert "/" + name + ")" in stack, name
