@@ -57,6 +57,13 @@ class PromotionRefused(RuntimeError):
     """The evidence does not support making this a permanent regression case."""
 
 
+class CorpusError(ValueError):
+    """One or more case files in the corpus cannot be read. The message names every one of them.
+
+    A corrupted archive used to read as an empty one ("the corpus is empty", exit 0): the file was skipped
+    without a word. Naming it is the whole point of this error."""
+
+
 @dataclass(frozen=True)
 class Entry:
     """One archived case."""
@@ -190,6 +197,7 @@ class Corpus:
 
     def entries(self, bucket: str = "") -> List[Entry]:
         out: List[Entry] = []
+        unreadable: List[str] = []
         for name in ([bucket] if bucket else BUCKETS):
             folder = self.root / name
             if not folder.is_dir():
@@ -197,10 +205,17 @@ class Corpus:
             for path in sorted(folder.glob("*.json")):
                 try:
                     record = json.loads(path.read_text(encoding="utf-8"))
-                except (OSError, json.JSONDecodeError):
+                except (OSError, ValueError) as exc:
+                    unreadable.append("%s (%s)" % (path, type(exc).__name__))
+                    continue
+                if not isinstance(record, dict) or not isinstance(record.get("genome", {}), dict):
+                    unreadable.append("%s (not a case record: a JSON object with an object genome)" % path)
                     continue
                 out.append(Entry(name, str(record.get("genome", {}).get("name", path.stem)),
                                  path, record))
+        if unreadable:
+            raise CorpusError("cannot read %d case file(s) in the corpus: %s"
+                              % (len(unreadable), "; ".join(unreadable)))
         return out
 
     def get(self, name: str,
