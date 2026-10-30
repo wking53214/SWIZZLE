@@ -11,6 +11,28 @@ under the first version that contains it.
 
 ## [Unreleased]
 
+## [0.8.11] - 2026-10-30
+
+Not tagged. One change: the CNS pin moves to the `v2.2.0` tag. One commit per step.
+
+### Changed
+- Pin22 step 1: the `cns` extra is now
+  `cns @ git+https://github.com/wking53214/CNS.git@v2.2.0  # v2.2.0 = ce6bd05578a7a3e3cafa0cfa1e9a2cca8a5f171f`
+  (a lightweight tag, so the tag is the commit), from the `v2.1.0` tag. The `cns` package at v2.2.0 equals v2.1.0
+  except its version string. The README, the workflow header comment, the `pyproject.toml` comment and the
+  `CnsNotInstalled` install hint carry the same spelling. The CI sibling pins (ghost_tools, ASSAY, WARDEN) are
+  unchanged: that tested set is not moved. Pre-existing tests edited under the exact-behaviour rule, each asserting
+  the old tag spelling and nothing else changed: `Tests/test_cns_independence.py` (the `EXTRA` line, and
+  `test_the_cns_extra_is_pinned_to_the_v2_1_0_tag`, renamed `..._v2_2_0_tag`), `Tests/test_ci_config.py`
+  (`test_the_cns_extra_is_pinned_to_the_v2_1_0_tag`, renamed `..._v2_2_0_tag`) and
+  `Tests/test_docs_install_hints.py` (three install-line strings). The README ledger line that cites the renamed guard
+  follows the new name.
+- Pin22 step 2: version 0.8.11 (`pyproject.toml`, the `swizzle_version` example in `docs/CONTRACT.md`) and this entry.
+  Not tagged.
+- A Warden run that governs a tree carries eight declined checks (mutate, kernel, structure, tests, project, secrets,
+  correlate, ledger), not seven, because ghost_tools 1.10.11 lists the ledger as declined under `--no-ledger`. This
+  repository's text states no such count, so nothing here changed for it.
+
 ## [0.8.10] - 2026-10-29
 
 Not tagged. One change: the CNS pin moves to the `v2.1.0` tag. One commit per step.
