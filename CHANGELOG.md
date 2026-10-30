@@ -11,6 +11,19 @@ under the first version that contains it.
 
 ## [Unreleased]
 
+## [0.8.13] - 2026-10-30
+
+Not tagged. An unreadable corpus or knowledge file is named and refused. Documentation corrections.
+
+### Fixed
+- `Corpus.entries` skipped a case file that was not valid JSON without a word, so a corrupted archive read as "the corpus is empty" with exit 0, and a file holding valid JSON that is not an object (`[]`) raised `AttributeError`.
+  `Store._load` (`knowledge.json`) did the same: garbage was skipped, `[]` raised. Every such file is now named in one message (`CorpusError`, `KnowledgeError`) and the lab commands that read the corpus or the knowledge file exit 2. An empty directory is still a legitimate empty corpus; a missing knowledge file and a knowledge file of another schema are unchanged. Tests: `Tests/test_cli_unreadable_corpus.py`.
+
+### Changed
+- README and the `-v` help text say exactly what each verbosity logs: `-v` shows the lab's attack, record and promote lines and `-vv` adds every subprocess and every warp proved, while `prove`, `run`, `assay` and `governor` log nothing at `-v`. No logging was added.
+- README "How to install and run" no longer says the sibling checkouts are at the commits CI tests: the clone lines take each default branch. `docs/ATTACK_CORPUS.md` no longer says only Burnish writes READMEs without saying Burnish is released from the circuit.
+- Version 0.8.13 (`pyproject.toml`, the `swizzle_version` example in `docs/CONTRACT.md`).
+
 ## [0.8.12] - 2026-10-30
 
 Not tagged. Documentation only: the circuit is five repositories since the owner ruling of 2026-10-29. No code change.

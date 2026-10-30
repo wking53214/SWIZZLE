@@ -68,7 +68,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--version", action="version",
                         version="swizzle %s" % __version__)
     parser.add_argument("-v", "--verbose", action="count", default=0,
-                        help="log diagnostics to stderr (-v: progress, -vv: every subprocess); "
+                        help="log diagnostics to stderr (-v: the lab's attack, record and promote steps; "
+                             "-vv: also every subprocess and every warp proved); "
                              "$SWIZZLE_LOG_LEVEL (e.g. DEBUG) does the same")
     parser.add_argument("--contract", action="store_true",
                         help="print the compatibility contract (JSON) a caller such "
