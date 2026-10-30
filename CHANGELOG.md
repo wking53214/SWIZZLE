@@ -11,6 +11,19 @@ under the first version that contains it.
 
 ## [Unreleased]
 
+## [0.8.12] - 2026-10-30
+
+Not tagged. Documentation only: the circuit is five repositories since the owner ruling of 2026-10-29. No code change.
+
+### Changed
+- `STACK.md` says five repositories (ASSAY, ghost_tools, SWIZZLE, Warden, Judge), that any actor's real change enters
+  through Warden's claim seat, that DRAFTER, BURNISH and WATCHER_MCU are released from the circuit, that a bare `--stack`
+  still requires all six checkouts, and that every run declines eight Ghost checks (eight because ghost_tools 1.10.11
+  lists the ledger as declined under `--no-ledger`, not because Warden declined a new check). New test:
+  `Tests/test_readme_claims.py::test_stack_doc_names_the_five_circuit_repositories_and_not_the_old_seven`. No existing
+  test needed an edit. The README's self-hosting paragraphs are dated records and are unchanged.
+- Version 0.8.12 (`pyproject.toml`, the `swizzle_version` example in `docs/CONTRACT.md`) and this entry.
+
 ## [0.8.11] - 2026-10-30
 
 Not tagged. One change: the CNS pin moves to the `v2.2.0` tag. One commit per step.
