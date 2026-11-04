@@ -25,11 +25,12 @@ BASE: Tree = {
 
 HIGH, MEDIUM, LOW = "high", "medium", "low"
 
-#: The first Warden release assumed to carry the stricter checks the red team asked for
-#: (protected bookkeeping and CI files, symlink handling, refusing a dirty folder, a SIGTERM
-#: handler). It is only a fallback: where a scenario's feature can be probed in the running
-#: Warden (`Probe` below), that wins. Against an older Warden a scenario that depends on such a
-#: feature is reported NOT RUN, never violated; `--assume-new-checks` turns that off.
+#: A version label, not a measured boundary: the release below which a Warden is treated as lacking
+#: the stricter checks the red team asked for (protected bookkeeping and CI files, symlink handling,
+#: refusing a dirty folder, a SIGTERM handler). Nothing here shows that Warden gained them at this
+#: version. It is only a fallback: where a scenario's feature can be probed in the running Warden
+#: (`Probe` below), that wins. Against an older Warden a scenario that depends on such a feature is
+#: reported NOT RUN, never violated; `--assume-new-checks` turns that off.
 NEW_CHECKS_SINCE = "0.9.0"
 
 

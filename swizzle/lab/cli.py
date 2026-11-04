@@ -23,7 +23,7 @@ from . import standing as standing_model
 from .adapter import TargetUnavailable
 from .adapters import GhostToolsAdapter
 from .attack import run as run_case
-from .corpus import Corpus, PromotionRefused
+from .corpus import Corpus, CorpusError, PromotionRefused
 from .differential import compare
 from .genome import RepositoryGenome
 from .mutators import registry
@@ -268,7 +268,13 @@ HANDLERS: Dict[str, Callable[[Any], int]] = {}
 
 
 def handle(command: str, args) -> int:
-    return HANDLERS[command](args)
+    from .knowledge import KnowledgeError
+    try:
+        return HANDLERS[command](args)
+    except (CorpusError, KnowledgeError) as exc:
+        # An unreadable case or knowledge file is named and refused, never read as an empty corpus.
+        print("swizzle: %s" % exc, file=sys.stderr)
+        return 2
 
 
 def _register(name):

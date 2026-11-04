@@ -53,6 +53,10 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 SCHEMA = "swizzle.knowledge.v1"
 
 
+class KnowledgeError(ValueError):
+    """The knowledge file exists but cannot be read as a JSON object. It is named, not skipped."""
+
+
 class Acquisition(str, Enum):
     """How a piece of knowledge came to be known. Decides what it licenses."""
 
@@ -272,8 +276,10 @@ class Store:
             return
         try:
             raw = json.loads(self.path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            return
+        except (OSError, ValueError) as exc:
+            raise KnowledgeError("cannot read the knowledge file %s (%s)" % (self.path, type(exc).__name__)) from exc
+        if not isinstance(raw, dict):
+            raise KnowledgeError("the knowledge file %s is not a JSON object" % self.path)
         if raw.get("schema") != SCHEMA:
             # A knowledge file this version does not speak is not merged in
             # under a guess. It is left alone and everything reads zero base,

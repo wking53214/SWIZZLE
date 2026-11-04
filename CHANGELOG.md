@@ -11,6 +11,147 @@ under the first version that contains it.
 
 ## [Unreleased]
 
+## [0.8.13] - 2026-10-30
+
+Not tagged. An unreadable corpus or knowledge file is named and refused. Documentation corrections.
+
+### Fixed
+- `Corpus.entries` skipped a case file that was not valid JSON without a word, so a corrupted archive read as "the corpus is empty" with exit 0, and a file holding valid JSON that is not an object (`[]`) raised `AttributeError`.
+  `Store._load` (`knowledge.json`) did the same: garbage was skipped, `[]` raised. Every such file is now named in one message (`CorpusError`, `KnowledgeError`) and the lab commands that read the corpus or the knowledge file exit 2. An empty directory is still a legitimate empty corpus; a missing knowledge file and a knowledge file of another schema are unchanged. Tests: `Tests/test_cli_unreadable_corpus.py`.
+
+### Changed
+- README and the `-v` help text say exactly what each verbosity logs: `-v` shows the lab's attack, record and promote lines and `-vv` adds every subprocess and every warp proved, while `prove`, `run`, `assay` and `governor` log nothing at `-v`. No logging was added.
+- README "How to install and run" no longer says the sibling checkouts are at the commits CI tests: the clone lines take each default branch. `docs/ATTACK_CORPUS.md` no longer says only Burnish writes READMEs without saying Burnish is released from the circuit.
+- Version 0.8.13 (`pyproject.toml`, the `swizzle_version` example in `docs/CONTRACT.md`).
+
+## [0.8.12] - 2026-10-30
+
+Not tagged. Documentation only: the circuit is five repositories since the owner ruling of 2026-10-29. No code change.
+
+### Changed
+- `STACK.md` says five repositories (ASSAY, ghost_tools, SWIZZLE, Warden, Judge), that any actor's real change enters
+  through Warden's claim seat, that DRAFTER, BURNISH and WATCHER_MCU are released from the circuit, that a bare `--stack`
+  still requires all six checkouts, and that every run declines eight Ghost checks (eight because ghost_tools 1.10.11
+  lists the ledger as declined under `--no-ledger`, not because Warden declined a new check). New test:
+  `Tests/test_readme_claims.py::test_stack_doc_names_the_five_circuit_repositories_and_not_the_old_seven`. No existing
+  test needed an edit. The README's self-hosting paragraphs are dated records and are unchanged.
+- Version 0.8.12 (`pyproject.toml`, the `swizzle_version` example in `docs/CONTRACT.md`) and this entry.
+
+## [0.8.11] - 2026-10-30
+
+Not tagged. One change: the CNS pin moves to the `v2.2.0` tag. One commit per step.
+
+### Changed
+- Pin22 step 1: the `cns` extra is now
+  `cns @ git+https://github.com/wking53214/CNS.git@v2.2.0  # v2.2.0 = ce6bd05578a7a3e3cafa0cfa1e9a2cca8a5f171f`
+  (a lightweight tag, so the tag is the commit), from the `v2.1.0` tag. The `cns` package at v2.2.0 equals v2.1.0
+  except its version string. The README, the workflow header comment, the `pyproject.toml` comment and the
+  `CnsNotInstalled` install hint carry the same spelling. The CI sibling pins (ghost_tools, ASSAY, WARDEN) are
+  unchanged: that tested set is not moved. Pre-existing tests edited under the exact-behaviour rule, each asserting
+  the old tag spelling and nothing else changed: `Tests/test_cns_independence.py` (the `EXTRA` line, and
+  `test_the_cns_extra_is_pinned_to_the_v2_1_0_tag`, renamed `..._v2_2_0_tag`), `Tests/test_ci_config.py`
+  (`test_the_cns_extra_is_pinned_to_the_v2_1_0_tag`, renamed `..._v2_2_0_tag`) and
+  `Tests/test_docs_install_hints.py` (three install-line strings). The README ledger line that cites the renamed guard
+  follows the new name.
+- Pin22 step 2: version 0.8.11 (`pyproject.toml`, the `swizzle_version` example in `docs/CONTRACT.md`) and this entry.
+  Not tagged.
+- A Warden run that governs a tree carries eight declined checks (mutate, kernel, structure, tests, project, secrets,
+  correlate, ledger), not seven, because ghost_tools 1.10.11 lists the ledger as declined under `--no-ledger`. This
+  repository's text states no such count, so nothing here changed for it.
+
+## [0.8.10] - 2026-10-29
+
+Not tagged. One change: the CNS pin moves to the `v2.1.0` tag. One commit per step.
+
+### Changed
+- Pin21 step 1: the `cns` extra is now
+  `cns @ git+https://github.com/wking53214/CNS.git@v2.1.0  # v2.1.0 = fde931ffa89aebec95647742256ad53033bd3d02`
+  (the annotated tag object is `0cc90472f7edc46c3bf40079e69fb03a06718e29`), from the `v2.0.0` tag. The README, the
+  workflow header comment, the `pyproject.toml` comment and the `CnsNotInstalled` install hint carry the same spelling.
+  The CI sibling pins (ghost_tools, ASSAY, WARDEN) are unchanged. Pre-existing tests edited under the exact-behaviour
+  rule, each asserting the old tag spelling and nothing else changed: `Tests/test_cns_independence.py` (the `EXTRA` line,
+  and `test_the_cns_extra_is_pinned_to_the_v2_0_0_tag`, renamed `..._v2_1_0_tag`), `Tests/test_ci_config.py`
+  (`test_the_cns_extra_is_pinned_to_the_v2_0_0_tag`, renamed `..._v2_1_0_tag`) and `Tests/test_docs_install_hints.py`
+  (three install-line strings). The README ledger line that cites the renamed guard follows the new name.
+- Pin21 step 2: version 0.8.10 (`pyproject.toml`, the `swizzle_version` example in `docs/CONTRACT.md`) and this entry.
+  Not tagged.
+
+## [0.8.9] - 2026-10-28
+
+Not tagged. One defect, found by self-hosting run 3 (2026-10-24). One commit per step.
+
+### Fixed
+- Step 1: the README's self-hosting paragraph said how many tests passed and were skipped in run 2. The suite has grown
+  since, so Burnish's drift check flagged the README as stating a count the tree contradicts, and the circuit's finisher
+  could not finish this repository. The sentence now says run 2 ended ACCEPT (exit 0) with a green suite and names
+  `SWIZZLE.run2.json` in the CNS repository's `docs/evidence/selfhosting-records-2026-10-23/` for the counts. The declined
+  Ghost checks and the standing findings are unchanged. Pre-existing test edited under the exact-behaviour rule:
+  `Tests/test_readme_claims.py::test_the_self_hosting_paragraph_states_the_recorded_run_and_what_it_does_not_mean` asserted
+  the old count text; it now asserts that the sentence names the record file and holds no bare count, and nothing else in
+  it changed. `Tests/test_ci_config.py::test_readme_does_not_hard_code_a_pass_count` still passes, unedited.
+
+- Step 3: the `dev` extra held `pytest>=8` with no upper bound, so CI (run 40785126388) installed pytest 9.2.0, whose
+  `Node` no longer has `_nodeid`, which pytest-benchmark 5.3.0 (the newest release) reads; the three tests that use the
+  `benchmark` fixture errored at setup. The extra is now `pytest>=8,<9.2`. No test was edited.
+
+### Changed
+- Step 2: version 0.8.9 (`pyproject.toml`, the `swizzle_version` example in `docs/CONTRACT.md`), this entry, and the
+  README ledger entry for the item above. Not tagged. The CI sibling pins and the CNS pin are unchanged.
+
+## [0.8.8] - 2026-10-24
+
+Fixes from the round-6 independent audit of the release set (2026-10-23 and 2026-10-24). Each item was reproduced
+before it was changed. One commit per step.
+
+### Fixed
+- Step 1: `Tests/test_wizzle_subprocess_safety.py::test_no_shell_true_anywhere_in_the_source` searched the source for the
+  text `shell=True`, so `kw = {"shell": True}; subprocess.run(c, **kw)` passed it. The test now parses every module in
+  `swizzle/` and `tools/` and rejects a `shell` keyword that is not the constant `False` (on any call), a dict with a
+  `shell` key that is not `False`, `**` into a subprocess call that cannot be shown to omit `shell`, and the calls that
+  always use a shell (`os.system`, `os.popen`, `subprocess.getoutput`, `subprocess.getstatusoutput`,
+  `asyncio.create_subprocess_shell`). Thirteen rejected spellings, five accepted ones and a mutated copy of
+  `swizzle/wizzle/_proc.py` in both spellings are tested. The new test replaces the old assertion in the same test; no
+  other test was edited. Limit: a call reached through `getattr`, `importlib` or `exec` is not followed.
+- Step 2: stale statements. The README, the workflow comments and `docs/IMPLEMENTATION_STATUS.md` called the CI sibling
+  pins the head of the siblings' `main` (they are the last set this repository's CI tested on its own; the whole-stack
+  check is the `stack` job in the CNS repository). The workflow comments also made statements about the siblings' tags;
+  those are removed. The README said the newer Warden checks were "assumed to arrive in 0.9.0"; it now says
+  `NEW_CHECKS_SINCE` is a version label used only when a probe does not show the check (the comment in
+  `swizzle/governor/scenarios.py` says the same; the value and the messages are unchanged). The self-hosting paragraph said
+  no fresh run was recorded and that no CNS status page existed; it now cites the CNS repository's
+  `docs/evidence/SELFHOSTING_2026-10-23.md` and what it recorded for this repository, with the numbers held by
+  `Tests/test_readme_claims.py`. `docs/IMPLEMENTATION_STATUS.md` re-counts its inventory (held by a test) and labels the
+  Ghost figures with the versions they were measured at; its collected-test count is now 1403.
+
+### Changed
+- Step 3: version 0.8.8 (`pyproject.toml`, the `swizzle_version` example in `docs/CONTRACT.md`), this entry, and the
+  README ledger entries for the two items above. The CI sibling pins and the CNS pin are unchanged.
+- No pre-existing test was edited to assert new behaviour. The one replaced assertion is in Step 1 (the shell check).
+
+## [0.8.7] - 2026-10-22
+
+### Changed
+- The CNS pin moves from the `v1.9.0` tag to the `v2.0.0` tag: the `cns` extra is now
+  `cns @ git+https://github.com/wking53214/CNS.git@v2.0.0  # v2.0.0 = b13e5d2f9e0e4291725f82794b89117c3d840ac1`
+  (the annotated tag object is `bb220f65d4629abc8073b976d1ea23f76d090e5e`). The README, the workflow header comment and
+  the `CnsNotInstalled` install hint carry the same spelling. The CI sibling pins are unchanged: ghost_tools
+  `2d03d8e19dc5937a6f45379c429d1a3afce4ab29`, ASSAY `54248beb5a36600f69de7c816cb2271dda20a879`, Warden
+  `380894f0304ef40587dd29efd41b4ceccf94a5d3`. The suite passed against the installed CNS 2.0.0 on Python 3.11, 3.12
+  and 3.13 with no skips. Tests that asserted the old tag spelling now assert the new one and nothing else about them
+  changed: `Tests/test_cns_independence.py` (the `EXTRA` line, and `test_the_cns_extra_is_pinned_to_the_v1_9_0_tag`,
+  renamed `..._v2_0_0_tag`), `Tests/test_ci_config.py` (`test_the_cns_extra_is_pinned_to_the_v1_9_0_tag`, renamed
+  `..._v2_0_0_tag`) and `Tests/test_docs_install_hints.py` (three install-line strings).
+- The README is rewritten to the final standard: What this is, How to install and run, evidence named for each item
+  under What works, What does not work and what is not proven, Known defects, What broke and how it was fixed (checked
+  against this changelog, the git history and the tests, each entry with its guard or "no test yet"), Self-hosting and
+  Ceilings code cannot fix. The statements about which git tags exist are removed because they go stale. The install
+  commands were run in a fresh virtual environment. New `Tests/test_readme_claims.py` holds the number of proofs and the
+  lint settings the README states, that every test the README cites exists, that every version in the ledger is a
+  changelog version, the promised sections and the banned words. `STACK.md` and `docs/` state no CNS version, so they
+  are unchanged.
+- Version 0.8.7 (`pyproject.toml`, the `swizzle_version` example in `docs/CONTRACT.md`, the `docs/IMPLEMENTATION_STATUS.md`
+  header).
+
 ## [0.8.6] - 2026-10-22
 
 ### Fixed

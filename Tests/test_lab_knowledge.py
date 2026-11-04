@@ -166,7 +166,10 @@ def test_a_file_this_version_cannot_read_is_not_merged_under_a_guess(tmp_path):
 def test_an_unreadable_file_does_not_take_the_run_down(tmp_path):
     path = tmp_path / "knowledge.json"
     path.write_text("{ not json")
-    assert Store(path).about("m", REV_A).acquisition is Acquisition.ZERO_BASE
+    # 0.8.13: the file is named and refused (KnowledgeError, exit 2 at the command line), not read as zero base.
+    from swizzle.lab.knowledge import KnowledgeError
+    with pytest.raises(KnowledgeError):
+        Store(path)
 
 
 # -------------------------------------------------------------- reporting
