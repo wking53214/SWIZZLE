@@ -66,7 +66,7 @@ def test_the_adapter_still_translates_a_verdict_with_cns_blocked():
         from swizzle.cns_adapter import translate_verdict
         from swizzle.schema import Verdict
         r = translate_verdict(Verdict.ESCAPED, {'warp': 'x'})
-        assert r.translation.cns_outcome == 'terminal_breach'
+        assert r.translation.cns_outcome is None
         assert r.translation.authority == 'advisory_only' and r.gate_result is None
         print('ok')
         """

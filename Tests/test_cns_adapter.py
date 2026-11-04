@@ -25,7 +25,7 @@ def test_cns_available_type():
 )
 def test_mapping_table(verdict, outcome):
     r = cns_adapter.translate_verdict(verdict, {"warp": "sql_through_a_name", "path": "fixture"})
-    assert r.translation.cns_outcome == outcome
+    assert r.translation.cns_outcome == (outcome if r.translation.cns_present else None)
     assert r.translation.information_lost
     if r.translation.cns_present:
         assert r.translation.authority == "cns.gate"
@@ -60,3 +60,19 @@ def test_digest_stable_when_cns_present():
     a = cns_adapter.translate_verdict(Verdict.ESCAPED, s)
     b = cns_adapter.translate_verdict(Verdict.ESCAPED, s)
     assert a.translation.subject_digest == b.translation.subject_digest
+
+
+@pytest.mark.parametrize("verdict", list(Verdict))
+def test_no_outcome_is_claimed_when_cns_is_missing(monkeypatch, verdict):
+    # Without CNS nothing was judged, so no gate outcome (least of all "pass") is reported.
+    monkeypatch.setattr(
+        cns_adapter,
+        "cns_available",
+        lambda: cns_adapter.CnsAvailability(ok=False, missing=("cns.gate",), error="forced"),
+    )
+    r = cns_adapter.translate_verdict(verdict, {"warp": "x"})
+    assert r.translation.cns_outcome is None
+    assert r.translation.cns_present is False
+    assert r.translation.source_value == verdict.value
+    assert r.translation.information_lost
+    assert r.translation.reason

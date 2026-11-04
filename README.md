@@ -75,7 +75,7 @@ modified by this package.
 Migration note: 0.8.7 moved the pin from `v1.9.0` to `v2.0.0`. The suite, including `Tests/test_cns_adapter.py` and `Tests/test_cns_connector.py`, passed against the installed CNS 2.0.0 on Python 3.11, 3.12 and 3.13. SWIZZLE does not import `cns.stack`, which holds the one change CNS's changelog lists as breaking.
 
 - `translate_verdict` (unchanged) maps one warp `Verdict` to a `cns.gate` outcome, or to an advisory
-  record when CNS is absent. It is not a `Gate`, and it stamps every result `ALPHA`, though a warp
+  record with no outcome (`cns_outcome` is None) when CNS is absent. It is not a `Gate`, and it stamps every result `ALPHA`, though a warp
   verdict judges a scan that has already run. That is left as it is, because changing it would
   change what existing callers receive.
 - `ProofGate` (ALPHA) asks whether the instrument is sound. Its candidate is what `swizzle prove`

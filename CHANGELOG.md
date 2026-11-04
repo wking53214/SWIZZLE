@@ -11,6 +11,9 @@ under the first version that contains it.
 
 ## [Unreleased]
 
+### Fixed
+- `translate_verdict` with CNS absent reported the mapped outcome (`pass` for a banished or dismissed warp) beside `authority=advisory_only`. Nothing was judged, so `TranslationRecord.cns_outcome` is now `None` in that case. With CNS present nothing changes.
+
 ## [0.8.13] - 2026-10-30
 
 Not tagged. An unreadable corpus or knowledge file is named and refused. Documentation corrections.
