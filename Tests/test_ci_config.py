@@ -72,7 +72,7 @@ def test_static_gates_are_run():
     assert re.search(r"^\s+run: mypy$", job, re.M)
 
 
-def test_the_cns_extra_is_pinned_to_the_v2_3_0_tag():
+def test_the_cns_extra_is_pinned_to_the_v3_0_0_tag():
     data = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     (requirement,) = data["project"]["optional-dependencies"]["cns"]
     assert re.search(r"CNS\.git@v3\.0\.0$", requirement), requirement

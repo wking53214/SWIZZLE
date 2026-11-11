@@ -48,7 +48,7 @@ swizzle = "swizzle.cli:main"
 dev = ["pytest>=8,<9.2", "pytest-benchmark", "ruff>=0.6", "mypy>=1.10", "setuptools>=68", "libcst==1.9.0"]
 # The CNS gate contract, for swizzle.cns_adapter's ProofGate and AttackGate. Optional: SWIZZLE runs without it.
 # Pinned to the v3.0.0 tag, which every repository in the circuit spells the same way (pip treats a tag URL and a
-# commit URL as two sources, and CNS's seat_pins check compares the text). The tag is the commit 31cb6f568219ef62cf3748701c895aa086abf1b8 (a lightweight tag).
+# commit URL as two sources, and CNS's seat_pins check compares the text). The tag peels to the commit 31cb6f568219ef62cf3748701c895aa086abf1b8 (an annotated tag).
 cns = ["cns @ git+https://github.com/wking53214/CNS.git@v3.0.0"]  # v3.0.0 = 31cb6f568219ef62cf3748701c895aa086abf1b8
 
 [tool.setuptools]

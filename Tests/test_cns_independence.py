@@ -123,7 +123,7 @@ def test_the_package_declares_no_runtime_dependency():
     assert "cns" in _pyproject()["project"]["optional-dependencies"]
 
 
-def test_the_cns_extra_is_pinned_to_the_v2_3_0_tag():
+def test_the_cns_extra_is_pinned_to_the_v3_0_0_tag():
     text = (ROOT / "pyproject.toml").read_text()
     assert EXTRA in text.splitlines()
     (spec,) = _pyproject()["project"]["optional-dependencies"]["cns"]
