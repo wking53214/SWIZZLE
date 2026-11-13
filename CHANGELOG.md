@@ -11,6 +11,10 @@ under the first version that contains it.
 
 ## [Unreleased]
 
+### Changed
+
+- CI tested set: WARDEN moves from 0.16.6 (`986f1d6ab1e103888a8b8a1c07706d4321dbc9c8`) to 1.0.0 (tag `v1.0.0`, `0339c09a69497be2d2fc34d71872c8c8616c6668`) in `.github/workflows/tests.yml`, `README.md`, `docs/IMPLEMENTATION_STATUS.md` and `Tests/test_ci_config.py`.
+
 ### Fixed
 - `translate_verdict` with CNS absent reported the mapped outcome (`pass` for a banished or dismissed warp) beside `authority=advisory_only`. Nothing was judged, so `TranslationRecord.cns_outcome` is now `None` in that case. With CNS present nothing changes.
 
