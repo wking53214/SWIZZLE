@@ -21,9 +21,9 @@ ROOT = Path(__file__).resolve().parents[1]
 BLOCK = "import sys; sys.modules['cns'] = None; sys.modules['cns.gate'] = None; "
 BLOCK += "sys.modules['cns.attack'] = None\n"
 
-#: The v4.0.0 tag spelling, the one every repository in the circuit uses (the commit it peels to is in the comment).
-EXTRA = ('cns = ["cns @ git+https://github.com/wking53214/CNS.git@v4.0.0"]'
-         '  # v4.0.0 = eabe6c72d71557b6327b80b42b0afab572acce80')
+#: The v4.1.0 tag spelling, the one every repository in the circuit uses (the commit it peels to is in the comment).
+EXTRA = ('cns = ["cns @ git+https://github.com/wking53214/CNS.git@v4.1.0"]'
+         '  # v4.1.0 = c84ef8c60079aae1753f92d9169d89081c670c22')
 
 
 def _run(code: str) -> subprocess.CompletedProcess[str]:
