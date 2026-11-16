@@ -75,7 +75,7 @@ def test_static_gates_are_run():
 def test_the_cns_extra_is_pinned_to_the_v4_0_0_tag():
     data = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     (requirement,) = data["project"]["optional-dependencies"]["cns"]
-    assert re.search(r"CNS\.git@v4\.0\.0$", requirement), requirement
+    assert re.search(r"CNS\.git@v4\.1\.0$", requirement), requirement
 
 
 def test_readme_does_not_hard_code_a_pass_count():
