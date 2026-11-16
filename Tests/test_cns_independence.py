@@ -128,7 +128,7 @@ def test_the_cns_extra_is_pinned_to_the_v4_0_0_tag():
     assert EXTRA in text.splitlines()
     (spec,) = _pyproject()["project"]["optional-dependencies"]["cns"]
     assert re.fullmatch(
-        r"cns @ git\+https://github\.com/wking53214/CNS\.git@v4\.0\.0", spec
+        r"cns @ git\+https://github\.com/wking53214/CNS\.git@v4\.1\.0", spec
     ), spec
 
 
