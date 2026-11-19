@@ -1,6 +1,6 @@
 # Stack role: SWIZZLE
 
-**ASSURANCE (not the live decision path).**
+**ASSURANCE (not the orchestrator path).**
 
 The attacker. Proves its own planted defects (`swizzle prove`), scores the scanner against the answer key (`swizzle assay`), and attacks the governor's rules (`swizzle governor`). Judges only from files on disk; never decides accept or reject.
 
@@ -71,8 +71,8 @@ earlier recorded run (2026-10-14, every seat live on a scratch repository, `ACCE
 see Warden's `docs/REGISTRY.json`) used the older circuit that seated them.
 
 ```text
-Live path: Admission → OBSERVE/Keys → Locks → PERCEIVE → Decision → Conservation → Execution → Custody
-Assurance: ASSAY · ghost_tools · SWIZZLE · Warden · Judge  (this circuit, off the live path)
+Orchestrator path: Admission → OBSERVE/Keys → Locks → PERCEIVE → Decision → Conservation → Execution → Custody
+Assurance: ASSAY · ghost_tools · SWIZZLE · Warden · Judge  (this circuit, off the orchestrator path)
 ```
 
 CNS (public, https://github.com/wking53214/CNS; the `cns` extra installs it with no token) holds the interoperability contracts. No repository in the circuit modifies it.
