@@ -44,7 +44,8 @@ def _plant(tmp_path, text, bucket="regression", name="bad.json"):
 @pytest.mark.parametrize("contents", BAD_CASE_FILES.values(), ids=BAD_CASE_FILES.keys())
 def test_a_corpus_command_names_an_unreadable_case_file_and_exits_2(tmp_path, capsys, command, contents):
     if command == "report" and resolve_ghost_tools() is None:
-        pytest.skip("the report command needs a ghost_tools checkout (set GHOST_TOOLS or place it next to this repository)")
+        pytest.skip("the report command needs a ghost_tools checkout "
+                    "(set GHOST_TOOLS or place it next to this repository)")
     bucket = "discovered" if command == "handoff-propose" else "regression"   # the buckets that command reads
     corpus, bad = _plant(tmp_path, contents, bucket=bucket)
     code, out, err = _main([*CORPUS_COMMANDS[command], "--corpus-dir", str(corpus)], capsys)
