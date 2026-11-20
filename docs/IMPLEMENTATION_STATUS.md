@@ -12,7 +12,7 @@ Header refreshed for SWIZZLE 0.8.8 on 2026-10-24. What is re-measured and what i
   result (25 cases, 25 usable, 0 broken runs, 0 critical; 8 HIGH, 2 LOW, 15 pass). Nothing re-runs them on a schedule.
 - **What CI tests today** is the last set this repository's CI tested on its own: ghost_tools
   `99f0e3cb14892ccefa737a01744420914e828cf1` (1.10.14), ASSAY `4da96411eb09f25e68a024cd1aeb004322c1c99f` (0.11.10) and
-  Warden `0339c09a69497be2d2fc34d71872c8c8616c6668` (1.0.0); see `.github/workflows/tests.yml`. Those pins are not
+  Warden `26d8128ecd75c841125128533812763385dc7497` (1.0.0, requires CNS v4.1.0; the `v1.0.0` tag is a different, earlier commit); see `.github/workflows/tests.yml`. Those pins are not
   moved when a sibling moves; the whole-stack check is the `stack` job in the CNS repository.
 
 The Ghost measurements below are **dated 2026-10-21**: the SWIZZLE 0.8.5 code (the commit before its version bump, which
