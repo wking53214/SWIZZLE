@@ -125,7 +125,7 @@ def test_the_tested_set_is_the_current_known_good_one():
     assert _pin_versions(job) == {"ghost_tools": "1.10.14", "ASSAY": "0.11.10", "WARDEN": "1.0.0"}
     assert "ref: 0339c09a69497be2d2fc34d71872c8c8616c6668" in job
     assert "ref: 99f0e3cb14892ccefa737a01744420914e828cf1" in job
-    assert "ref: 3d50a70566f8c2278b0fc5d110309f3ace75bfdf" in job
+    assert "ref: 5c71dc37694ce13cc02a99555598b063c340021b" in job
 
 
 # The oldest CPython each numpy release supports (its Requires-Python). numpy 2.5.x dropped 3.11, so an
