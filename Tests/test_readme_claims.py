@@ -138,7 +138,7 @@ SELFHOSTING_GHOST_FINDINGS_STANDING = 215
 def test_the_self_hosting_paragraph_states_the_recorded_run_and_what_it_does_not_mean():
     text = _section("### Self-hosting")
     assert SELFHOSTING_EVIDENCE_FILE in text
-    assert "claude/horsemen-production-status-5wsndb" in text and "until that branch is merged" in text
+    assert "on CNS `main`" in text
     assert SELFHOSTING_COMMIT in text and SELFHOSTING_VERSION in text
     assert SELFHOSTING_RUN_1_DECISION in text and "Burnish 0.3.12" in text
     assert re.search(r"\bended %s \(exit 0\)" % SELFHOSTING_RUN_2_DECISION, text)
