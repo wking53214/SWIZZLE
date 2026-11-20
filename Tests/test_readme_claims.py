@@ -120,8 +120,8 @@ def test_the_ledger_and_the_defects_say_what_prevents_each_item_or_that_nothing_
 
 # --- the self-hosting paragraph ------------------------------------------------------------------------------
 
-#: Copied from the CNS repository's docs/evidence/SELFHOSTING_2026-10-23.md (branch
-#: claude/horsemen-production-status-5wsndb until merged): the SWIZZLE rows of its two tables and its
+#: Copied from the CNS repository's docs/evidence/SELFHOSTING_2026-10-23.md (on CNS
+#: main): the SWIZZLE rows of its two tables and its
 #: "Re-run after BURNISH 0.3.12" section. They are the numbers of one recorded run at commit 3f35dad, so they
 #: do not change when this repository does. If the evidence file is corrected, change them here and in the README.
 SELFHOSTING_EVIDENCE_FILE = "docs/evidence/SELFHOSTING_2026-10-23.md"
