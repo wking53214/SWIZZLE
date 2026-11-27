@@ -11,8 +11,10 @@ under the first version that contains it.
 
 ## [Unreleased]
 
+
 ### Changed
 
+- CNS pin `v4.1.0` -> `v4.2.0` (`670246fe5006ae15757f90e48350f57b53c56414`), which adds `Evidence.edit_sources`; the circuit and the repositories released from it move together. No code change here.
 - CI tested set: WARDEN moves from 0.16.6 (`986f1d6ab1e103888a8b8a1c07706d4321dbc9c8`) to 1.0.0 (tag `v1.0.0`, `0339c09a69497be2d2fc34d71872c8c8616c6668`) in `.github/workflows/tests.yml`, `README.md`, `docs/IMPLEMENTATION_STATUS.md` and `Tests/test_ci_config.py`.
 
 ### Fixed
